@@ -12,7 +12,19 @@ export async function fetchYouTubeVideoInfo(url: string): Promise<YouTubeVideoIn
     throw new Error('Invalid YouTube URL');
   }
 
-  const apiKey = process.env.YOUTUBE_API_KEY || process.env.VITE_YOUTUBE_API_KEY || "demo_key";
+  const apiKey = process.env.YOUTUBE_API_KEY;
+  
+  // If no API key, return fallback data
+  if (!apiKey) {
+    console.log('No YouTube API key provided, using fallback data');
+    return {
+      id: videoId,
+      title: `YouTube Video ${videoId}`,
+      description: 'Please add a custom description for this video.',
+      thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+      duration: 'Unknown',
+    };
+  }
   
   try {
     const response = await fetch(
@@ -20,7 +32,14 @@ export async function fetchYouTubeVideoInfo(url: string): Promise<YouTubeVideoIn
     );
 
     if (!response.ok) {
-      throw new Error('Failed to fetch video information from YouTube API');
+      console.error('YouTube API request failed, using fallback data');
+      return {
+        id: videoId,
+        title: `YouTube Video ${videoId}`,
+        description: 'Please add a custom description for this video.',
+        thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+        duration: 'Unknown',
+      };
     }
 
     const data = await response.json();
@@ -41,8 +60,14 @@ export async function fetchYouTubeVideoInfo(url: string): Promise<YouTubeVideoIn
       duration: formatDuration(contentDetails.duration),
     };
   } catch (error) {
-    console.error('YouTube API error:', error);
-    throw new Error('Failed to fetch video information');
+    console.error('YouTube API error, using fallback data:', error);
+    return {
+      id: videoId,
+      title: `YouTube Video ${videoId}`,
+      description: 'Please add a custom description for this video.',
+      thumbnailUrl: `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
+      duration: 'Unknown',
+    };
   }
 }
 

@@ -75,8 +75,34 @@ async function createTestUser() {
     console.log("Regular User: test@example.com / password123");
     console.log("Admin User: admin@example.com / admin123");
     console.log("==============================\n");
+
+    // Create default categories
+    await createDefaultCategories();
   } catch (error) {
     console.error("Failed to create test users:", error);
+  }
+}
+
+async function createDefaultCategories() {
+  try {
+    const defaultCategories = [
+      { name: "Programming", slug: "programming" },
+      { name: "Web Development", slug: "web-development" },
+      { name: "Data Science", slug: "data-science" },
+      { name: "Mobile Development", slug: "mobile-development" },
+      { name: "DevOps", slug: "devops" },
+      { name: "Design", slug: "design" },
+    ];
+
+    for (const category of defaultCategories) {
+      const existing = await storage.getCategoryBySlug(category.slug);
+      if (!existing) {
+        await storage.createCategory(category);
+        console.log(`Created category: ${category.name}`);
+      }
+    }
+  } catch (error) {
+    console.error("Failed to create default categories:", error);
   }
 }
 
