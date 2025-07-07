@@ -14,7 +14,7 @@ import type { VideoWithCategory, Category } from "@shared/schema";
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
-  const [selectedCategory, setSelectedCategory] = useState<string>("");
+  const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedVideo, setSelectedVideo] = useState<VideoWithCategory | null>(null);
 
   const { data: categories = [] } = useQuery<Category[]>({
@@ -26,7 +26,7 @@ export default function HomePage() {
     queryFn: async () => {
       const params = new URLSearchParams();
       if (searchQuery) params.append("search", searchQuery);
-      if (selectedCategory) params.append("categoryId", selectedCategory);
+      if (selectedCategory && selectedCategory !== "all") params.append("categoryId", selectedCategory);
       
       const response = await fetch(`/api/videos?${params}`);
       if (!response.ok) throw new Error("Failed to fetch videos");
@@ -107,7 +107,7 @@ export default function HomePage() {
                 <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">All Categories</SelectItem>
+                <SelectItem value="all">All Categories</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
