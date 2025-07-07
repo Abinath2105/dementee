@@ -60,10 +60,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const res = await apiRequest("POST", "/api/register", credentials);
       return await res.json();
     },
-    onSuccess: (response: { message: string; email: string }) => {
+    onSuccess: (response: { message: string; email: string; testOtp?: string }) => {
       toast({
         title: "Registration successful",
         description: response.message,
+        duration: response.testOtp ? 10000 : 5000, // Show longer if OTP is included
       });
     },
     onError: (error: Error) => {
