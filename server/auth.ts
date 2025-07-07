@@ -33,6 +33,53 @@ function generateOtp(): string {
   return Math.floor(100000 + Math.random() * 900000).toString();
 }
 
+async function createTestUser() {
+  try {
+    // Check if test user already exists
+    const existingUser = await storage.getUserByEmail("test@example.com");
+    if (existingUser) {
+      console.log("Test user already exists: test@example.com");
+    } else {
+      // Create regular test user
+      const hashedPassword = await hashPassword("password123");
+      await storage.createUser({
+        email: "test@example.com",
+        username: "testuser",
+        password: hashedPassword,
+        fullName: "Test User",
+        isVerified: true,
+        isAdmin: false,
+      });
+      console.log("Regular test user created: test@example.com / password123");
+    }
+
+    // Check if admin user already exists
+    const existingAdmin = await storage.getUserByEmail("admin@example.com");
+    if (existingAdmin) {
+      console.log("Admin user already exists: admin@example.com");
+    } else {
+      // Create admin test user
+      const hashedAdminPassword = await hashPassword("admin123");
+      await storage.createUser({
+        email: "admin@example.com",
+        username: "admin",
+        password: hashedAdminPassword,
+        fullName: "Admin User",
+        isVerified: true,
+        isAdmin: true,
+      });
+      console.log("Admin test user created: admin@example.com / admin123");
+    }
+
+    console.log("\n=== TEST LOGIN CREDENTIALS ===");
+    console.log("Regular User: test@example.com / password123");
+    console.log("Admin User: admin@example.com / admin123");
+    console.log("==============================\n");
+  } catch (error) {
+    console.error("Failed to create test users:", error);
+  }
+}
+
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
     secret: process.env.SESSION_SECRET || 'default-secret-key',
@@ -48,6 +95,9 @@ export function setupAuth(app: Express) {
   app.use(session(sessionSettings));
   app.use(passport.initialize());
   app.use(passport.session());
+
+  // Create test user on startup
+  createTestUser();
 
   passport.use(
     new LocalStrategy(
