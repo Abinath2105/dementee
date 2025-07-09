@@ -125,14 +125,14 @@ export default function MentorProfilePage() {
           
           {/* Profile Info */}
           <div className="relative px-6 pb-6">
-            <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-6">
-              <div className="relative">
-                <Avatar className="h-32 w-32 border-4 border-white shadow-lg bg-white relative z-10">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:space-x-6">
+              <div className="relative mb-4 sm:mb-0">
+                <Avatar className="h-40 w-40 border-4 border-white shadow-xl bg-white relative z-10">
                   <AvatarImage 
                     src={mentorProfile.photo || undefined} 
                     alt={mentorProfile.name}
                   />
-                  <AvatarFallback className="text-3xl font-bold bg-blue-600 text-white">
+                  <AvatarFallback className="text-4xl font-bold bg-blue-600 text-white">
                     {getInitials(mentorProfile.name)}
                   </AvatarFallback>
                 </Avatar>
@@ -147,25 +147,27 @@ export default function MentorProfilePage() {
               </div>
               
               <div className="mt-4 sm:mt-0 flex-1">
-                <h1 className="text-3xl font-bold text-gray-900">{mentorProfile.name}</h1>
-                <p className="text-xl text-gray-600 mt-1">{mentorProfile.profession}</p>
-                <p className="text-gray-500 mt-1">{mentorProfile.experience} experience</p>
+                <div className="mb-4">
+                  <h1 className="text-4xl font-bold text-gray-900 mb-2">{mentorProfile.name}</h1>
+                  <p className="text-xl text-gray-600 font-medium">{mentorProfile.profession}</p>
+                  <p className="text-gray-500 mt-1">{mentorProfile.experience} experience</p>
+                </div>
                 
-                <div className="flex items-center mt-3 space-x-4">
+                <div className="flex flex-wrap items-center gap-4">
                   <div className="flex items-center">
                     {mentorProfile.isActive ? (
                       <>
                         <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span className="text-sm text-green-700 font-medium">Active Mentor</span>
+                        <span className="text-sm text-green-700 font-medium bg-green-50 px-3 py-1 rounded-full">Active Mentor</span>
                       </>
                     ) : (
                       <>
                         <User className="h-5 w-5 text-yellow-500 mr-2" />
-                        <span className="text-sm text-yellow-700 font-medium">Pending Activation</span>
+                        <span className="text-sm text-yellow-700 font-medium bg-yellow-50 px-3 py-1 rounded-full">Pending Activation</span>
                       </>
                     )}
                   </div>
-                  <div className="flex items-center text-gray-500">
+                  <div className="flex items-center text-gray-600 bg-gray-50 px-3 py-1 rounded-full">
                     <Mail className="h-4 w-4 mr-2" />
                     <span className="text-sm">{mentorProfile.email}</span>
                   </div>
