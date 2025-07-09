@@ -20,6 +20,7 @@ export default function MentorSetupPage() {
   // Debug: Log token and location
   console.log('Location:', location);
   console.log('Token:', token);
+  console.log('URL Search:', location.split('?')[1] || 'No query string');
   
   // Form state
   const [password, setPassword] = useState("");
