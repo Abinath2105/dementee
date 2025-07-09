@@ -17,6 +17,10 @@ export default function MentorSetupPage() {
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
   const token = urlParams.get('token');
   
+  // Debug: Log token and location
+  console.log('Location:', location);
+  console.log('Token:', token);
+  
   // Form state
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
