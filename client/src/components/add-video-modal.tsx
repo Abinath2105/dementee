@@ -293,12 +293,15 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
                 <div className="border rounded-md p-3 min-h-[80px] focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
                   <div className="flex flex-wrap gap-1 mb-2">
                     {tags.map((tag, index) => (
-                      <Badge key={index} variant="secondary" className="text-xs px-2 py-1">
+                      <Badge 
+                        key={index} 
+                        className="bg-black dark:bg-white text-white dark:text-black text-xs px-3 py-1 rounded-full font-normal hover:bg-gray-800 dark:hover:bg-gray-200 transition-colors"
+                      >
                         {tag}
                         <button
                           type="button"
                           onClick={() => removeTag(tag)}
-                          className="ml-1 hover:text-destructive"
+                          className="ml-2 hover:opacity-70 transition-opacity"
                         >
                           <X className="h-3 w-3" />
                         </button>
