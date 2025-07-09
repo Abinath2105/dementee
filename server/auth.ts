@@ -11,7 +11,14 @@ import { sendOtpEmail } from "./services/email";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {}
+    interface User extends SelectUser {
+      isMentor?: boolean;
+      mentorProfile?: {
+        profession: string;
+        bio: string | null;
+        photo: string | null;
+      };
+    }
   }
 }
 
@@ -134,14 +141,41 @@ export function setupAuth(app: Express) {
       { usernameField: 'email' },
       async (email, password, done) => {
         try {
+          // First, try to find a regular user
           const user = await storage.getUserByEmail(email);
-          if (!user || !(await comparePasswords(password, user.password))) {
-            return done(null, false);
+          if (user && await comparePasswords(password, user.password)) {
+            if (!user.isVerified) {
+              return done(null, false, { message: 'Email not verified' });
+            }
+            return done(null, user);
           }
-          if (!user.isVerified) {
-            return done(null, false, { message: 'Email not verified' });
+
+          // If no regular user found, check for mentor
+          const mentor = await storage.getMentorByEmail(email);
+          if (mentor && mentor.isActive) {
+            const mentorCredentials = await storage.getMentorCredentials(mentor.id);
+            if (mentorCredentials && await comparePasswords(password, mentorCredentials.password)) {
+              // Create a user-like object for mentors
+              const mentorUser = {
+                id: mentor.id,
+                email: mentor.email,
+                username: mentor.email.split('@')[0], // Use email prefix as username
+                fullName: mentor.name,
+                isVerified: true,
+                isAdmin: false,
+                isMentor: true, // Special flag to identify mentors
+                mentorProfile: {
+                  profession: mentor.profession,
+                  bio: mentor.bio,
+                  photo: mentor.photo,
+                }
+              };
+              return done(null, mentorUser);
+            }
           }
-          return done(null, user);
+
+          // No valid user or mentor found
+          return done(null, false);
         } catch (error) {
           return done(error);
         }
@@ -149,11 +183,41 @@ export function setupAuth(app: Express) {
     )
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
-  passport.deserializeUser(async (id: number, done) => {
+  passport.serializeUser((user, done) => {
+    // Store both id and type for proper deserialization
+    done(null, { id: user.id, isMentor: user.isMentor || false });
+  });
+  
+  passport.deserializeUser(async (data: { id: number; isMentor: boolean }, done) => {
     try {
-      const user = await storage.getUser(id);
-      done(null, user);
+      if (data.isMentor) {
+        // Deserialize mentor
+        const mentor = await storage.getMentor(data.id);
+        if (mentor && mentor.isActive) {
+          const mentorUser = {
+            id: mentor.id,
+            email: mentor.email,
+            username: mentor.email.split('@')[0],
+            fullName: mentor.name,
+            isVerified: true,
+            isAdmin: false,
+            isMentor: true,
+            mentorProfile: {
+              profession: mentor.profession,
+              bio: mentor.bio,
+              photo: mentor.photo,
+            }
+          };
+          return done(null, mentorUser);
+        }
+      } else {
+        // Deserialize regular user
+        const user = await storage.getUser(data.id);
+        if (user) {
+          return done(null, user);
+        }
+      }
+      done(null, false);
     } catch (error) {
       done(error);
     }
