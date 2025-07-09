@@ -3,7 +3,19 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { fetchYouTubeVideoInfo } from "./services/youtube";
-import { insertVideoSchema, insertCategorySchema } from "@shared/schema";
+import { insertVideoSchema, insertCategorySchema, insertMentorSchema } from "@shared/schema";
+import { sendMentorInvitationEmail } from "./services/email";
+import { nanoid } from "nanoid";
+import { scrypt, randomBytes, timingSafeEqual } from "crypto";
+import { promisify } from "util";
+
+const scryptAsync = promisify(scrypt);
+
+async function hashPassword(password: string) {
+  const salt = randomBytes(16).toString("hex");
+  const buf = (await scryptAsync(password, salt, 64)) as Buffer;
+  return `${buf.toString("hex")}.${salt}`;
+}
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -258,6 +270,217 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Delete user error:", error);
       res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // Mentor management endpoints (admin only)
+  app.get("/api/admin/mentors", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const mentors = await storage.getMentors();
+      res.json(mentors);
+    } catch (error) {
+      console.error("Get mentors error:", error);
+      res.status(500).json({ message: "Failed to fetch mentors" });
+    }
+  });
+
+  app.post("/api/admin/mentors", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const parsed = insertMentorSchema.parse(req.body);
+      
+      // Check if mentor with this email already exists
+      const existingMentor = await storage.getMentorByEmail(parsed.email);
+      if (existingMentor) {
+        return res.status(400).json({ message: "Mentor with this email already exists" });
+      }
+
+      // Create mentor
+      const mentor = await storage.createMentor(parsed);
+
+      // Generate invitation token
+      const token = nanoid(32);
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
+
+      // Create invitation
+      await storage.createMentorInvitation({
+        mentorId: mentor.id,
+        token,
+        expiresAt,
+      });
+
+      // Send invitation email
+      await sendMentorInvitationEmail(mentor.email, mentor.name, token);
+
+      res.status(201).json({ 
+        message: "Mentor created and invitation sent successfully",
+        mentor 
+      });
+    } catch (error) {
+      console.error("Create mentor error:", error);
+      res.status(500).json({ message: "Failed to create mentor" });
+    }
+  });
+
+  app.put("/api/admin/mentors/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const mentorId = parseInt(req.params.id);
+      const updateData = insertMentorSchema.partial().parse(req.body);
+
+      const mentor = await storage.updateMentor(mentorId, updateData);
+      res.json(mentor);
+    } catch (error) {
+      console.error("Update mentor error:", error);
+      res.status(500).json({ message: "Failed to update mentor" });
+    }
+  });
+
+  app.delete("/api/admin/mentors/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const mentorId = parseInt(req.params.id);
+      await storage.deleteMentor(mentorId);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error("Delete mentor error:", error);
+      res.status(500).json({ message: "Failed to delete mentor" });
+    }
+  });
+
+  app.post("/api/admin/mentors/:id/resend-invitation", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const mentorId = parseInt(req.params.id);
+      const mentor = await storage.getMentor(mentorId);
+      
+      if (!mentor) {
+        return res.status(404).json({ message: "Mentor not found" });
+      }
+
+      if (mentor.isActive) {
+        return res.status(400).json({ message: "Mentor is already active" });
+      }
+
+      // Generate new invitation token
+      const token = nanoid(32);
+      const expiresAt = new Date();
+      expiresAt.setDate(expiresAt.getDate() + 7); // 7 days expiry
+
+      // Create new invitation
+      await storage.createMentorInvitation({
+        mentorId: mentor.id,
+        token,
+        expiresAt,
+      });
+
+      // Send invitation email
+      await sendMentorInvitationEmail(mentor.email, mentor.name, token);
+
+      res.json({ message: "Invitation resent successfully" });
+    } catch (error) {
+      console.error("Resend invitation error:", error);
+      res.status(500).json({ message: "Failed to resend invitation" });
+    }
+  });
+
+  // Mentor setup endpoint (public)
+  app.get("/api/mentor/invitation/:token", async (req, res) => {
+    try {
+      const { token } = req.params;
+      const invitation = await storage.getMentorInvitationByToken(token);
+      
+      if (!invitation) {
+        return res.status(404).json({ message: "Invalid or expired invitation" });
+      }
+
+      const mentor = await storage.getMentor(invitation.mentorId);
+      if (!mentor) {
+        return res.status(404).json({ message: "Mentor not found" });
+      }
+
+      res.json({
+        mentorName: mentor.name,
+        mentorEmail: mentor.email,
+        valid: true
+      });
+    } catch (error) {
+      console.error("Get invitation error:", error);
+      res.status(500).json({ message: "Failed to validate invitation" });
+    }
+  });
+
+  app.post("/api/mentor/setup", async (req, res) => {
+    try {
+      const { token, password, confirmPassword } = req.body;
+      
+      if (!password || !confirmPassword) {
+        return res.status(400).json({ message: "Password and confirmation are required" });
+      }
+
+      if (password !== confirmPassword) {
+        return res.status(400).json({ message: "Passwords do not match" });
+      }
+
+      if (password.length < 8) {
+        return res.status(400).json({ message: "Password must be at least 8 characters long" });
+      }
+
+      const invitation = await storage.getMentorInvitationByToken(token);
+      if (!invitation) {
+        return res.status(404).json({ message: "Invalid or expired invitation" });
+      }
+
+      const mentor = await storage.getMentor(invitation.mentorId);
+      if (!mentor) {
+        return res.status(404).json({ message: "Mentor not found" });
+      }
+
+      // Check if mentor already has credentials
+      const existingCredentials = await storage.getMentorCredentials(mentor.id);
+      if (existingCredentials) {
+        return res.status(400).json({ message: "Mentor account is already set up" });
+      }
+
+      // Hash password and create credentials
+      const hashedPassword = await hashPassword(password);
+      await storage.createMentorCredentials({
+        mentorId: mentor.id,
+        password: hashedPassword,
+      });
+
+      // Activate mentor and mark invitation as used
+      await storage.activateMentor(mentor.id);
+      await storage.markInvitationAsUsed(invitation.id);
+
+      res.json({ 
+        message: "Mentor account setup completed successfully",
+        mentor: {
+          name: mentor.name,
+          email: mentor.email,
+          profession: mentor.profession
+        }
+      });
+    } catch (error) {
+      console.error("Mentor setup error:", error);
+      res.status(500).json({ message: "Failed to setup mentor account" });
     }
   });
 

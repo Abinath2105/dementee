@@ -54,6 +54,35 @@ export const videoViews = pgTable("video_views", {
   viewedAt: timestamp("viewed_at").defaultNow().notNull(),
 });
 
+export const mentors = pgTable("mentors", {
+  id: serial("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  photo: text("photo"),
+  profession: text("profession").notNull(),
+  experience: text("experience").notNull(),
+  isActive: boolean("is_active").default(false).notNull(),
+  invitedAt: timestamp("invited_at").defaultNow().notNull(),
+  activatedAt: timestamp("activated_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const mentorCredentials = pgTable("mentor_credentials", {
+  id: serial("id").primaryKey(),
+  mentorId: integer("mentor_id").notNull().references(() => mentors.id, { onDelete: "cascade" }),
+  password: text("password").notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const mentorInvitations = pgTable("mentor_invitations", {
+  id: serial("id").primaryKey(),
+  mentorId: integer("mentor_id").notNull().references(() => mentors.id, { onDelete: "cascade" }),
+  token: text("token").notNull().unique(),
+  expiresAt: timestamp("expires_at").notNull(),
+  usedAt: timestamp("used_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   videoViews: many(videoViews),
@@ -80,6 +109,19 @@ export const videoViewsRelations = relations(videoViews, ({ one }) => ({
     fields: [videoViews.userId],
     references: [users.id],
   }),
+}));
+
+export const mentorsRelations = relations(mentors, ({ one, many }) => ({
+  credentials: one(mentorCredentials),
+  invitations: many(mentorInvitations),
+}));
+
+export const mentorCredentialsRelations = relations(mentorCredentials, ({ one }) => ({
+  mentor: one(mentors, { fields: [mentorCredentials.mentorId], references: [mentors.id] }),
+}));
+
+export const mentorInvitationsRelations = relations(mentorInvitations, ({ one }) => ({
+  mentor: one(mentors, { fields: [mentorInvitations.mentorId], references: [mentors.id] }),
 }));
 
 // Insert schemas
@@ -119,6 +161,25 @@ export const insertVideoViewSchema = createInsertSchema(videoViews).pick({
   ipAddress: true,
 });
 
+export const insertMentorSchema = createInsertSchema(mentors).pick({
+  name: true,
+  email: true,
+  photo: true,
+  profession: true,
+  experience: true,
+});
+
+export const insertMentorCredentialsSchema = createInsertSchema(mentorCredentials).pick({
+  mentorId: true,
+  password: true,
+});
+
+export const insertMentorInvitationSchema = createInsertSchema(mentorInvitations).pick({
+  mentorId: true,
+  token: true,
+  expiresAt: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -130,6 +191,12 @@ export type Video = typeof videos.$inferSelect;
 export type InsertVideo = z.infer<typeof insertVideoSchema>;
 export type VideoView = typeof videoViews.$inferSelect;
 export type InsertVideoView = z.infer<typeof insertVideoViewSchema>;
+export type Mentor = typeof mentors.$inferSelect;
+export type InsertMentor = z.infer<typeof insertMentorSchema>;
+export type MentorCredentials = typeof mentorCredentials.$inferSelect;
+export type InsertMentorCredentials = z.infer<typeof insertMentorCredentialsSchema>;
+export type MentorInvitation = typeof mentorInvitations.$inferSelect;
+export type InsertMentorInvitation = z.infer<typeof insertMentorInvitationSchema>;
 
 // Extended types for API responses
 export type VideoWithCategory = Video & {
@@ -137,9 +204,16 @@ export type VideoWithCategory = Video & {
   viewCount: number;
 };
 
+export type MentorWithStats = Mentor & {
+  hasCredentials: boolean;
+  pendingInvitations: number;
+};
+
 export type AdminStats = {
   totalVideos: number;
   totalUsers: number;
   totalViews: number;
+  totalMentors: number;
+  activeMentors: number;
   totalWatchTime: string;
 };

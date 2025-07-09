@@ -11,9 +11,10 @@ import { Switch } from "@/components/ui/switch";
 import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff } from "lucide-react";
 import { AddVideoModal } from "@/components/add-video-modal";
 import { EditVideoModal } from "@/components/edit-video-modal";
+import { AddMentorModal } from "@/components/add-mentor-modal";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { VideoWithCategory, AdminStats, User, Category } from "@shared/schema";
+import type { VideoWithCategory, AdminStats, User, Category, MentorWithStats } from "@shared/schema";
 
 export default function AdminPage() {
   const { user, logoutMutation } = useAuth();
@@ -21,6 +22,7 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("videos");
   const [editingVideo, setEditingVideo] = useState<VideoWithCategory | null>(null);
   const [showEditVideo, setShowEditVideo] = useState(false);
+  const [showAddMentor, setShowAddMentor] = useState(false);
   const { toast } = useToast();
 
   // Redirect if not admin
@@ -42,6 +44,10 @@ export default function AdminPage() {
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
+  });
+
+  const { data: mentors = [], isLoading: mentorsLoading } = useQuery<MentorWithStats[]>({
+    queryKey: ["/api/admin/mentors"],
   });
 
   const deleteVideoMutation = useMutation({
@@ -168,6 +174,61 @@ export default function AdminPage() {
     },
   });
 
+  const deleteMentorMutation = useMutation({
+    mutationFn: async (mentorId: number) => {
+      const response = await fetch(`/api/admin/mentors/${mentorId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete mentor");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/mentors"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({
+        title: "Mentor deleted",
+        description: "Mentor profile deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const resendInvitationMutation = useMutation({
+    mutationFn: async (mentorId: number) => {
+      const response = await fetch(`/api/admin/mentors/${mentorId}/resend-invitation`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to resend invitation");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Invitation sent",
+        description: "Mentor invitation has been resent successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeleteVideo = (videoId: number) => {
     if (confirm("Are you sure you want to delete this video?")) {
       deleteVideoMutation.mutate(videoId);
@@ -197,6 +258,16 @@ export default function AdminPage() {
   const handleEditVideo = (video: VideoWithCategory) => {
     setEditingVideo(video);
     setShowEditVideo(true);
+  };
+
+  const handleDeleteMentor = (mentorId: number) => {
+    if (confirm("Are you sure you want to delete this mentor? This action cannot be undone.")) {
+      deleteMentorMutation.mutate(mentorId);
+    }
+  };
+
+  const handleResendInvitation = (mentorId: number) => {
+    resendInvitationMutation.mutate(mentorId);
   };
 
   const handleCloseEditVideo = () => {
@@ -310,9 +381,10 @@ export default function AdminPage() {
 
         {/* Tabs for different management sections */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
+          <TabsList className="grid w-full grid-cols-3">
             <TabsTrigger value="videos">Video Management</TabsTrigger>
             <TabsTrigger value="users">User Management</TabsTrigger>
+            <TabsTrigger value="mentors">Mentor Management</TabsTrigger>
           </TabsList>
           
           <TabsContent value="videos" className="mt-6">
@@ -600,6 +672,144 @@ export default function AdminPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="mentors" className="mt-6">
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-4 mb-6">
+              <Button onClick={() => setShowAddMentor(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Mentor
+              </Button>
+            </div>
+
+            {/* Mentors Management Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Mentor Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Mentor</TableHead>
+                        <TableHead>Profession</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Credentials</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {mentorsLoading ? (
+                        [...Array(3)].map((_, i) => (
+                          <TableRow key={i}>
+                            <TableCell>
+                              <div className="flex items-center space-x-3">
+                                <div className="w-10 h-10 bg-gray-200 rounded-full animate-pulse"></div>
+                                <div className="space-y-1">
+                                  <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+                                  <div className="h-3 bg-gray-200 rounded w-48 animate-pulse"></div>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="h-6 bg-gray-200 rounded w-16 animate-pulse"></div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="h-6 bg-gray-200 rounded w-16 animate-pulse"></div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                                <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : mentors.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8">
+                            <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                            <p className="text-gray-500">No mentors found</p>
+                            <p className="text-sm text-gray-400 mt-1">Add your first mentor to get started</p>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        mentors.map((mentor) => (
+                          <TableRow key={mentor.id}>
+                            <TableCell>
+                              <div className="flex items-center space-x-3">
+                                {mentor.photo ? (
+                                  <img
+                                    src={mentor.photo}
+                                    alt={mentor.name}
+                                    className="w-10 h-10 rounded-full object-cover"
+                                  />
+                                ) : (
+                                  <div className="w-10 h-10 bg-gray-200 rounded-full flex items-center justify-center">
+                                    <Users className="h-5 w-5 text-gray-500" />
+                                  </div>
+                                )}
+                                <div>
+                                  <div className="font-medium text-gray-900">
+                                    {mentor.name}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    {mentor.email}
+                                  </div>
+                                </div>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-gray-900">
+                                {mentor.profession}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={mentor.isActive ? "default" : "secondary"}>
+                                {mentor.isActive ? "Active" : "Pending"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={mentor.hasCredentials ? "default" : "outline"}>
+                                {mentor.hasCredentials ? "Set Up" : "Pending"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                {!mentor.isActive && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleResendInvitation(mentor.id)}
+                                    disabled={resendInvitationMutation.isPending}
+                                    title="Resend invitation email"
+                                  >
+                                    <UserCheck className="h-4 w-4" />
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDeleteMentor(mentor.id)}
+                                  disabled={deleteMentorMutation.isPending}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -614,6 +824,11 @@ export default function AdminPage() {
         video={editingVideo}
         isOpen={showEditVideo}
         onClose={handleCloseEditVideo}
+      />
+
+      <AddMentorModal
+        isOpen={showAddMentor}
+        onClose={() => setShowAddMentor(false)}
       />
     </div>
   );

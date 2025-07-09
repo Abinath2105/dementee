@@ -1,4 +1,4 @@
-import { users, videos, categories, otpCodes, videoViews, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats } from "@shared/schema";
+import { users, videos, categories, otpCodes, videoViews, mentors, mentorCredentials, mentorInvitations, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type Mentor, type InsertMentor, type MentorWithStats, type MentorCredentials, type InsertMentorCredentials, type MentorInvitation, type InsertMentorInvitation } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or, ilike } from "drizzle-orm";
 import session from "express-session";
@@ -39,6 +39,24 @@ export interface IStorage {
 
   // Admin stats
   getAdminStats(): Promise<AdminStats>;
+
+  // Mentor management
+  getMentors(): Promise<MentorWithStats[]>;
+  getMentor(id: number): Promise<Mentor | undefined>;
+  getMentorByEmail(email: string): Promise<Mentor | undefined>;
+  createMentor(mentor: InsertMentor): Promise<Mentor>;
+  updateMentor(id: number, mentor: Partial<InsertMentor>): Promise<Mentor>;
+  deleteMentor(id: number): Promise<void>;
+  activateMentor(id: number): Promise<void>;
+  
+  // Mentor credentials
+  createMentorCredentials(credentials: InsertMentorCredentials): Promise<MentorCredentials>;
+  getMentorCredentials(mentorId: number): Promise<MentorCredentials | undefined>;
+  
+  // Mentor invitations
+  createMentorInvitation(invitation: InsertMentorInvitation): Promise<MentorInvitation>;
+  getMentorInvitationByToken(token: string): Promise<MentorInvitation | undefined>;
+  markInvitationAsUsed(id: number): Promise<void>;
 
   sessionStore: any;
 }
@@ -290,12 +308,134 @@ export class DatabaseStorage implements IStorage {
       })
       .from(videoViews);
 
+    const [mentorStats] = await db
+      .select({
+        totalMentors: sql<number>`COUNT(*)::int`,
+        activeMentors: sql<number>`COUNT(*) FILTER (WHERE is_active = true)::int`,
+      })
+      .from(mentors);
+
     return {
       totalVideos: videoStats?.totalVideos || 0,
       totalUsers: userStats?.totalUsers || 0,
       totalViews: viewStats?.totalViews || 0,
+      totalMentors: mentorStats?.totalMentors || 0,
+      activeMentors: mentorStats?.activeMentors || 0,
       totalWatchTime: "0h", // This would require duration calculation
     };
+  }
+
+  // Mentor management methods
+  async getMentors(): Promise<MentorWithStats[]> {
+    const mentorList = await db.select().from(mentors).orderBy(desc(mentors.createdAt));
+    
+    const mentorsWithStats = await Promise.all(
+      mentorList.map(async (mentor) => {
+        const [credentialsCheck, invitationsCount] = await Promise.all([
+          db.select({ count: sql<number>`count(*)` })
+            .from(mentorCredentials)
+            .where(eq(mentorCredentials.mentorId, mentor.id)),
+          db.select({ count: sql<number>`count(*)` })
+            .from(mentorInvitations)
+            .where(and(
+              eq(mentorInvitations.mentorId, mentor.id),
+              sql`used_at IS NULL`,
+              sql`expires_at > NOW()`
+            ))
+        ]);
+
+        return {
+          ...mentor,
+          hasCredentials: credentialsCheck[0].count > 0,
+          pendingInvitations: invitationsCount[0].count,
+        };
+      })
+    );
+
+    return mentorsWithStats;
+  }
+
+  async getMentor(id: number): Promise<Mentor | undefined> {
+    const [mentor] = await db.select().from(mentors).where(eq(mentors.id, id));
+    return mentor || undefined;
+  }
+
+  async getMentorByEmail(email: string): Promise<Mentor | undefined> {
+    const [mentor] = await db.select().from(mentors).where(eq(mentors.email, email));
+    return mentor || undefined;
+  }
+
+  async createMentor(insertMentor: InsertMentor): Promise<Mentor> {
+    const [mentor] = await db
+      .insert(mentors)
+      .values(insertMentor)
+      .returning();
+    return mentor;
+  }
+
+  async updateMentor(id: number, updateData: Partial<InsertMentor>): Promise<Mentor> {
+    const [mentor] = await db
+      .update(mentors)
+      .set(updateData)
+      .where(eq(mentors.id, id))
+      .returning();
+    return mentor;
+  }
+
+  async deleteMentor(id: number): Promise<void> {
+    await db.delete(mentors).where(eq(mentors.id, id));
+  }
+
+  async activateMentor(id: number): Promise<void> {
+    await db
+      .update(mentors)
+      .set({ isActive: true, activatedAt: new Date() })
+      .where(eq(mentors.id, id));
+  }
+
+  // Mentor credentials methods
+  async createMentorCredentials(credentials: InsertMentorCredentials): Promise<MentorCredentials> {
+    const [cred] = await db
+      .insert(mentorCredentials)
+      .values(credentials)
+      .returning();
+    return cred;
+  }
+
+  async getMentorCredentials(mentorId: number): Promise<MentorCredentials | undefined> {
+    const [credentials] = await db
+      .select()
+      .from(mentorCredentials)
+      .where(eq(mentorCredentials.mentorId, mentorId));
+    return credentials || undefined;
+  }
+
+  // Mentor invitation methods
+  async createMentorInvitation(invitation: InsertMentorInvitation): Promise<MentorInvitation> {
+    const [inv] = await db
+      .insert(mentorInvitations)
+      .values(invitation)
+      .returning();
+    return inv;
+  }
+
+  async getMentorInvitationByToken(token: string): Promise<MentorInvitation | undefined> {
+    const [invitation] = await db
+      .select()
+      .from(mentorInvitations)
+      .where(and(
+        eq(mentorInvitations.token, token),
+        sql`used_at IS NULL`,
+        sql`expires_at > NOW()`
+      ));
+    return invitation || undefined;
+  }
+
+  async markInvitationAsUsed(id: number): Promise<void> {
+    await db
+      .update(mentorInvitations)
+      .set({ usedAt: new Date() })
+      .where(eq(mentorInvitations.id, id));
   }
 }
 
