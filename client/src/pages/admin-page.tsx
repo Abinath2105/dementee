@@ -10,6 +10,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff } from "lucide-react";
 import { AddVideoModal } from "@/components/add-video-modal";
+import { EditVideoModal } from "@/components/edit-video-modal";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { VideoWithCategory, AdminStats, User, Category } from "@shared/schema";
@@ -19,6 +20,7 @@ export default function AdminPage() {
   const [showAddVideo, setShowAddVideo] = useState(false);
   const [activeTab, setActiveTab] = useState("videos");
   const [editingVideo, setEditingVideo] = useState<VideoWithCategory | null>(null);
+  const [showEditVideo, setShowEditVideo] = useState(false);
   const { toast } = useToast();
 
   // Redirect if not admin
@@ -190,6 +192,16 @@ export default function AdminPage() {
 
   const handleVisibilityToggle = (videoId: number, isPublic: boolean) => {
     updateVideoVisibilityMutation.mutate({ videoId, isPublic });
+  };
+
+  const handleEditVideo = (video: VideoWithCategory) => {
+    setEditingVideo(video);
+    setShowEditVideo(true);
+  };
+
+  const handleCloseEditVideo = () => {
+    setEditingVideo(null);
+    setShowEditVideo(false);
   };
 
   return (
@@ -381,7 +393,11 @@ export default function AdminPage() {
                               className="w-16 h-9 object-cover rounded"
                             />
                             <div>
-                              <div className="font-medium text-gray-900 truncate max-w-xs">
+                              <div 
+                                className="font-medium text-gray-900 truncate max-w-xs cursor-pointer hover:text-blue-600 transition-colors"
+                                onClick={() => handleEditVideo(video)}
+                                title="Click to edit video"
+                              >
                                 {video.title}
                               </div>
                               <div className="text-sm text-gray-500">
@@ -425,7 +441,12 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell>
                           <div className="flex space-x-2">
-                            <Button size="sm" variant="ghost">
+                            <Button 
+                              size="sm" 
+                              variant="ghost"
+                              onClick={() => handleEditVideo(video)}
+                              title="Edit video"
+                            >
                               <Edit className="h-4 w-4" />
                             </Button>
                             <Button 
@@ -433,6 +454,7 @@ export default function AdminPage() {
                               variant="ghost"
                               onClick={() => handleDeleteVideo(video.id)}
                               disabled={deleteVideoMutation.isPending}
+                              title="Delete video"
                             >
                               <Trash2 className="h-4 w-4 text-red-600" />
                             </Button>
@@ -587,6 +609,12 @@ export default function AdminPage() {
           onClose={() => setShowAddVideo(false)}
         />
       )}
+      
+      <EditVideoModal
+        video={editingVideo}
+        isOpen={showEditVideo}
+        onClose={handleCloseEditVideo}
+      />
     </div>
   );
 }
