@@ -82,7 +82,11 @@ async function createTestUser() {
     console.log("\n=== TEST LOGIN CREDENTIALS ===");
     console.log("Regular User: test@example.com / password123");
     console.log("Admin User: admin@example.com / admin123");
+    console.log("Mentor User: mentor@example.com / mentor123");
     console.log("==============================\n");
+
+    // Create test mentor
+    await createTestMentor();
 
     // Create default categories
     await createDefaultCategories();
@@ -91,6 +95,48 @@ async function createTestUser() {
     await testEmailConnection();
   } catch (error) {
     console.error("Failed to create test users:", error);
+  }
+}
+
+async function createTestMentor() {
+  try {
+    // Check if mentor already exists
+    const existingMentor = await storage.getMentorByEmail("mentor@example.com");
+    if (existingMentor) {
+      console.log("Test mentor already exists: mentor@example.com");
+      return;
+    }
+
+    // Create mentor user first
+    const hashedPassword = await hashPassword("mentor123");
+    const mentorUser = await storage.createUser({
+      email: "mentor@example.com",
+      username: "mentoruser",
+      password: hashedPassword,
+      fullName: "Dr. Sarah Johnson",
+      isVerified: true,
+      isAdmin: false,
+    });
+
+    // Create mentor profile
+    const mentor = await storage.createMentor({
+      name: "Dr. Sarah Johnson",
+      email: "mentor@example.com",
+      profession: "Senior Software Engineer & Tech Lead",
+      bio: "Passionate software engineer with over 10 years of experience in full-stack development, cloud architecture, and team leadership. I love mentoring developers and sharing knowledge about modern web technologies, DevOps practices, and career growth in tech.",
+      photo: null,
+      isActive: true,
+    });
+
+    // Create mentor credentials linking the user to the mentor
+    await storage.createMentorCredentials({
+      userId: mentorUser.id,
+      mentorId: mentor.id,
+    });
+
+    console.log("✓ Test mentor created: mentor@example.com / mentor123");
+  } catch (error) {
+    console.error("Error creating test mentor:", error);
   }
 }
 

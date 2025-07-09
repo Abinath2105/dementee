@@ -676,6 +676,35 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Mentor profile endpoint
+  app.get("/api/mentor/profile", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      // Check if user is a mentor by looking up mentor credentials
+      const mentorCredentials = await storage.getMentorCredentials(req.user.id);
+      if (!mentorCredentials) {
+        return res.status(404).json({ message: "Mentor profile not found" });
+      }
+
+      // Get mentor details
+      const mentor = await storage.getMentor(mentorCredentials.mentorId);
+      if (!mentor) {
+        return res.status(404).json({ message: "Mentor not found" });
+      }
+
+      res.json({
+        ...mentor,
+        hasCredentials: true,
+      });
+    } catch (error) {
+      console.error("Error fetching mentor profile:", error);
+      res.status(500).send("Failed to fetch mentor profile");
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

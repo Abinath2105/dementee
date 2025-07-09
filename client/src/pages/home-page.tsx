@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Play, Search, Settings, LogOut, BarChart3 } from "lucide-react";
+import { Play, Search, Settings, LogOut, BarChart3, User } from "lucide-react";
 import { VideoCard } from "@/components/video-card";
 import { EnhancedVideoPlayerModal } from "@/components/enhanced-video-player-modal";
 import type { VideoWithCategory, Category } from "@shared/schema";
@@ -53,6 +53,12 @@ export default function HomePage() {
                 <Button variant="outline" size="sm">
                   <BarChart3 className="h-4 w-4 mr-2" />
                   My Dashboard
+                </Button>
+              </Link>
+              <Link href="/mentor/profile">
+                <Button variant="outline" size="sm">
+                  <User className="h-4 w-4 mr-2" />
+                  Mentor Profile
                 </Button>
               </Link>
               {user?.isAdmin && (
