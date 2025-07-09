@@ -59,6 +59,7 @@ export const mentors = pgTable("mentors", {
   name: text("name").notNull(),
   email: text("email").notNull().unique(),
   photo: text("photo"),
+  backgroundImage: text("background_image"),
   profession: text("profession").notNull(),
   experience: text("experience").notNull(),
   isActive: boolean("is_active").default(false).notNull(),
@@ -239,6 +240,7 @@ export const insertMentorSchema = createInsertSchema(mentors).pick({
   name: true,
   email: true,
   photo: true,
+  backgroundImage: true,
   profession: true,
   experience: true,
 });

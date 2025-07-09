@@ -8,6 +8,13 @@ import { sendMentorInvitationEmail } from "./services/email";
 import { nanoid } from "nanoid";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import { fileURLToPath } from "url";
+import express from "express";
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
 const scryptAsync = promisify(scrypt);
 
@@ -17,8 +24,51 @@ async function hashPassword(password: string) {
   return `${buf.toString("hex")}.${salt}`;
 }
 
+// Configure multer for file uploads
+const uploadsDir = path.join(__dirname, '../uploads');
+if (!fs.existsSync(uploadsDir)) {
+  fs.mkdirSync(uploadsDir, { recursive: true });
+}
+
+const storage_multer = multer.diskStorage({
+  destination: (req, file, cb) => {
+    cb(null, uploadsDir);
+  },
+  filename: (req, file, cb) => {
+    const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+    cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+  },
+});
+
+const upload = multer({
+  storage: storage_multer,
+  limits: {
+    fileSize: 5 * 1024 * 1024, // 5MB limit
+  },
+  fileFilter: (req, file, cb) => {
+    const allowedTypes = /jpeg|jpg|png|gif|webp/;
+    const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+    const mimetype = allowedTypes.test(file.mimetype);
+
+    if (mimetype && extname) {
+      return cb(null, true);
+    } else {
+      cb(new Error('Only image files are allowed'));
+    }
+  },
+});
+
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
+
+  // Serve uploaded files
+  app.use('/uploads', (req, res, next) => {
+    res.header('Access-Control-Allow-Origin', '*');
+    res.header('Access-Control-Allow-Methods', 'GET');
+    res.header('Access-Control-Allow-Headers', 'Origin, X-Requested-With, Content-Type, Accept');
+    next();
+  });
+  app.use('/uploads', express.static(uploadsDir));
 
   // Categories
   app.get("/api/categories", async (req, res) => {
@@ -726,6 +776,166 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Error fetching mentor profile:", error);
       res.status(500).send("Failed to fetch mentor profile");
+    }
+  });
+
+  // Photo upload endpoints for mentors
+  app.post("/api/mentor/upload-photo", upload.single('photo'), async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Check if user is a mentor
+      const mentor = await storage.getMentorByEmail(req.user.email);
+      if (!mentor) {
+        // Clean up uploaded file if not a mentor
+        fs.unlinkSync(req.file.path);
+        return res.status(404).json({ message: "Mentor profile not found" });
+      }
+
+      // Generate the URL path for the uploaded file
+      const photoUrl = `/uploads/${req.file.filename}`;
+
+      // Update mentor profile with new photo
+      const updatedMentor = await storage.updateMentor(mentor.id, { photo: photoUrl });
+
+      res.json({
+        message: "Photo uploaded successfully",
+        photoUrl: photoUrl,
+        mentor: updatedMentor
+      });
+    } catch (error) {
+      console.error("Error uploading photo:", error);
+      // Clean up file on error
+      if (req.file) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (cleanupError) {
+          console.error("Error cleaning up file:", cleanupError);
+        }
+      }
+      res.status(500).send("Failed to upload photo");
+    }
+  });
+
+  app.post("/api/mentor/upload-background", upload.single('background'), async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      // Check if user is a mentor
+      const mentor = await storage.getMentorByEmail(req.user.email);
+      if (!mentor) {
+        // Clean up uploaded file if not a mentor
+        fs.unlinkSync(req.file.path);
+        return res.status(404).json({ message: "Mentor profile not found" });
+      }
+
+      // Generate the URL path for the uploaded file
+      const backgroundUrl = `/uploads/${req.file.filename}`;
+
+      // Update mentor profile with new background image
+      const updatedMentor = await storage.updateMentor(mentor.id, { backgroundImage: backgroundUrl });
+
+      res.json({
+        message: "Background image uploaded successfully",
+        backgroundUrl: backgroundUrl,
+        mentor: updatedMentor
+      });
+    } catch (error) {
+      console.error("Error uploading background image:", error);
+      // Clean up file on error
+      if (req.file) {
+        try {
+          fs.unlinkSync(req.file.path);
+        } catch (cleanupError) {
+          console.error("Error cleaning up file:", cleanupError);
+        }
+      }
+      res.status(500).send("Failed to upload background image");
+    }
+  });
+
+  // Delete photo endpoints
+  app.delete("/api/mentor/delete-photo", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const mentor = await storage.getMentorByEmail(req.user.email);
+      if (!mentor) {
+        return res.status(404).json({ message: "Mentor profile not found" });
+      }
+
+      // Delete old photo file if it exists
+      if (mentor.photo && mentor.photo.startsWith('/uploads/')) {
+        const filePath = path.join(uploadsDir, mentor.photo.replace('/uploads/', ''));
+        try {
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        } catch (deleteError) {
+          console.error("Error deleting old photo file:", deleteError);
+        }
+      }
+
+      // Update mentor profile to remove photo
+      const updatedMentor = await storage.updateMentor(mentor.id, { photo: null });
+
+      res.json({
+        message: "Photo deleted successfully",
+        mentor: updatedMentor
+      });
+    } catch (error) {
+      console.error("Error deleting photo:", error);
+      res.status(500).send("Failed to delete photo");
+    }
+  });
+
+  app.delete("/api/mentor/delete-background", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const mentor = await storage.getMentorByEmail(req.user.email);
+      if (!mentor) {
+        return res.status(404).json({ message: "Mentor profile not found" });
+      }
+
+      // Delete old background image file if it exists
+      if (mentor.backgroundImage && mentor.backgroundImage.startsWith('/uploads/')) {
+        const filePath = path.join(uploadsDir, mentor.backgroundImage.replace('/uploads/', ''));
+        try {
+          if (fs.existsSync(filePath)) {
+            fs.unlinkSync(filePath);
+          }
+        } catch (deleteError) {
+          console.error("Error deleting old background file:", deleteError);
+        }
+      }
+
+      // Update mentor profile to remove background image
+      const updatedMentor = await storage.updateMentor(mentor.id, { backgroundImage: null });
+
+      res.json({
+        message: "Background image deleted successfully",
+        mentor: updatedMentor
+      });
+    } catch (error) {
+      console.error("Error deleting background image:", error);
+      res.status(500).send("Failed to delete background image");
     }
   });
 

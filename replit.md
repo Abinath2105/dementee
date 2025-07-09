@@ -123,6 +123,7 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - July 09, 2025: Mentor profile page implemented with avatar display, personal details, and logout functionality
 - July 09, 2025: Test mentor account created and integrated with authentication system
 - July 09, 2025: Redesigned mentor profile page with LinkedIn-style professional layout and sections
+- July 09, 2025: Added photo upload functionality for mentor profile photos and background images with multer integration
 
 ## User Preferences
 

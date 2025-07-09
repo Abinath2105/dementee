@@ -6,8 +6,9 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Separator } from "@/components/ui/separator";
-import { LogOut, User, Mail, Briefcase, Calendar, CheckCircle, Users, Video, ArrowLeft } from "lucide-react";
+import { LogOut, User, Mail, Briefcase, Calendar, CheckCircle, Users, Video, ArrowLeft, Camera, Image, Edit } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
+import { PhotoUploadModal } from "@/components/photo-upload-modal";
 import type { Mentor } from "@shared/schema";
 
 interface MentorProfile extends Mentor {
@@ -16,6 +17,8 @@ interface MentorProfile extends Mentor {
 
 export default function MentorProfilePage() {
   const { user, logoutMutation } = useAuth();
+  const [photoUploadOpen, setPhotoUploadOpen] = useState(false);
+  const [backgroundUploadOpen, setBackgroundUploadOpen] = useState(false);
 
   // Fetch mentor profile data
   const { data: mentorProfile, isLoading, error } = useQuery<MentorProfile>({
@@ -100,21 +103,48 @@ export default function MentorProfilePage() {
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Cover Photo Area */}
           <div className="h-48 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-t-lg -mb-16 relative overflow-hidden">
-            <div className="absolute inset-0 bg-black/10"></div>
+            {mentorProfile.backgroundImage ? (
+              <img
+                src={mentorProfile.backgroundImage}
+                alt="Background"
+                className="w-full h-full object-cover"
+              />
+            ) : (
+              <div className="absolute inset-0 bg-black/10"></div>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="absolute top-4 right-4 bg-white/90 backdrop-blur-sm hover:bg-white"
+              onClick={() => setBackgroundUploadOpen(true)}
+            >
+              <Image className="h-4 w-4 mr-2" />
+              {mentorProfile.backgroundImage ? "Change Background" : "Add Background"}
+            </Button>
           </div>
           
           {/* Profile Info */}
           <div className="relative px-6 pb-6">
             <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-6">
-              <Avatar className="h-32 w-32 border-4 border-white shadow-lg bg-white relative z-10">
-                <AvatarImage 
-                  src={mentorProfile.photo || undefined} 
-                  alt={mentorProfile.name}
-                />
-                <AvatarFallback className="text-3xl font-bold bg-blue-600 text-white">
-                  {getInitials(mentorProfile.name)}
-                </AvatarFallback>
-              </Avatar>
+              <div className="relative">
+                <Avatar className="h-32 w-32 border-4 border-white shadow-lg bg-white relative z-10">
+                  <AvatarImage 
+                    src={mentorProfile.photo || undefined} 
+                    alt={mentorProfile.name}
+                  />
+                  <AvatarFallback className="text-3xl font-bold bg-blue-600 text-white">
+                    {getInitials(mentorProfile.name)}
+                  </AvatarFallback>
+                </Avatar>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="absolute -bottom-2 -right-2 bg-white shadow-md hover:bg-gray-50 rounded-full p-2"
+                  onClick={() => setPhotoUploadOpen(true)}
+                >
+                  <Camera className="h-4 w-4" />
+                </Button>
+              </div>
               
               <div className="mt-4 sm:mt-0 flex-1">
                 <h1 className="text-3xl font-bold text-gray-900">{mentorProfile.name}</h1>
@@ -323,6 +353,21 @@ export default function MentorProfilePage() {
           </div>
         </div>
       </div>
+
+      {/* Photo Upload Modals */}
+      <PhotoUploadModal
+        isOpen={photoUploadOpen}
+        onClose={() => setPhotoUploadOpen(false)}
+        uploadType="photo"
+        currentImage={mentorProfile.photo}
+      />
+      
+      <PhotoUploadModal
+        isOpen={backgroundUploadOpen}
+        onClose={() => setBackgroundUploadOpen(false)}
+        uploadType="background"
+        currentImage={mentorProfile.backgroundImage}
+      />
     </div>
   );
 }
