@@ -71,7 +71,16 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
 
 export async function sendMentorInvitationEmail(email: string, mentorName: string, invitationToken: string): Promise<void> {
   try {
-    const baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    // Construct Replit domain from available environment variables
+    let baseUrl = process.env.BASE_URL || 'http://localhost:5000';
+    
+    if (process.env.REPLIT_DEV_DOMAIN) {
+      baseUrl = `https://${process.env.REPLIT_DEV_DOMAIN}`;
+    } else if (process.env.REPL_SLUG && process.env.REPL_OWNER) {
+      baseUrl = `https://${process.env.REPL_SLUG}--${process.env.REPL_OWNER}.repl.co`;
+    } else if (process.env.REPLIT_DOMAIN) {
+      baseUrl = `https://${process.env.REPLIT_DOMAIN}`;
+    }
     const invitationLink = `${baseUrl}/mentor/setup?token=${invitationToken}`;
     
     const mailOptions = {
