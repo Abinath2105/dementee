@@ -88,7 +88,7 @@ export function AddMentorModal({ isOpen, onClose }: AddMentorModalProps) {
       email: email.trim().toLowerCase(),
       profession: profession.trim(),
       experience: experience.trim(),
-      photo: photoPreview || photo.trim() || undefined,
+      photo: photo.trim() || undefined,
     };
 
     addMentorMutation.mutate(mentorData);
@@ -117,10 +117,12 @@ export function AddMentorModal({ isOpen, onClose }: AddMentorModalProps) {
 
       setPhotoFile(file);
       
-      // Create preview
+      // Create preview and set photo data
       const reader = new FileReader();
       reader.onload = (e) => {
-        setPhotoPreview(e.target?.result as string);
+        const result = e.target?.result as string;
+        setPhotoPreview(result);
+        setPhoto(result); // Store base64 data for submission
       };
       reader.readAsDataURL(file);
     }
@@ -132,6 +134,14 @@ export function AddMentorModal({ isOpen, onClose }: AddMentorModalProps) {
     setPhoto("");
     if (fileInputRef.current) {
       fileInputRef.current.value = "";
+    }
+  };
+
+  const handleUrlChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const url = e.target.value;
+    setPhoto(url);
+    if (url && !photoFile) {
+      setPhotoPreview(url);
     }
   };
 
@@ -243,10 +253,11 @@ export function AddMentorModal({ isOpen, onClose }: AddMentorModalProps) {
                 <span className="text-sm text-gray-500">or</span>
                 <Input
                   type="url"
-                  value={photo}
-                  onChange={(e) => setPhoto(e.target.value)}
+                  value={photoFile ? "" : photo}
+                  onChange={handleUrlChange}
                   placeholder="Enter photo URL"
                   className="flex-1"
+                  disabled={!!photoFile}
                 />
               </div>
               
