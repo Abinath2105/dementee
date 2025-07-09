@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
@@ -7,7 +7,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { Plus } from "lucide-react";
+import { Badge } from "@/components/ui/badge";
+import { Plus, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import type { Category } from "@shared/schema";
@@ -26,7 +27,9 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
   const [youtubeUrl, setYoutubeUrl] = useState("");
   const [categoryId, setCategoryId] = useState("");
   const [description, setDescription] = useState("");
-  const [tags, setTags] = useState("");
+  const [tags, setTags] = useState<string[]>([]);
+  const [tagInput, setTagInput] = useState("");
+  const tagInputRef = useRef<HTMLInputElement>(null);
   
   // Category form fields
   const [categoryName, setCategoryName] = useState("");
@@ -115,6 +118,36 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
     },
   });
 
+  const addTag = (tag: string) => {
+    const trimmedTag = tag.trim();
+    if (trimmedTag && !tags.includes(trimmedTag)) {
+      setTags([...tags, trimmedTag]);
+    }
+  };
+
+  const removeTag = (tagToRemove: string) => {
+    setTags(tags.filter(tag => tag !== tagToRemove));
+  };
+
+  const handleTagInputKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === 'Enter' || e.key === ',') {
+      e.preventDefault();
+      if (tagInput.trim()) {
+        addTag(tagInput);
+        setTagInput("");
+      }
+    } else if (e.key === 'Backspace' && !tagInput && tags.length > 0) {
+      removeTag(tags[tags.length - 1]);
+    }
+  };
+
+  const handleTagInputBlur = () => {
+    if (tagInput.trim()) {
+      addTag(tagInput);
+      setTagInput("");
+    }
+  };
+
   const handleVideoSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
@@ -132,7 +165,7 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
       youtubeUrl,
       categoryId: categoryId ? parseInt(categoryId) : undefined,
       description: description || undefined,
-      tags: tags ? tags.split(/[,\n]/).map(tag => tag.trim()).filter(Boolean) : undefined,
+      tags: tags.length > 0 ? tags : undefined,
     };
 
     addVideoMutation.mutate(videoData);
@@ -161,7 +194,8 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
     setYoutubeUrl("");
     setCategoryId("");
     setDescription("");
-    setTags("");
+    setTags([]);
+    setTagInput("");
     setCategoryName("");
     setMentorName("");
     setActiveTab("video");
@@ -256,18 +290,33 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
               
               <div>
                 <Label htmlFor="tags">Tags</Label>
-                <Textarea
-                  id="tags"
-                  rows={3}
-                  placeholder="Enter tags separated by commas or one per line:
-javascript, react, frontend
-tutorial
-beginner-friendly"
-                  value={tags}
-                  onChange={(e) => setTags(e.target.value)}
-                />
+                <div className="border rounded-md p-3 min-h-[80px] focus-within:outline-none focus-within:ring-2 focus-within:ring-ring focus-within:ring-offset-2">
+                  <div className="flex flex-wrap gap-1 mb-2">
+                    {tags.map((tag, index) => (
+                      <Badge key={index} variant="secondary" className="text-xs px-2 py-1">
+                        {tag}
+                        <button
+                          type="button"
+                          onClick={() => removeTag(tag)}
+                          className="ml-1 hover:text-destructive"
+                        >
+                          <X className="h-3 w-3" />
+                        </button>
+                      </Badge>
+                    ))}
+                  </div>
+                  <Input
+                    ref={tagInputRef}
+                    value={tagInput}
+                    onChange={(e) => setTagInput(e.target.value)}
+                    onKeyDown={handleTagInputKeyDown}
+                    onBlur={handleTagInputBlur}
+                    placeholder={tags.length === 0 ? "Type tags and press Enter or comma..." : "Add another tag..."}
+                    className="border-0 shadow-none focus-visible:ring-0 px-0"
+                  />
+                </div>
                 <p className="text-xs text-gray-500 mt-1">
-                  Separate tags with commas or put each tag on a new line
+                  Type and press Enter or comma to add tags. Backspace to remove the last tag.
                 </p>
               </div>
               
