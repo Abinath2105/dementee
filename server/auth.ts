@@ -6,6 +6,7 @@ import { scrypt, randomBytes, timingSafeEqual } from "crypto";
 import { promisify } from "util";
 import { storage } from "./storage";
 import { User as SelectUser } from "@shared/schema";
+import { testEmailConnection } from "./services/email";
 import { sendOtpEmail } from "./services/email";
 
 declare global {
@@ -78,6 +79,9 @@ async function createTestUser() {
 
     // Create default categories
     await createDefaultCategories();
+
+    // Test email connection
+    await testEmailConnection();
   } catch (error) {
     console.error("Failed to create test users:", error);
   }

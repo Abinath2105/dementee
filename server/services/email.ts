@@ -3,17 +3,32 @@ import nodemailer from 'nodemailer';
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
+  secure: false, // Use STARTTLS
   auth: {
-    user: process.env.SMTP_USER || process.env.EMAIL_USER || 'noreply@example.com',
-    pass: process.env.SMTP_PASS || process.env.EMAIL_PASS || 'demo_password',
+    user: process.env.SMTP_USER,
+    pass: process.env.SMTP_PASS,
   },
+  tls: {
+    rejectUnauthorized: false
+  }
 });
+
+// Test email configuration
+export async function testEmailConnection(): Promise<boolean> {
+  try {
+    await transporter.verify();
+    console.log('✓ Email server connection successful');
+    return true;
+  } catch (error) {
+    console.error('✗ Email server connection failed:', error);
+    return false;
+  }
+}
 
 export async function sendOtpEmail(email: string, otp: string): Promise<void> {
   try {
     const mailOptions = {
-      from: process.env.SMTP_USER || 'noreply@example.com',
+      from: process.env.SMTP_USER,
       to: email,
       subject: 'VideoLearn Pro - Email Verification',
       html: `

@@ -154,6 +154,36 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Test email endpoint (admin only)
+  app.post("/api/test-email", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const { testEmailConnection } = await import("./services/email");
+      const isConnected = await testEmailConnection();
+      
+      if (isConnected) {
+        res.json({ 
+          success: true, 
+          message: "Email server connection successful" 
+        });
+      } else {
+        res.status(500).json({ 
+          success: false, 
+          message: "Email server connection failed. Check your SMTP credentials." 
+        });
+      }
+    } catch (error) {
+      console.error("Email test error:", error);
+      res.status(500).json({ 
+        success: false, 
+        message: "Email test failed: " + (error instanceof Error ? error.message : 'Unknown error')
+      });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
