@@ -103,8 +103,12 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - Environment variable configuration for database connections
 - Session store automatically creates required tables
 
-## Changelog
-- July 07, 2025. Initial setup
+## Recent Changes
+- July 07, 2025: Initial setup complete
+- July 07, 2025: SMTP email verification system successfully configured with Gmail App Password
+- July 07, 2025: YouTube video fallback system implemented for admin video management
+- July 07, 2025: Test user accounts created for immediate testing access
+- July 07, 2025: Default video categories created (Programming, Web Development, Data Science, etc.)
 
 ## User Preferences
 
