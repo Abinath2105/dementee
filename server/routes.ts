@@ -454,6 +454,30 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // File upload endpoint
+  app.post("/api/upload", upload.single("file"), async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ error: "Authentication required" });
+    }
+
+    try {
+      if (!req.file) {
+        return res.status(400).json({ error: "No file uploaded" });
+      }
+
+      const fileUrl = `/uploads/${req.file.filename}`;
+      res.json({ 
+        url: fileUrl,
+        filename: req.file.filename,
+        originalname: req.file.originalname,
+        size: req.file.size 
+      });
+    } catch (error) {
+      console.error("Error uploading file:", error);
+      res.status(500).json({ error: "Failed to upload file" });
+    }
+  });
+
   // Test email endpoint (admin only)
   app.post("/api/test-email", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
