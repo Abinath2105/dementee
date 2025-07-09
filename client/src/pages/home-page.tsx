@@ -1,18 +1,17 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
-import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Play, Search, Settings, LogOut, BarChart3, User, TrendingUp, BookOpen } from "lucide-react";
+import { Search } from "lucide-react";
 import { VideoCard } from "@/components/video-card";
 import { EnhancedVideoPlayerModal } from "@/components/enhanced-video-player-modal";
+import { Navigation } from "@/components/navigation";
 import type { VideoWithCategory, Category } from "@shared/schema";
 
 export default function HomePage() {
-  const { user, logoutMutation } = useAuth();
+  const { user } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedVideo, setSelectedVideo] = useState<VideoWithCategory | null>(null);
@@ -41,65 +40,7 @@ export default function HomePage() {
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Play className="h-8 w-8 text-primary mr-3" />
-              <span className="text-xl font-bold text-gray-900">VideoLearn Pro</span>
-            </div>
-            <div className="flex items-center space-x-4">
-              <Link href="/dashboard">
-                <Button variant="outline" size="sm">
-                  <BarChart3 className="h-4 w-4 mr-2" />
-                  My Dashboard
-                </Button>
-              </Link>
-              <Link href="/advanced-dashboard">
-                <Button variant="outline" size="sm">
-                  <TrendingUp className="h-4 w-4 mr-2" />
-                  Advanced Dashboard
-                </Button>
-              </Link>
-              <Link href="/assignments">
-                <Button variant="outline" size="sm">
-                  <BookOpen className="h-4 w-4 mr-2" />
-                  Assignments
-                </Button>
-              </Link>
-              <Link href="/mentor/profile">
-                <Button variant="outline" size="sm">
-                  <User className="h-4 w-4 mr-2" />
-                  Mentor Profile
-                </Button>
-              </Link>
-              <Link href="/student/profile">
-                <Button variant="outline" size="sm">
-                  <User className="h-4 w-4 mr-2" />
-                  My Profile
-                </Button>
-              </Link>
-              {user?.isAdmin && (
-                <Link href="/admin">
-                  <Button variant="outline" size="sm">
-                    <Settings className="h-4 w-4 mr-2" />
-                    Admin Panel
-                  </Button>
-                </Link>
-              )}
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => logoutMutation.mutate()}
-                disabled={logoutMutation.isPending}
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
-            </div>
-          </div>
-        </div>
-      </nav>
+      <Navigation />
 
       {/* Hero Section */}
       <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
