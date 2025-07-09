@@ -35,7 +35,7 @@ export function EditVideoModal({ video, isOpen, onClose }: EditVideoModalProps) 
   useEffect(() => {
     if (video) {
       setTitle(video.title || "");
-      setCategoryId(video.categoryId ? video.categoryId.toString() : "");
+      setCategoryId(video.categoryId ? video.categoryId.toString() : "0");
       setDescription(video.description || "");
       setTags(video.tags || []);
       setIsPublic(video.isPublic);
@@ -122,7 +122,7 @@ export function EditVideoModal({ video, isOpen, onClose }: EditVideoModalProps) 
 
     const videoData = {
       title: title.trim(),
-      categoryId: categoryId ? parseInt(categoryId) : null,
+      categoryId: categoryId && categoryId !== "0" ? parseInt(categoryId) : null,
       description: description.trim() || null,
       tags: tags.length > 0 ? tags : [],
       isPublic,
@@ -134,7 +134,7 @@ export function EditVideoModal({ video, isOpen, onClose }: EditVideoModalProps) 
   const handleClose = () => {
     if (video) {
       setTitle(video.title || "");
-      setCategoryId(video.categoryId ? video.categoryId.toString() : "");
+      setCategoryId(video.categoryId ? video.categoryId.toString() : "0");
       setDescription(video.description || "");
       setTags(video.tags || []);
       setIsPublic(video.isPublic);
@@ -171,7 +171,7 @@ export function EditVideoModal({ video, isOpen, onClose }: EditVideoModalProps) 
                 <SelectValue placeholder="Select a category (optional)" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="">No category</SelectItem>
+                <SelectItem value="0">No category</SelectItem>
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}

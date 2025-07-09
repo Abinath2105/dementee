@@ -26,7 +26,7 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
   // Video form fields
   const [title, setTitle] = useState("");
   const [youtubeUrl, setYoutubeUrl] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [categoryId, setCategoryId] = useState("0");
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
@@ -165,7 +165,7 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
     const videoData = {
       title: title || undefined,
       youtubeUrl,
-      categoryId: categoryId ? parseInt(categoryId) : undefined,
+      categoryId: categoryId && categoryId !== "0" ? parseInt(categoryId) : undefined,
       description: description || undefined,
       tags: tags.length > 0 ? tags : undefined,
       isPublic,
@@ -195,7 +195,7 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
   const handleClose = () => {
     setTitle("");
     setYoutubeUrl("");
-    setCategoryId("");
+    setCategoryId("0");
     setDescription("");
     setTags([]);
     setTagInput("");
@@ -256,6 +256,7 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
                     <SelectValue placeholder="Select Category" />
                   </SelectTrigger>
                   <SelectContent>
+                    <SelectItem value="0">No category</SelectItem>
                     {categories.map((category) => (
                       <SelectItem key={category.id} value={category.id.toString()}>
                         {category.name} {category.mentorName && `(${category.mentorName})`}
