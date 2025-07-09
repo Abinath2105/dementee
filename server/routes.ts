@@ -484,6 +484,198 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Video progress tracking endpoints
+  app.get("/api/progress/:videoId", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const videoId = parseInt(req.params.videoId);
+      const progress = await storage.getVideoProgress(req.user.id, videoId);
+      res.json(progress || null);
+    } catch (error) {
+      console.error("Error fetching video progress:", error);
+      res.status(500).send("Failed to fetch video progress");
+    }
+  });
+
+  app.post("/api/progress/:videoId", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const videoId = parseInt(req.params.videoId);
+      const progressData = {
+        currentTimeSeconds: req.body.currentTimeSeconds,
+        durationSeconds: req.body.durationSeconds,
+        isCompleted: req.body.isCompleted,
+        completedAt: req.body.isCompleted ? new Date() : undefined,
+      };
+
+      const progress = await storage.updateVideoProgress(req.user.id, videoId, progressData);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error updating video progress:", error);
+      res.status(500).send("Failed to update video progress");
+    }
+  });
+
+  app.get("/api/user/progress", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const progress = await storage.getUserVideoProgress(req.user.id);
+      res.json(progress);
+    } catch (error) {
+      console.error("Error fetching user progress:", error);
+      res.status(500).send("Failed to fetch user progress");
+    }
+  });
+
+  app.get("/api/user/progress/stats", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const stats = await storage.getVideoProgressStats(req.user.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching progress stats:", error);
+      res.status(500).send("Failed to fetch progress stats");
+    }
+  });
+
+  // Video bookmarks endpoints
+  app.get("/api/bookmarks/:videoId", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const videoId = parseInt(req.params.videoId);
+      const bookmarks = await storage.getVideoBookmarks(req.user.id, videoId);
+      res.json(bookmarks);
+    } catch (error) {
+      console.error("Error fetching video bookmarks:", error);
+      res.status(500).send("Failed to fetch video bookmarks");
+    }
+  });
+
+  app.post("/api/bookmarks", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const bookmarkData = {
+        userId: req.user.id,
+        videoId: req.body.videoId,
+        timestampSeconds: req.body.timestampSeconds,
+        note: req.body.note,
+      };
+
+      const bookmark = await storage.createVideoBookmark(bookmarkData);
+      res.json(bookmark);
+    } catch (error) {
+      console.error("Error creating bookmark:", error);
+      res.status(500).send("Failed to create bookmark");
+    }
+  });
+
+  app.delete("/api/bookmarks/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteVideoBookmark(id);
+      res.status(200).json({ message: "Bookmark deleted successfully" });
+    } catch (error) {
+      console.error("Error deleting bookmark:", error);
+      res.status(500).send("Failed to delete bookmark");
+    }
+  });
+
+  app.get("/api/user/bookmarks", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const bookmarks = await storage.getUserBookmarks(req.user.id);
+      res.json(bookmarks);
+    } catch (error) {
+      console.error("Error fetching user bookmarks:", error);
+      res.status(500).send("Failed to fetch user bookmarks");
+    }
+  });
+
+  // Watchlist endpoints
+  app.get("/api/watchlist", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const watchlist = await storage.getUserWatchlist(req.user.id);
+      res.json(watchlist);
+    } catch (error) {
+      console.error("Error fetching watchlist:", error);
+      res.status(500).send("Failed to fetch watchlist");
+    }
+  });
+
+  app.post("/api/watchlist/:videoId", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const videoId = parseInt(req.params.videoId);
+      const watchlistItem = await storage.addToWatchlist(req.user.id, videoId);
+      res.json(watchlistItem);
+    } catch (error) {
+      console.error("Error adding to watchlist:", error);
+      res.status(500).send("Failed to add to watchlist");
+    }
+  });
+
+  app.delete("/api/watchlist/:videoId", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const videoId = parseInt(req.params.videoId);
+      await storage.removeFromWatchlist(req.user.id, videoId);
+      res.status(200).json({ message: "Removed from watchlist" });
+    } catch (error) {
+      console.error("Error removing from watchlist:", error);
+      res.status(500).send("Failed to remove from watchlist");
+    }
+  });
+
+  app.get("/api/watchlist/:videoId/status", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const videoId = parseInt(req.params.videoId);
+      const isInWatchlist = await storage.isInWatchlist(req.user.id, videoId);
+      res.json({ isInWatchlist });
+    } catch (error) {
+      console.error("Error checking watchlist status:", error);
+      res.status(500).send("Failed to check watchlist status");
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

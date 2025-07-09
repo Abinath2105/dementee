@@ -1,6 +1,6 @@
-import { users, videos, categories, otpCodes, videoViews, mentors, mentorCredentials, mentorInvitations, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type Mentor, type InsertMentor, type MentorWithStats, type MentorCredentials, type InsertMentorCredentials, type MentorInvitation, type InsertMentorInvitation } from "@shared/schema";
+import { users, videos, categories, otpCodes, videoViews, mentors, mentorCredentials, mentorInvitations, videoProgress, videoBookmarks, userWatchlist, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type Mentor, type InsertMentor, type MentorWithStats, type MentorCredentials, type InsertMentorCredentials, type MentorInvitation, type InsertMentorInvitation, type VideoProgress, type InsertVideoProgress, type VideoBookmark, type InsertVideoBookmark, type UserWatchlist, type InsertUserWatchlist } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, sql, and, or, ilike } from "drizzle-orm";
+import { eq, desc, sql, and, or, ilike, count, sum } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -17,6 +17,28 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   updateUserAdminStatus(userId: number, isAdmin: boolean): Promise<User>;
   deleteUser(userId: number): Promise<void>;
+
+  // Video progress tracking
+  getVideoProgress(userId: number, videoId: number): Promise<VideoProgress | undefined>;
+  updateVideoProgress(userId: number, videoId: number, progress: Partial<InsertVideoProgress>): Promise<VideoProgress>;
+  getUserVideoProgress(userId: number): Promise<VideoProgress[]>;
+  getVideoProgressStats(userId: number): Promise<{
+    totalVideos: number;
+    completedVideos: number;
+    totalWatchTime: number;
+  }>;
+
+  // Video bookmarks
+  getVideoBookmarks(userId: number, videoId: number): Promise<VideoBookmark[]>;
+  createVideoBookmark(bookmark: InsertVideoBookmark): Promise<VideoBookmark>;
+  deleteVideoBookmark(id: number): Promise<void>;
+  getUserBookmarks(userId: number): Promise<VideoBookmark[]>;
+
+  // User watchlist
+  getUserWatchlist(userId: number): Promise<UserWatchlist[]>;
+  addToWatchlist(userId: number, videoId: number): Promise<UserWatchlist>;
+  removeFromWatchlist(userId: number, videoId: number): Promise<void>;
+  isInWatchlist(userId: number, videoId: number): Promise<boolean>;
 
   // OTP management
   createOtp(otp: InsertOtp): Promise<OtpCode>;
@@ -436,6 +458,121 @@ export class DatabaseStorage implements IStorage {
       .update(mentorInvitations)
       .set({ usedAt: new Date() })
       .where(eq(mentorInvitations.id, id));
+  }
+
+  // Video progress tracking
+  async getVideoProgress(userId: number, videoId: number): Promise<VideoProgress | undefined> {
+    const [progress] = await db.select()
+      .from(videoProgress)
+      .where(and(eq(videoProgress.userId, userId), eq(videoProgress.videoId, videoId)));
+    return progress || undefined;
+  }
+
+  async updateVideoProgress(userId: number, videoId: number, progress: Partial<InsertVideoProgress>): Promise<VideoProgress> {
+    const existing = await this.getVideoProgress(userId, videoId);
+    
+    if (existing) {
+      const [updated] = await db.update(videoProgress)
+        .set({
+          ...progress,
+          updatedAt: sql`NOW()`,
+          lastWatchedAt: sql`NOW()`
+        })
+        .where(and(eq(videoProgress.userId, userId), eq(videoProgress.videoId, videoId)))
+        .returning();
+      return updated;
+    } else {
+      const [created] = await db.insert(videoProgress)
+        .values({
+          userId,
+          videoId,
+          ...progress,
+        })
+        .returning();
+      return created;
+    }
+  }
+
+  async getUserVideoProgress(userId: number): Promise<VideoProgress[]> {
+    return await db.select()
+      .from(videoProgress)
+      .where(eq(videoProgress.userId, userId))
+      .orderBy(desc(videoProgress.lastWatchedAt));
+  }
+
+  async getVideoProgressStats(userId: number): Promise<{
+    totalVideos: number;
+    completedVideos: number;
+    totalWatchTime: number;
+  }> {
+    const [stats] = await db.select({
+      totalVideos: count(videoProgress.id),
+      completedVideos: count(sql`CASE WHEN ${videoProgress.isCompleted} THEN 1 END`),
+      totalWatchTime: sum(videoProgress.currentTimeSeconds)
+    })
+    .from(videoProgress)
+    .where(eq(videoProgress.userId, userId));
+
+    return {
+      totalVideos: stats.totalVideos || 0,
+      completedVideos: stats.completedVideos || 0,
+      totalWatchTime: stats.totalWatchTime || 0,
+    };
+  }
+
+  // Video bookmarks
+  async getVideoBookmarks(userId: number, videoId: number): Promise<VideoBookmark[]> {
+    return await db.select()
+      .from(videoBookmarks)
+      .where(and(eq(videoBookmarks.userId, userId), eq(videoBookmarks.videoId, videoId)))
+      .orderBy(videoBookmarks.timestampSeconds);
+  }
+
+  async createVideoBookmark(bookmark: InsertVideoBookmark): Promise<VideoBookmark> {
+    const [created] = await db.insert(videoBookmarks)
+      .values(bookmark)
+      .returning();
+    return created;
+  }
+
+  async deleteVideoBookmark(id: number): Promise<void> {
+    await db.delete(videoBookmarks)
+      .where(eq(videoBookmarks.id, id));
+  }
+
+  async getUserBookmarks(userId: number): Promise<VideoBookmark[]> {
+    return await db.select()
+      .from(videoBookmarks)
+      .where(eq(videoBookmarks.userId, userId))
+      .orderBy(desc(videoBookmarks.createdAt));
+  }
+
+  // User watchlist
+  async getUserWatchlist(userId: number): Promise<UserWatchlist[]> {
+    return await db.select()
+      .from(userWatchlist)
+      .where(eq(userWatchlist.userId, userId))
+      .orderBy(desc(userWatchlist.addedAt));
+  }
+
+  async addToWatchlist(userId: number, videoId: number): Promise<UserWatchlist> {
+    const [created] = await db.insert(userWatchlist)
+      .values({ userId, videoId })
+      .returning();
+    return created;
+  }
+
+  async removeFromWatchlist(userId: number, videoId: number): Promise<void> {
+    await db.delete(userWatchlist)
+      .where(and(eq(userWatchlist.userId, userId), eq(userWatchlist.videoId, videoId)));
+  }
+
+  async isInWatchlist(userId: number, videoId: number): Promise<boolean> {
+    const [exists] = await db.select()
+      .from(userWatchlist)
+      .where(and(eq(userWatchlist.userId, userId), eq(userWatchlist.videoId, videoId)))
+      .limit(1);
+    return !!exists;
   }
 }
 

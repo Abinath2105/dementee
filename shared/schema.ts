@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, unique } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -83,9 +83,47 @@ export const mentorInvitations = pgTable("mentor_invitations", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+export const videoProgress = pgTable("video_progress", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  videoId: integer("video_id").notNull().references(() => videos.id, { onDelete: "cascade" }),
+  currentTimeSeconds: integer("current_time_seconds").notNull().default(0), // in seconds
+  durationSeconds: integer("duration_seconds").notNull().default(0), // in seconds
+  isCompleted: boolean("is_completed").notNull().default(false),
+  completedAt: timestamp("completed_at"),
+  lastWatchedAt: timestamp("last_watched_at").defaultNow().notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserVideo: unique("unique_user_video").on(table.userId, table.videoId),
+}));
+
+export const videoBookmarks = pgTable("video_bookmarks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  videoId: integer("video_id").notNull().references(() => videos.id, { onDelete: "cascade" }),
+  timestampSeconds: integer("timestamp_seconds").notNull().default(0), // in seconds
+  note: text("note"), // optional user note for the bookmark
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserVideoTimestamp: unique("unique_user_video_timestamp").on(table.userId, table.videoId, table.timestampSeconds),
+}));
+
+export const userWatchlist = pgTable("user_watchlist", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  videoId: integer("video_id").notNull().references(() => videos.id, { onDelete: "cascade" }),
+  addedAt: timestamp("added_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserVideo: unique("unique_user_video_watchlist").on(table.userId, table.videoId),
+}));
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   videoViews: many(videoViews),
+  videoProgress: many(videoProgress),
+  videoBookmarks: many(videoBookmarks),
+  watchlist: many(userWatchlist),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -98,6 +136,9 @@ export const videosRelations = relations(videos, ({ one, many }) => ({
     references: [categories.id],
   }),
   views: many(videoViews),
+  progress: many(videoProgress),
+  bookmarks: many(videoBookmarks),
+  watchlistEntries: many(userWatchlist),
 }));
 
 export const videoViewsRelations = relations(videoViews, ({ one }) => ({
@@ -122,6 +163,39 @@ export const mentorCredentialsRelations = relations(mentorCredentials, ({ one })
 
 export const mentorInvitationsRelations = relations(mentorInvitations, ({ one }) => ({
   mentor: one(mentors, { fields: [mentorInvitations.mentorId], references: [mentors.id] }),
+}));
+
+export const videoProgressRelations = relations(videoProgress, ({ one }) => ({
+  user: one(users, {
+    fields: [videoProgress.userId],
+    references: [users.id],
+  }),
+  video: one(videos, {
+    fields: [videoProgress.videoId],
+    references: [videos.id],
+  }),
+}));
+
+export const videoBookmarksRelations = relations(videoBookmarks, ({ one }) => ({
+  user: one(users, {
+    fields: [videoBookmarks.userId],
+    references: [users.id],
+  }),
+  video: one(videos, {
+    fields: [videoBookmarks.videoId],
+    references: [videos.id],
+  }),
+}));
+
+export const userWatchlistRelations = relations(userWatchlist, ({ one }) => ({
+  user: one(users, {
+    fields: [userWatchlist.userId],
+    references: [users.id],
+  }),
+  video: one(videos, {
+    fields: [userWatchlist.videoId],
+    references: [videos.id],
+  }),
 }));
 
 // Insert schemas
@@ -180,6 +254,27 @@ export const insertMentorInvitationSchema = createInsertSchema(mentorInvitations
   expiresAt: true,
 });
 
+export const insertVideoProgressSchema = createInsertSchema(videoProgress).pick({
+  userId: true,
+  videoId: true,
+  currentTimeSeconds: true,
+  durationSeconds: true,
+  isCompleted: true,
+  completedAt: true,
+});
+
+export const insertVideoBookmarkSchema = createInsertSchema(videoBookmarks).pick({
+  userId: true,
+  videoId: true,
+  timestampSeconds: true,
+  note: true,
+});
+
+export const insertUserWatchlistSchema = createInsertSchema(userWatchlist).pick({
+  userId: true,
+  videoId: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -197,6 +292,12 @@ export type MentorCredentials = typeof mentorCredentials.$inferSelect;
 export type InsertMentorCredentials = z.infer<typeof insertMentorCredentialsSchema>;
 export type MentorInvitation = typeof mentorInvitations.$inferSelect;
 export type InsertMentorInvitation = z.infer<typeof insertMentorInvitationSchema>;
+export type VideoProgress = typeof videoProgress.$inferSelect;
+export type InsertVideoProgress = z.infer<typeof insertVideoProgressSchema>;
+export type VideoBookmark = typeof videoBookmarks.$inferSelect;
+export type InsertVideoBookmark = z.infer<typeof insertVideoBookmarkSchema>;
+export type UserWatchlist = typeof userWatchlist.$inferSelect;
+export type InsertUserWatchlist = z.infer<typeof insertUserWatchlistSchema>;
 
 // Extended types for API responses
 export type VideoWithCategory = Video & {
