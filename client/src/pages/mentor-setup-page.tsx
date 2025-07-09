@@ -13,17 +13,20 @@ import { useAuth } from "@/hooks/use-auth";
 export default function MentorSetupPage() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
-  const { user } = useAuth();
   
-  // Extract token from URL
+  // Extract token from URL first
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
   const token = urlParams.get('token');
   
   // Debug: Log token and location
+  console.log('=== MENTOR SETUP DEBUG ===');
   console.log('Location:', location);
+  console.log('URL Parts:', location.split('?'));
+  console.log('Query String:', location.split('?')[1] || 'No query string');
+  console.log('URLSearchParams:', urlParams.toString());
   console.log('Token:', token);
-  console.log('URL Search:', location.split('?')[1] || 'No query string');
-  console.log('Current user:', user);
+  console.log('All URL params:', Object.fromEntries(urlParams.entries()));
+  console.log('=== END DEBUG ===');
   
   // Form state
   const [password, setPassword] = useState("");
@@ -33,12 +36,16 @@ export default function MentorSetupPage() {
   // Redirect if no token
   useEffect(() => {
     if (!token) {
+      console.log('No token found, redirecting to auth');
       navigate('/auth');
     }
   }, [token, navigate]);
 
-  // Show notice if user is already logged in
-  if (user) {
+  // Only check auth if we have a token
+  const { user } = useAuth();
+  
+  // Show notice if user is already logged in (only if we have a token)
+  if (token && user) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -59,6 +66,11 @@ export default function MentorSetupPage() {
         </Card>
       </div>
     );
+  }
+
+  // Return early if no token (will redirect via useEffect)
+  if (!token) {
+    return <div>Loading...</div>;
   }
 
   // Validate invitation token
