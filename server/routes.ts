@@ -69,13 +69,13 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { youtubeUrl, categoryId, description, tags } = req.body;
+      const { youtubeUrl, categoryId, description, tags, title } = req.body;
 
       // Fetch YouTube video info
       const youtubeInfo = await fetchYouTubeVideoInfo(youtubeUrl);
 
       const videoData = {
-        title: youtubeInfo.title,
+        title: title || youtubeInfo.title,
         description: description || youtubeInfo.description,
         youtubeId: youtubeInfo.id,
         thumbnailUrl: youtubeInfo.thumbnailUrl,

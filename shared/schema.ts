@@ -27,6 +27,7 @@ export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
   slug: text("slug").notNull().unique(),
+  mentorName: text("mentor_name"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -97,6 +98,7 @@ export const insertOtpSchema = createInsertSchema(otpCodes).pick({
 export const insertCategorySchema = createInsertSchema(categories).pick({
   name: true,
   slug: true,
+  mentorName: true,
 });
 
 export const insertVideoSchema = createInsertSchema(videos).pick({

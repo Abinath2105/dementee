@@ -241,7 +241,7 @@ export default function AdminPage() {
             <div className="flex flex-wrap gap-4 mb-6">
               <Button onClick={() => setShowAddVideo(true)}>
                 <Plus className="h-4 w-4 mr-2" />
-                Add New Video
+                Add Video or Category
               </Button>
             </div>
 
