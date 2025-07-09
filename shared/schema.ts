@@ -11,6 +11,23 @@ export const users = pgTable("users", {
   fullName: text("full_name").notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
   isVerified: boolean("is_verified").default(false).notNull(),
+  // Student profile fields
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  bio: text("bio"),
+  avatar: text("avatar"),
+  location: text("location"),
+  website: text("website"),
+  linkedinUrl: text("linkedin_url"),
+  githubUrl: text("github_url"),
+  twitterUrl: text("twitter_url"),
+  skills: text("skills").array(),
+  interests: text("interests").array(),
+  learningGoals: text("learning_goals").array(),
+  experienceLevel: text("experience_level").default("beginner"),
+  preferredTopics: text("preferred_topics").array(),
+  studySchedule: text("study_schedule"),
+  timezone: text("timezone"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -250,6 +267,25 @@ export const insertUserSchema = createInsertSchema(users).pick({
   email: true,
   password: true,
   fullName: true,
+});
+
+export const updateUserProfileSchema = createInsertSchema(users).pick({
+  firstName: true,
+  lastName: true,
+  bio: true,
+  avatar: true,
+  location: true,
+  website: true,
+  linkedinUrl: true,
+  githubUrl: true,
+  twitterUrl: true,
+  skills: true,
+  interests: true,
+  learningGoals: true,
+  experienceLevel: true,
+  preferredTopics: true,
+  studySchedule: true,
+  timezone: true,
 });
 
 export const insertOtpSchema = createInsertSchema(otpCodes).pick({

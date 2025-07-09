@@ -61,6 +61,12 @@ export default function HomePage() {
                   Mentor Profile
                 </Button>
               </Link>
+              <Link href="/student/profile">
+                <Button variant="outline" size="sm">
+                  <User className="h-4 w-4 mr-2" />
+                  My Profile
+                </Button>
+              </Link>
               {user?.isAdmin && (
                 <Link href="/admin">
                   <Button variant="outline" size="sm">

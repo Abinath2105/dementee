@@ -1099,6 +1099,46 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Student profile endpoints
+  app.get("/api/student/profile", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const user = await storage.getUser(req.user.id);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Get additional student data
+      const progressStats = await storage.getVideoProgressStats(req.user.id);
+      
+      res.json({
+        ...user,
+        completedVideos: progressStats.completedVideos,
+        totalWatchTime: progressStats.totalWatchTime,
+      });
+    } catch (error) {
+      console.error("Error fetching student profile:", error);
+      res.status(500).send("Failed to fetch student profile");
+    }
+  });
+
+  app.put("/api/student/profile", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const updatedUser = await storage.updateUserProfile(req.user.id, req.body);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Error updating student profile:", error);
+      res.status(500).send("Failed to update student profile");
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -17,6 +17,7 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   updateUserAdminStatus(userId: number, isAdmin: boolean): Promise<User>;
   deleteUser(userId: number): Promise<void>;
+  updateUserProfile(userId: number, profileData: Partial<User>): Promise<User>;
 
   // Video progress tracking
   getVideoProgress(userId: number, videoId: number): Promise<VideoProgress | undefined>;
@@ -153,6 +154,15 @@ export class DatabaseStorage implements IStorage {
 
   async deleteUser(userId: number): Promise<void> {
     await db.delete(users).where(eq(users.id, userId));
+  }
+
+  async updateUserProfile(userId: number, profileData: Partial<User>): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set(profileData)
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
   }
 
   async createOtp(insertOtp: InsertOtp): Promise<OtpCode> {

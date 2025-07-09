@@ -10,6 +10,7 @@ import AdminPage from "@/pages/admin-page";
 import DashboardPage from "@/pages/dashboard-page";
 import MentorSetupPage from "@/pages/mentor-setup-page";
 import MentorProfilePage from "@/pages/mentor-profile-page";
+import StudentProfilePage from "@/pages/student-profile-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <ProtectedRoute path="/dashboard" component={DashboardPage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/mentor/profile" component={MentorProfilePage} />
+      <ProtectedRoute path="/student/profile" component={StudentProfilePage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/mentor/setup" component={MentorSetupPage} />
       <Route component={NotFound} />
