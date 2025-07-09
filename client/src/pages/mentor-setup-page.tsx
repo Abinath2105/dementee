@@ -14,19 +14,30 @@ export default function MentorSetupPage() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
   
-  // Extract token from URL first
+  // Extract token from URL first - try multiple methods
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
   const token = urlParams.get('token');
   
+  // Alternative method using window.location
+  const windowParams = new URLSearchParams(window.location.search);
+  const windowToken = windowParams.get('token');
+  
   // Debug: Log token and location
   console.log('=== MENTOR SETUP DEBUG ===');
-  console.log('Location:', location);
+  console.log('Location (wouter):', location);
+  console.log('window.location.href:', window.location.href);
+  console.log('window.location.search:', window.location.search);
   console.log('URL Parts:', location.split('?'));
   console.log('Query String:', location.split('?')[1] || 'No query string');
   console.log('URLSearchParams:', urlParams.toString());
-  console.log('Token:', token);
+  console.log('Token (from location):', token);
+  console.log('Token (from window):', windowToken);
   console.log('All URL params:', Object.fromEntries(urlParams.entries()));
+  console.log('All window params:', Object.fromEntries(windowParams.entries()));
   console.log('=== END DEBUG ===');
+  
+  // Use the token from whichever method found it
+  const finalToken = token || windowToken;
   
   // Form state
   const [password, setPassword] = useState("");
@@ -35,17 +46,17 @@ export default function MentorSetupPage() {
 
   // Redirect if no token
   useEffect(() => {
-    if (!token) {
+    if (!finalToken) {
       console.log('No token found, redirecting to auth');
       navigate('/auth');
     }
-  }, [token, navigate]);
+  }, [finalToken, navigate]);
 
   // Only check auth if we have a token
   const { user } = useAuth();
   
   // Show notice if user is already logged in (only if we have a token)
-  if (token && user) {
+  if (finalToken && user) {
     return (
       <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
         <Card className="w-full max-w-md">
@@ -69,24 +80,24 @@ export default function MentorSetupPage() {
   }
 
   // Return early if no token (will redirect via useEffect)
-  if (!token) {
+  if (!finalToken) {
     return <div>Loading...</div>;
   }
 
   // Validate invitation token
   const { data: invitation, isLoading, error } = useQuery({
-    queryKey: ["/api/mentor/invitation", token],
+    queryKey: ["/api/mentor/invitation", finalToken],
     queryFn: async () => {
-      if (!token) throw new Error("No token provided");
+      if (!finalToken) throw new Error("No token provided");
       
-      const response = await fetch(`/api/mentor/invitation/${token}`);
+      const response = await fetch(`/api/mentor/invitation/${finalToken}`);
       if (!response.ok) {
         const error = await response.json();
         throw new Error(error.message || "Invalid invitation");
       }
       return response.json();
     },
-    enabled: !!token,
+    enabled: !!finalToken,
   });
 
   const setupMutation = useMutation({
@@ -148,16 +159,16 @@ export default function MentorSetupPage() {
       return;
     }
 
-    if (!token) return;
+    if (!finalToken) return;
 
-    setupMutation.mutate({ token, password, confirmPassword });
+    setupMutation.mutate({ token: finalToken, password, confirmPassword });
   };
 
   const handleGoToLogin = () => {
     navigate('/auth');
   };
 
-  if (!token) {
+  if (!finalToken) {
     return null; // Will redirect
   }
 
