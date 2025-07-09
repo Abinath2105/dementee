@@ -163,4 +163,4 @@ VideoLearn Pro is a comprehensive Learning Management System (LMS) designed for 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
-UI/UX Design: Prefers clean, simplified layouts with clear separation between user types. Two-section auth page design with student login on one side and mentor/admin login options on the other side.
+UI/UX Design: Prefers clean, simplified layouts with minimal clutter. Single-focus auth page with student portal as main content and admin/mentor access hidden behind settings icon in top right corner.

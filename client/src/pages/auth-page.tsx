@@ -7,13 +7,14 @@ import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Play, Mail, Shield, Users, GraduationCap, UserCheck, BookOpen, Award, TrendingUp, CheckCircle } from "lucide-react";
+import { Play, Mail, Shield, Users, GraduationCap, UserCheck, BookOpen, Award, TrendingUp, CheckCircle, Settings } from "lucide-react";
 import { OtpVerificationModal } from "@/components/otp-verification-modal";
 
 export default function AuthPage() {
   const { user, loginMutation, registerMutation } = useAuth();
   const [showOtpModal, setShowOtpModal] = useState(false);
   const [registrationEmail, setRegistrationEmail] = useState("");
+  const [showAdminModal, setShowAdminModal] = useState(false);
 
   // Redirect if already logged in
   if (user) {
@@ -50,18 +51,29 @@ export default function AuthPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-indigo-50 to-purple-50">
-      {/* Header */}
-      <div className="text-center pt-8 pb-4">
-        <div className="flex items-center justify-center mb-4">
-          <Play className="h-12 w-12 text-primary" />
+      {/* Header with Settings Button */}
+      <div className="relative">
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => setShowAdminModal(true)}
+          className="absolute top-4 right-4 text-gray-600 hover:text-gray-900"
+        >
+          <Settings className="h-5 w-5" />
+        </Button>
+        
+        <div className="text-center pt-8 pb-4">
+          <div className="flex items-center justify-center mb-4">
+            <Play className="h-12 w-12 text-primary" />
+          </div>
+          <h1 className="text-4xl font-bold text-gray-900">VideoLearn Pro</h1>
+          <p className="text-gray-600 mt-2 text-lg">Transform Your Learning Journey</p>
         </div>
-        <h1 className="text-4xl font-bold text-gray-900">VideoLearn Pro</h1>
-        <p className="text-gray-600 mt-2 text-lg">Transform Your Learning Journey</p>
       </div>
 
-      <div className="flex flex-col lg:flex-row max-w-6xl mx-auto p-8 gap-8">
-        {/* Student Login Section */}
-        <div className="flex-1">
+      <div className="flex justify-center max-w-2xl mx-auto p-8">
+        {/* Student Login Section - Centered */}
+        <div className="w-full">
           <div className="bg-white rounded-xl shadow-lg p-8">
             <div className="text-center mb-6">
               <div className="flex items-center justify-center mb-4">
@@ -214,98 +226,6 @@ export default function AuthPage() {
             </Tabs>
           </div>
         </div>
-
-        {/* Admin & Mentor Login Section */}
-        <div className="flex-1">
-          <div className="bg-white rounded-xl shadow-lg p-8">
-            <div className="text-center mb-6">
-              <div className="flex items-center justify-center mb-4">
-                <div className="flex space-x-2">
-                  <Shield className="h-12 w-12 text-red-600" />
-                  <UserCheck className="h-12 w-12 text-purple-600" />
-                </div>
-              </div>
-              <h2 className="text-3xl font-bold text-gray-900">Mentor & Admin Portal</h2>
-              <p className="text-gray-600 text-lg">Platform management and instruction access</p>
-            </div>
-
-            <div className="space-y-6">
-              {/* Admin Login */}
-              <Card className="border border-red-200 bg-gradient-to-r from-red-50 to-red-100">
-                <CardHeader className="text-center pb-4">
-                  <div className="flex items-center justify-center mb-2">
-                    <Shield className="h-8 w-8 text-red-600 mr-2" />
-                    <CardTitle className="text-xl text-red-800">Admin Access</CardTitle>
-                  </div>
-                  <CardDescription className="text-red-700">Platform administration</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <Input
-                      name="email"
-                      type="email"
-                      placeholder="Admin email"
-                      defaultValue="admin@example.com"
-                      className="h-12"
-                    />
-                    <Input
-                      name="password"
-                      type="password"
-                      placeholder="Admin password"
-                      defaultValue="admin123"
-                      className="h-12"
-                    />
-                    <Button 
-                      type="submit" 
-                      className="w-full h-12 bg-red-600 hover:bg-red-700 text-white"
-                      disabled={loginMutation.isPending}
-                    >
-                      <Shield className="h-4 w-4 mr-2" />
-                      Admin Login
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-
-              {/* Mentor Login */}
-              <Card className="border border-purple-200 bg-gradient-to-r from-purple-50 to-purple-100">
-                <CardHeader className="text-center pb-4">
-                  <div className="flex items-center justify-center mb-2">
-                    <UserCheck className="h-8 w-8 text-purple-600 mr-2" />
-                    <CardTitle className="text-xl text-purple-800">Mentor Access</CardTitle>
-                  </div>
-                  <CardDescription className="text-purple-700">Instructor and mentor portal</CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <form onSubmit={handleLogin} className="space-y-4">
-                    <Input
-                      name="email"
-                      type="email"
-                      placeholder="Mentor email"
-                      defaultValue="mentor@example.com"
-                      className="h-12"
-                    />
-                    <Input
-                      name="password"
-                      type="password"
-                      placeholder="Mentor password"
-                      defaultValue="mentor123"
-                      className="h-12"
-                    />
-                    <Button 
-                      type="submit" 
-                      className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white"
-                      disabled={loginMutation.isPending}
-                    >
-                      <UserCheck className="h-4 w-4 mr-2" />
-                      Mentor Login
-                    </Button>
-                  </form>
-                </CardContent>
-              </Card>
-            </div>
-          </div>
-        </div>
       </div>
 
       {/* Features Section */}
@@ -345,6 +265,99 @@ export default function AuthPage() {
           </div>
         </div>
       </div>
+
+      {/* Admin/Mentor Login Modal */}
+      {showAdminModal && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-xl shadow-xl p-6 w-full max-w-md">
+            <div className="flex justify-between items-center mb-4">
+              <h3 className="text-lg font-semibold text-gray-900">Admin & Mentor Access</h3>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowAdminModal(false)}
+                className="text-gray-500 hover:text-gray-700"
+              >
+                ✕
+              </Button>
+            </div>
+            
+            <div className="space-y-4">
+              {/* Admin Login */}
+              <Card className="border border-red-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center">
+                    <Shield className="h-6 w-6 text-red-600 mr-2" />
+                    <CardTitle className="text-sm text-red-800">Admin Access</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleLogin} className="space-y-3">
+                    <Input
+                      name="email"
+                      type="email"
+                      placeholder="Admin email"
+                      defaultValue="admin@example.com"
+                      className="h-10"
+                    />
+                    <Input
+                      name="password"
+                      type="password"
+                      placeholder="Admin password"
+                      defaultValue="admin123"
+                      className="h-10"
+                    />
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-red-600 hover:bg-red-700 text-white"
+                      disabled={loginMutation.isPending}
+                    >
+                      <Shield className="h-4 w-4 mr-2" />
+                      Admin Login
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+
+              {/* Mentor Login */}
+              <Card className="border border-purple-200">
+                <CardHeader className="pb-3">
+                  <div className="flex items-center">
+                    <UserCheck className="h-6 w-6 text-purple-600 mr-2" />
+                    <CardTitle className="text-sm text-purple-800">Mentor Access</CardTitle>
+                  </div>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleLogin} className="space-y-3">
+                    <Input
+                      name="email"
+                      type="email"
+                      placeholder="Mentor email"
+                      defaultValue="mentor@example.com"
+                      className="h-10"
+                    />
+                    <Input
+                      name="password"
+                      type="password"
+                      placeholder="Mentor password"
+                      defaultValue="mentor123"
+                      className="h-10"
+                    />
+                    <Button 
+                      type="submit" 
+                      className="w-full bg-purple-600 hover:bg-purple-700 text-white"
+                      disabled={loginMutation.isPending}
+                    >
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      Mentor Login
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* OTP Modal */}
       {showOtpModal && (
