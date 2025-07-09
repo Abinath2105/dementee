@@ -6,14 +6,19 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { Badge } from "@/components/ui/badge";
-import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck } from "lucide-react";
 import { AddVideoModal } from "@/components/add-video-modal";
 import { queryClient } from "@/lib/queryClient";
-import type { VideoWithCategory, AdminStats } from "@shared/schema";
+import { useToast } from "@/hooks/use-toast";
+import type { VideoWithCategory, AdminStats, User } from "@shared/schema";
 
 export default function AdminPage() {
   const { user, logoutMutation } = useAuth();
   const [showAddVideo, setShowAddVideo] = useState(false);
+  const [activeTab, setActiveTab] = useState("videos");
+  const { toast } = useToast();
 
   // Redirect if not admin
   if (!user?.isAdmin) {
@@ -26,6 +31,10 @@ export default function AdminPage() {
 
   const { data: videos = [], isLoading } = useQuery<VideoWithCategory[]>({
     queryKey: ["/api/videos"],
+  });
+
+  const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
+    queryKey: ["/api/admin/users"],
   });
 
   const deleteVideoMutation = useMutation({
@@ -42,9 +51,77 @@ export default function AdminPage() {
     },
   });
 
+  const updateUserAdminMutation = useMutation({
+    mutationFn: async ({ userId, isAdmin }: { userId: number; isAdmin: boolean }) => {
+      const response = await fetch(`/api/admin/users/${userId}/admin`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ isAdmin }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update user admin status");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "User updated",
+        description: "User admin status updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const response = await fetch(`/api/admin/users/${userId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to delete user");
+      }
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({
+        title: "User deleted",
+        description: "User account deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeleteVideo = (videoId: number) => {
     if (confirm("Are you sure you want to delete this video?")) {
       deleteVideoMutation.mutate(videoId);
+    }
+  };
+
+  const handleAdminToggle = (userId: number, isAdmin: boolean) => {
+    updateUserAdminMutation.mutate({ userId, isAdmin });
+  };
+
+  const handleDeleteUser = (userId: number) => {
+    if (confirm("Are you sure you want to delete this user account? This action cannot be undone.")) {
+      deleteUserMutation.mutate(userId);
     }
   };
 
@@ -152,21 +229,29 @@ export default function AdminPage() {
           </Card>
         </div>
 
-        {/* Action Buttons */}
-        <div className="flex flex-wrap gap-4 mb-8">
-          <Button onClick={() => setShowAddVideo(true)}>
-            <Plus className="h-4 w-4 mr-2" />
-            Add New Video
-          </Button>
-        </div>
+        {/* Tabs for different management sections */}
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="grid w-full grid-cols-2">
+            <TabsTrigger value="videos">Video Management</TabsTrigger>
+            <TabsTrigger value="users">User Management</TabsTrigger>
+          </TabsList>
+          
+          <TabsContent value="videos" className="mt-6">
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-4 mb-6">
+              <Button onClick={() => setShowAddVideo(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add New Video
+              </Button>
+            </div>
 
-        {/* Video Management Table */}
-        <Card>
-          <CardHeader>
-            <CardTitle>Video Management</CardTitle>
-          </CardHeader>
-          <CardContent>
-            <div className="overflow-x-auto">
+            {/* Video Management Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Video Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
               <Table>
                 <TableHeader>
                   <TableRow>
@@ -264,10 +349,108 @@ export default function AdminPage() {
                     ))
                   )}
                 </TableBody>
-              </Table>
-            </div>
-          </CardContent>
-        </Card>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+          
+          <TabsContent value="users" className="mt-6">
+            {/* User Management Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>User Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>User</TableHead>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Admin</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {usersLoading ? (
+                        [...Array(5)].map((_, i) => (
+                          <TableRow key={i}>
+                            <TableCell>
+                              <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="h-6 bg-gray-200 rounded w-16 animate-pulse"></div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="h-6 bg-gray-200 rounded w-12 animate-pulse"></div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      ) : users.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center py-8">
+                            <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+                            <p className="text-gray-500">No users found</p>
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        users.map((userItem) => (
+                          <TableRow key={userItem.id}>
+                            <TableCell>
+                              <div className="font-medium text-gray-900">
+                                {userItem.username}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="text-gray-600">
+                                {userItem.email}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={userItem.isVerified ? "default" : "secondary"}>
+                                {userItem.isVerified ? "Verified" : "Unverified"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <Switch
+                                  checked={userItem.isAdmin}
+                                  onCheckedChange={(checked) => handleAdminToggle(userItem.id, checked)}
+                                  disabled={updateUserAdminMutation.isPending || userItem.id === user?.id}
+                                />
+                                {userItem.isAdmin && (
+                                  <Shield className="h-4 w-4 text-blue-600" />
+                                )}
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteUser(userItem.id)}
+                                disabled={deleteUserMutation.isPending || userItem.id === user?.id}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        </Tabs>
       </div>
 
       {showAddVideo && (

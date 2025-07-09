@@ -14,6 +14,9 @@ export interface IStorage {
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   verifyUser(email: string): Promise<void>;
+  getAllUsers(): Promise<User[]>;
+  updateUserAdminStatus(userId: number, isAdmin: boolean): Promise<User>;
+  deleteUser(userId: number): Promise<void>;
 
   // OTP management
   createOtp(otp: InsertOtp): Promise<OtpCode>;
@@ -77,6 +80,23 @@ export class DatabaseStorage implements IStorage {
       .update(users)
       .set({ isVerified: true })
       .where(eq(users.email, email));
+  }
+
+  async getAllUsers(): Promise<User[]> {
+    return await db.select().from(users).orderBy(users.email);
+  }
+
+  async updateUserAdminStatus(userId: number, isAdmin: boolean): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ isAdmin })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(userId: number): Promise<void> {
+    await db.delete(users).where(eq(users.id, userId));
   }
 
   async createOtp(insertOtp: InsertOtp): Promise<OtpCode> {
