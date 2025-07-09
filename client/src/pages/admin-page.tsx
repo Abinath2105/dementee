@@ -8,16 +8,17 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck } from "lucide-react";
+import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff } from "lucide-react";
 import { AddVideoModal } from "@/components/add-video-modal";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { VideoWithCategory, AdminStats, User } from "@shared/schema";
+import type { VideoWithCategory, AdminStats, User, Category } from "@shared/schema";
 
 export default function AdminPage() {
   const { user, logoutMutation } = useAuth();
   const [showAddVideo, setShowAddVideo] = useState(false);
   const [activeTab, setActiveTab] = useState("videos");
+  const [editingVideo, setEditingVideo] = useState<VideoWithCategory | null>(null);
   const { toast } = useToast();
 
   // Redirect if not admin
@@ -35,6 +36,10 @@ export default function AdminPage() {
 
   const { data: users = [], isLoading: usersLoading } = useQuery<User[]>({
     queryKey: ["/api/admin/users"],
+  });
+
+  const { data: categories = [] } = useQuery<Category[]>({
+    queryKey: ["/api/categories"],
   });
 
   const deleteVideoMutation = useMutation({
@@ -109,6 +114,58 @@ export default function AdminPage() {
     },
   });
 
+  const deleteCategoryMutation = useMutation({
+    mutationFn: async (categoryId: number) => {
+      const response = await fetch(`/api/categories/${categoryId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to delete category");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+      toast({
+        title: "Category deleted",
+        description: "Category deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const updateVideoVisibilityMutation = useMutation({
+    mutationFn: async ({ videoId, isPublic }: { videoId: number; isPublic: boolean }) => {
+      const response = await fetch(`/api/videos/${videoId}`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ isPublic }),
+      });
+      if (!response.ok) throw new Error("Failed to update video visibility");
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+      toast({
+        title: "Video updated",
+        description: "Video visibility updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleDeleteVideo = (videoId: number) => {
     if (confirm("Are you sure you want to delete this video?")) {
       deleteVideoMutation.mutate(videoId);
@@ -123,6 +180,16 @@ export default function AdminPage() {
     if (confirm("Are you sure you want to delete this user account? This action cannot be undone.")) {
       deleteUserMutation.mutate(userId);
     }
+  };
+
+  const handleDeleteCategory = (categoryId: number) => {
+    if (confirm("Are you sure you want to delete this category? All videos in this category will be uncategorized.")) {
+      deleteCategoryMutation.mutate(categoryId);
+    }
+  };
+
+  const handleVisibilityToggle = (videoId: number, isPublic: boolean) => {
+    updateVideoVisibilityMutation.mutate({ videoId, isPublic });
   };
 
   return (
@@ -257,6 +324,7 @@ export default function AdminPage() {
                   <TableRow>
                     <TableHead>Video</TableHead>
                     <TableHead>Category</TableHead>
+                    <TableHead>Visibility</TableHead>
                     <TableHead>Views</TableHead>
                     <TableHead>Date Added</TableHead>
                     <TableHead>Actions</TableHead>
@@ -279,6 +347,9 @@ export default function AdminPage() {
                           <div className="h-6 bg-gray-200 rounded w-20 animate-pulse"></div>
                         </TableCell>
                         <TableCell>
+                          <div className="h-6 bg-gray-200 rounded w-16 animate-pulse"></div>
+                        </TableCell>
+                        <TableCell>
                           <div className="h-4 bg-gray-200 rounded w-12 animate-pulse"></div>
                         </TableCell>
                         <TableCell>
@@ -294,7 +365,7 @@ export default function AdminPage() {
                     ))
                   ) : videos.length === 0 ? (
                     <TableRow>
-                      <TableCell colSpan={5} className="text-center py-8">
+                      <TableCell colSpan={6} className="text-center py-8">
                         <Video className="h-12 w-12 text-gray-300 mx-auto mb-4" />
                         <p className="text-gray-500">No videos found</p>
                       </TableCell>
@@ -326,6 +397,28 @@ export default function AdminPage() {
                             <span className="text-gray-400">Uncategorized</span>
                           )}
                         </TableCell>
+                        <TableCell>
+                          <div className="flex items-center space-x-2">
+                            <Switch
+                              checked={video.isPublic}
+                              onCheckedChange={(checked) => handleVisibilityToggle(video.id, checked)}
+                              disabled={updateVideoVisibilityMutation.isPending}
+                            />
+                            <div className="flex items-center space-x-1">
+                              {video.isPublic ? (
+                                <>
+                                  <Eye className="h-4 w-4 text-green-600" />
+                                  <span className="text-xs text-green-600">Public</span>
+                                </>
+                              ) : (
+                                <>
+                                  <EyeOff className="h-4 w-4 text-gray-600" />
+                                  <span className="text-xs text-gray-600">Private</span>
+                                </>
+                              )}
+                            </div>
+                          </div>
+                        </TableCell>
                         <TableCell>{video.viewCount}</TableCell>
                         <TableCell>
                           {new Date(video.createdAt).toLocaleDateString()}
@@ -350,6 +443,41 @@ export default function AdminPage() {
                   )}
                 </TableBody>
                   </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Categories Management */}
+            <Card className="mt-6">
+              <CardHeader>
+                <CardTitle>Categories Management</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {categories.map((category) => (
+                    <div key={category.id} className="flex items-center justify-between p-4 border rounded-lg">
+                      <div>
+                        <h3 className="font-medium text-gray-900">{category.name}</h3>
+                        {category.mentorName && (
+                          <p className="text-sm text-gray-500">Mentor: {category.mentorName}</p>
+                        )}
+                      </div>
+                      <Button
+                        size="sm"
+                        variant="ghost"
+                        onClick={() => handleDeleteCategory(category.id)}
+                        disabled={deleteCategoryMutation.isPending}
+                        className="text-red-600 hover:text-red-800"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                      </Button>
+                    </div>
+                  ))}
+                  {categories.length === 0 && (
+                    <div className="col-span-full text-center py-8 text-gray-500">
+                      No categories found. Create one using the "Add Video or Category" button.
+                    </div>
+                  )}
                 </div>
               </CardContent>
             </Card>

@@ -27,6 +27,7 @@ export interface IStorage {
   getCategories(): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
   getCategoryBySlug(slug: string): Promise<Category | undefined>;
+  deleteCategory(id: number): Promise<void>;
 
   // Video management
   getVideos(search?: string, categoryId?: number): Promise<VideoWithCategory[]>;
@@ -246,6 +247,10 @@ export class DatabaseStorage implements IStorage {
 
   async deleteVideo(id: number): Promise<void> {
     await db.delete(videos).where(eq(videos.id, id));
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
   }
 
   async incrementVideoViews(videoId: number, userId?: number, ipAddress?: string): Promise<void> {

@@ -34,6 +34,21 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.delete("/api/categories/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      
+      const categoryId = parseInt(req.params.id);
+      await storage.deleteCategory(categoryId);
+      res.status(200).json({ message: "Category deleted successfully" });
+    } catch (error) {
+      console.error('Delete category error:', error);
+      res.status(500).json({ message: "Failed to delete category" });
+    }
+  });
+
   // Videos
   app.get("/api/videos", async (req, res) => {
     try {
@@ -69,7 +84,7 @@ export function registerRoutes(app: Express): Server {
         return res.status(403).json({ message: "Admin access required" });
       }
 
-      const { youtubeUrl, categoryId, description, tags, title } = req.body;
+      const { youtubeUrl, categoryId, description, tags, title, isPublic } = req.body;
 
       // Fetch YouTube video info
       const youtubeInfo = await fetchYouTubeVideoInfo(youtubeUrl);
@@ -82,6 +97,7 @@ export function registerRoutes(app: Express): Server {
         duration: youtubeInfo.duration,
         categoryId: categoryId || null,
         tags: tags || [],
+        isPublic: isPublic !== undefined ? isPublic : true,
       };
 
       const parsed = insertVideoSchema.parse(videoData);

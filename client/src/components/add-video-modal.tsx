@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Badge } from "@/components/ui/badge";
-import { Plus, X } from "lucide-react";
+import { Switch } from "@/components/ui/switch";
+import { Plus, X, Eye, EyeOff } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import type { Category } from "@shared/schema";
@@ -29,6 +30,7 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
+  const [isPublic, setIsPublic] = useState(true);
   const tagInputRef = useRef<HTMLInputElement>(null);
   
   // Category form fields
@@ -166,6 +168,7 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
       categoryId: categoryId ? parseInt(categoryId) : undefined,
       description: description || undefined,
       tags: tags.length > 0 ? tags : undefined,
+      isPublic,
     };
 
     addVideoMutation.mutate(videoData);
@@ -196,6 +199,7 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
     setDescription("");
     setTags([]);
     setTagInput("");
+    setIsPublic(true);
     setCategoryName("");
     setMentorName("");
     setActiveTab("video");
@@ -320,6 +324,33 @@ export function AddVideoModal({ isOpen, onClose }: AddVideoModalProps) {
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
                   Type and press Enter or comma to add tags. Backspace to remove the last tag.
+                </p>
+              </div>
+
+              <div>
+                <Label htmlFor="visibility">Visibility</Label>
+                <div className="flex items-center space-x-3 mt-2">
+                  <Switch
+                    id="visibility"
+                    checked={isPublic}
+                    onCheckedChange={setIsPublic}
+                  />
+                  <div className="flex items-center space-x-2">
+                    {isPublic ? (
+                      <>
+                        <Eye className="h-4 w-4 text-green-600" />
+                        <span className="text-sm text-green-600">Public</span>
+                      </>
+                    ) : (
+                      <>
+                        <EyeOff className="h-4 w-4 text-gray-600" />
+                        <span className="text-sm text-gray-600">Private</span>
+                      </>
+                    )}
+                  </div>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  {isPublic ? "Video will be visible to all users" : "Video will only be visible to admins"}
                 </p>
               </div>
               

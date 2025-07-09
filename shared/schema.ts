@@ -41,6 +41,7 @@ export const videos = pgTable("videos", {
   categoryId: integer("category_id").references(() => categories.id),
   tags: jsonb("tags").$type<string[]>().default([]),
   views: integer("views").default(0).notNull(),
+  isPublic: boolean("is_public").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
@@ -109,6 +110,7 @@ export const insertVideoSchema = createInsertSchema(videos).pick({
   duration: true,
   categoryId: true,
   tags: true,
+  isPublic: true,
 });
 
 export const insertVideoViewSchema = createInsertSchema(videoViews).pick({
