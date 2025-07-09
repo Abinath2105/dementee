@@ -9,6 +9,12 @@ import { Separator } from "@/components/ui/separator";
 import { LogOut, User, Mail, Briefcase, Calendar, CheckCircle, Users, Video, ArrowLeft, Camera, Image, Edit } from "lucide-react";
 import { useAuth } from "@/hooks/use-auth";
 import { PhotoUploadModal } from "@/components/photo-upload-modal";
+import { 
+  OpenToModal, 
+  AddProfileSectionModal, 
+  EnhanceProfileModal, 
+  ResourcesModal 
+} from "@/components/mentor-action-modals";
 import type { Mentor } from "@shared/schema";
 
 interface MentorProfile extends Mentor {
@@ -19,6 +25,10 @@ export default function MentorProfilePage() {
   const { user, logoutMutation } = useAuth();
   const [photoUploadOpen, setPhotoUploadOpen] = useState(false);
   const [backgroundUploadOpen, setBackgroundUploadOpen] = useState(false);
+  const [openToModalOpen, setOpenToModalOpen] = useState(false);
+  const [addSectionModalOpen, setAddSectionModalOpen] = useState(false);
+  const [enhanceProfileModalOpen, setEnhanceProfileModalOpen] = useState(false);
+  const [resourcesModalOpen, setResourcesModalOpen] = useState(false);
 
   // Fetch mentor profile data
   const { data: mentorProfile, isLoading, error } = useQuery<MentorProfile>({
@@ -183,10 +193,11 @@ export default function MentorProfilePage() {
                 </div>
               </div>
               
-              <div className="flex gap-2 pt-4">
+              <div className="flex gap-2 pt-4 flex-wrap">
                 <Button 
                   className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium"
                   size="sm"
+                  onClick={() => setOpenToModalOpen(true)}
                 >
                   Open to
                 </Button>
@@ -194,6 +205,7 @@ export default function MentorProfilePage() {
                   variant="outline" 
                   className="border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-2 rounded-full font-medium"
                   size="sm"
+                  onClick={() => setAddSectionModalOpen(true)}
                 >
                   Add profile section
                 </Button>
@@ -201,6 +213,7 @@ export default function MentorProfilePage() {
                   variant="outline" 
                   className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-full font-medium"
                   size="sm"
+                  onClick={() => setEnhanceProfileModalOpen(true)}
                 >
                   Enhance profile
                 </Button>
@@ -208,6 +221,7 @@ export default function MentorProfilePage() {
                   variant="outline" 
                   className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-full font-medium"
                   size="sm"
+                  onClick={() => setResourcesModalOpen(true)}
                 >
                   Resources
                 </Button>
@@ -408,6 +422,27 @@ export default function MentorProfilePage() {
         onClose={() => setBackgroundUploadOpen(false)}
         uploadType="background"
         currentImage={mentorProfile.backgroundImage}
+      />
+
+      {/* Action Modals */}
+      <OpenToModal
+        isOpen={openToModalOpen}
+        onClose={() => setOpenToModalOpen(false)}
+      />
+
+      <AddProfileSectionModal
+        isOpen={addSectionModalOpen}
+        onClose={() => setAddSectionModalOpen(false)}
+      />
+
+      <EnhanceProfileModal
+        isOpen={enhanceProfileModalOpen}
+        onClose={() => setEnhanceProfileModalOpen(false)}
+      />
+
+      <ResourcesModal
+        isOpen={resourcesModalOpen}
+        onClose={() => setResourcesModalOpen(false)}
       />
     </div>
   );
