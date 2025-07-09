@@ -21,6 +21,7 @@ export default function MentorSetupPage() {
   console.log('Location:', location);
   console.log('Token:', token);
   console.log('URL Search:', location.split('?')[1] || 'No query string');
+  console.log('Full URL to test: https://053c500c-736b-4cd2-9361-58b3f106515b-00-11w8zsf6byy25.spock.replit.dev/mentor/setup?token=u9GRbrLBuRBFce4Ng8KIXXVM8tclIsi8');
   
   // Form state
   const [password, setPassword] = useState("");
