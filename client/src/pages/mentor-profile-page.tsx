@@ -124,8 +124,8 @@ export default function MentorProfilePage() {
           </div>
           
           {/* Profile Info */}
-          <div className="relative px-6 pb-6">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:space-x-6">
+          <div className="relative px-6 pb-8 pt-4">
+            <div className="flex flex-col sm:flex-row sm:items-start sm:space-x-8">
               <div className="relative mb-4 sm:mb-0">
                 <Avatar className="h-40 w-40 border-4 border-white shadow-xl bg-white relative z-10">
                   <AvatarImage 
@@ -146,14 +146,14 @@ export default function MentorProfilePage() {
                 </Button>
               </div>
               
-              <div className="mt-4 sm:mt-0 flex-1">
-                <div className="mb-4">
-                  <h1 className="text-4xl font-bold text-gray-900 mb-2">{mentorProfile.name}</h1>
-                  <p className="text-xl text-gray-600 font-medium">{mentorProfile.profession}</p>
-                  <p className="text-gray-500 mt-1">{mentorProfile.experience} experience</p>
+              <div className="mt-6 sm:mt-0 flex-1 min-h-[160px]">
+                <div className="space-y-3 mb-6">
+                  <h1 className="text-4xl font-bold text-gray-900 leading-tight">{mentorProfile.name}</h1>
+                  <p className="text-xl text-gray-600 font-medium leading-relaxed">{mentorProfile.profession}</p>
+                  <p className="text-lg text-gray-500">{mentorProfile.experience} experience</p>
                 </div>
                 
-                <div className="flex flex-wrap items-center gap-4">
+                <div className="flex flex-wrap items-center gap-3 mt-auto">
                   <div className="flex items-center">
                     {mentorProfile.isActive ? (
                       <>
