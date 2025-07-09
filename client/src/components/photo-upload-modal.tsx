@@ -33,12 +33,33 @@ export function PhotoUploadModal({ isOpen, onClose, uploadType, currentImage }: 
       const fieldName = uploadType === "photo" ? "photo" : "background";
       formData.append(fieldName, file);
 
+      console.log("Upload attempt:", {
+        fieldName,
+        fileName: file.name,
+        fileSize: file.size,
+        fileType: file.type
+      });
+
       const endpoint = uploadType === "photo" 
         ? "/api/mentor/upload-photo" 
         : "/api/mentor/upload-background";
 
-      const res = await apiRequest("POST", endpoint, formData);
-      return await res.json();
+      // Use fetch directly for file uploads instead of apiRequest
+      const res = await fetch(endpoint, {
+        method: "POST",
+        body: formData,
+        credentials: "include", // Include cookies for authentication
+      });
+
+      if (!res.ok) {
+        const errorText = await res.text();
+        console.error("Upload failed:", errorText);
+        throw new Error(errorText || `Upload failed with status ${res.status}`);
+      }
+
+      const result = await res.json();
+      console.log("Upload successful:", result);
+      return result;
     },
     onSuccess: (data) => {
       toast({
