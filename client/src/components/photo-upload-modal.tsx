@@ -33,12 +33,7 @@ export function PhotoUploadModal({ isOpen, onClose, uploadType, currentImage }: 
       const fieldName = uploadType === "photo" ? "photo" : "background";
       formData.append(fieldName, file);
 
-      console.log("Upload attempt:", {
-        fieldName,
-        fileName: file.name,
-        fileSize: file.size,
-        fileType: file.type
-      });
+
 
       const endpoint = uploadType === "photo" 
         ? "/api/mentor/upload-photo" 
@@ -53,13 +48,10 @@ export function PhotoUploadModal({ isOpen, onClose, uploadType, currentImage }: 
 
       if (!res.ok) {
         const errorText = await res.text();
-        console.error("Upload failed:", errorText);
         throw new Error(errorText || `Upload failed with status ${res.status}`);
       }
 
-      const result = await res.json();
-      console.log("Upload successful:", result);
-      return result;
+      return await res.json();
     },
     onSuccess: (data) => {
       toast({

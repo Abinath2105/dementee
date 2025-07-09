@@ -102,7 +102,7 @@ export default function MentorProfilePage() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Cover Photo Area */}
-          <div className="h-48 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-t-lg -mb-16 relative overflow-hidden">
+          <div className="h-64 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-t-lg relative overflow-hidden">
             {mentorProfile.backgroundImage ? (
               <img
                 src={mentorProfile.backgroundImage}
@@ -124,9 +124,9 @@ export default function MentorProfilePage() {
           </div>
           
           {/* Profile Info */}
-          <div className="relative px-6 pb-8 pt-4">
-            <div className="flex flex-col sm:flex-row sm:items-start sm:space-x-8">
-              <div className="relative mb-4 sm:mb-0">
+          <div className="relative px-6 pb-12 -mt-20">
+            <div className="flex flex-col lg:flex-row lg:items-end lg:space-x-8 space-y-6 lg:space-y-0">
+              <div className="relative flex-shrink-0">
                 <Avatar className="h-40 w-40 border-4 border-white shadow-xl bg-white relative z-10">
                   <AvatarImage 
                     src={mentorProfile.photo || undefined} 
@@ -146,30 +146,32 @@ export default function MentorProfilePage() {
                 </Button>
               </div>
               
-              <div className="mt-6 sm:mt-0 flex-1 min-h-[160px]">
-                <div className="space-y-3 mb-6">
-                  <h1 className="text-4xl font-bold text-gray-900 leading-tight">{mentorProfile.name}</h1>
-                  <p className="text-xl text-gray-600 font-medium leading-relaxed">{mentorProfile.profession}</p>
-                  <p className="text-lg text-gray-500">{mentorProfile.experience} experience</p>
-                </div>
-                
-                <div className="flex flex-wrap items-center gap-3 mt-auto">
-                  <div className="flex items-center">
-                    {mentorProfile.isActive ? (
-                      <>
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                        <span className="text-sm text-green-700 font-medium bg-green-50 px-3 py-1 rounded-full">Active Mentor</span>
-                      </>
-                    ) : (
-                      <>
-                        <User className="h-5 w-5 text-yellow-500 mr-2" />
-                        <span className="text-sm text-yellow-700 font-medium bg-yellow-50 px-3 py-1 rounded-full">Pending Activation</span>
-                      </>
-                    )}
+              <div className="flex-1 bg-white rounded-lg shadow-sm p-6 lg:mb-6">
+                <div className="space-y-4">
+                  <div>
+                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{mentorProfile.name}</h1>
+                    <p className="text-xl text-gray-600 font-medium mb-2">{mentorProfile.profession}</p>
+                    <p className="text-lg text-gray-500 mb-4">{mentorProfile.experience} experience</p>
                   </div>
-                  <div className="flex items-center text-gray-600 bg-gray-50 px-3 py-1 rounded-full">
-                    <Mail className="h-4 w-4 mr-2" />
-                    <span className="text-sm">{mentorProfile.email}</span>
+                  
+                  <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-100">
+                    <div className="flex items-center">
+                      {mentorProfile.isActive ? (
+                        <>
+                          <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                          <span className="text-sm text-green-700 font-medium bg-green-50 px-3 py-1 rounded-full">Active Mentor</span>
+                        </>
+                      ) : (
+                        <>
+                          <User className="h-5 w-5 text-yellow-500 mr-2" />
+                          <span className="text-sm text-yellow-700 font-medium bg-yellow-50 px-3 py-1 rounded-full">Pending Activation</span>
+                        </>
+                      )}
+                    </div>
+                    <div className="flex items-center text-gray-600 bg-gray-50 px-3 py-1 rounded-full">
+                      <Mail className="h-4 w-4 mr-2" />
+                      <span className="text-sm">{mentorProfile.email}</span>
+                    </div>
                   </div>
                 </div>
               </div>
