@@ -102,7 +102,7 @@ export default function MentorProfilePage() {
       <div className="bg-white border-b border-gray-200">
         <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
           {/* Cover Photo Area */}
-          <div className="h-64 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-t-lg relative overflow-hidden">
+          <div className="h-48 bg-gradient-to-r from-blue-600 to-indigo-700 relative overflow-hidden">
             {mentorProfile.backgroundImage ? (
               <img
                 src={mentorProfile.backgroundImage}
@@ -123,57 +123,94 @@ export default function MentorProfilePage() {
             </Button>
           </div>
           
-          {/* Profile Info */}
-          <div className="relative px-6 pb-12 -mt-20">
-            <div className="flex flex-col lg:flex-row lg:items-end lg:space-x-8 space-y-6 lg:space-y-0">
-              <div className="relative flex-shrink-0">
-                <Avatar className="h-40 w-40 border-4 border-white shadow-xl bg-white relative z-10">
+          {/* Profile Section */}
+          <div className="bg-white px-6 pb-6">
+            <div className="flex items-end -mt-16 mb-6">
+              <div className="relative mr-6">
+                <Avatar className="h-32 w-32 border-4 border-white shadow-lg bg-white">
                   <AvatarImage 
                     src={mentorProfile.photo || undefined} 
                     alt={mentorProfile.name}
                   />
-                  <AvatarFallback className="text-4xl font-bold bg-blue-600 text-white">
+                  <AvatarFallback className="text-3xl font-bold bg-blue-600 text-white">
                     {getInitials(mentorProfile.name)}
                   </AvatarFallback>
                 </Avatar>
                 <Button
                   variant="outline"
                   size="sm"
-                  className="absolute -bottom-2 -right-2 bg-white shadow-md hover:bg-gray-50 rounded-full p-2"
+                  className="absolute -bottom-1 -right-1 bg-white shadow-md hover:bg-gray-50 rounded-full p-1.5"
                   onClick={() => setPhotoUploadOpen(true)}
                 >
-                  <Camera className="h-4 w-4" />
+                  <Camera className="h-3 w-3" />
                 </Button>
               </div>
-              
-              <div className="flex-1 bg-white rounded-lg shadow-sm p-6 lg:mb-6">
-                <div className="space-y-4">
-                  <div>
-                    <h1 className="text-3xl font-bold text-gray-900 mb-2">{mentorProfile.name}</h1>
-                    <p className="text-xl text-gray-600 font-medium mb-2">{mentorProfile.profession}</p>
-                    <p className="text-lg text-gray-500 mb-4">{mentorProfile.experience} experience</p>
-                  </div>
-                  
-                  <div className="flex flex-wrap items-center gap-3 pt-2 border-t border-gray-100">
-                    <div className="flex items-center">
-                      {mentorProfile.isActive ? (
-                        <>
-                          <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
-                          <span className="text-sm text-green-700 font-medium bg-green-50 px-3 py-1 rounded-full">Active Mentor</span>
-                        </>
-                      ) : (
-                        <>
-                          <User className="h-5 w-5 text-yellow-500 mr-2" />
-                          <span className="text-sm text-yellow-700 font-medium bg-yellow-50 px-3 py-1 rounded-full">Pending Activation</span>
-                        </>
-                      )}
-                    </div>
-                    <div className="flex items-center text-gray-600 bg-gray-50 px-3 py-1 rounded-full">
-                      <Mail className="h-4 w-4 mr-2" />
-                      <span className="text-sm">{mentorProfile.email}</span>
-                    </div>
-                  </div>
+            </div>
+            
+            <div className="space-y-2">
+              <div className="flex items-center gap-2">
+                <h1 className="text-2xl font-bold text-gray-900">{mentorProfile.name}</h1>
+                <div className="flex items-center text-gray-500">
+                  <span className="text-sm">He/Him</span>
                 </div>
+              </div>
+              
+              <p className="text-lg text-gray-700 font-medium leading-relaxed">
+                {mentorProfile.profession}
+              </p>
+              
+              <p className="text-sm text-gray-500 mb-4">
+                VideoLearn Pro • {mentorProfile.experience} experience
+              </p>
+              
+              <div className="flex flex-wrap items-center gap-4 pt-3">
+                <div className="flex items-center">
+                  {mentorProfile.isActive ? (
+                    <>
+                      <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                      <span className="text-sm text-green-700 font-medium">Active Mentor</span>
+                    </>
+                  ) : (
+                    <>
+                      <User className="h-4 w-4 text-yellow-500 mr-2" />
+                      <span className="text-sm text-yellow-700 font-medium">Pending Activation</span>
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center text-gray-600">
+                  <Mail className="h-4 w-4 mr-2" />
+                  <span className="text-sm">{mentorProfile.email}</span>
+                </div>
+              </div>
+              
+              <div className="flex gap-2 pt-4">
+                <Button 
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-2 rounded-full font-medium"
+                  size="sm"
+                >
+                  Open to
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="border-blue-600 text-blue-600 hover:bg-blue-50 px-6 py-2 rounded-full font-medium"
+                  size="sm"
+                >
+                  Add profile section
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-full font-medium"
+                  size="sm"
+                >
+                  Enhance profile
+                </Button>
+                <Button 
+                  variant="outline" 
+                  className="border-gray-300 text-gray-700 hover:bg-gray-50 px-6 py-2 rounded-full font-medium"
+                  size="sm"
+                >
+                  Resources
+                </Button>
               </div>
             </div>
           </div>
