@@ -141,42 +141,64 @@ export function setupAuth(app: Express) {
       { usernameField: 'email' },
       async (email, password, done) => {
         try {
+          console.log(`=== LOGIN ATTEMPT ===`);
+          console.log(`Email: ${email}`);
+          console.log(`Password length: ${password.length}`);
+          
           // First, try to find a regular user
           const user = await storage.getUserByEmail(email);
+          console.log(`Regular user found: ${!!user}`);
+          
           if (user && await comparePasswords(password, user.password)) {
+            console.log(`Regular user password valid`);
             if (!user.isVerified) {
+              console.log(`Regular user not verified`);
               return done(null, false, { message: 'Email not verified' });
             }
+            console.log(`Regular user login successful`);
             return done(null, user);
           }
 
           // If no regular user found, check for mentor
           const mentor = await storage.getMentorByEmail(email);
+          console.log(`Mentor found: ${!!mentor}, Active: ${mentor?.isActive}`);
+          
           if (mentor && mentor.isActive) {
             const mentorCredentials = await storage.getMentorCredentials(mentor.id);
-            if (mentorCredentials && await comparePasswords(password, mentorCredentials.password)) {
-              // Create a user-like object for mentors
-              const mentorUser = {
-                id: mentor.id,
-                email: mentor.email,
-                username: mentor.email.split('@')[0], // Use email prefix as username
-                fullName: mentor.name,
-                isVerified: true,
-                isAdmin: false,
-                isMentor: true, // Special flag to identify mentors
-                mentorProfile: {
-                  profession: mentor.profession,
-                  bio: mentor.bio,
-                  photo: mentor.photo,
-                }
-              };
-              return done(null, mentorUser);
+            console.log(`Mentor credentials found: ${!!mentorCredentials}`);
+            
+            if (mentorCredentials) {
+              const passwordMatch = await comparePasswords(password, mentorCredentials.password);
+              console.log(`Mentor password match: ${passwordMatch}`);
+              
+              if (passwordMatch) {
+                // Create a user-like object for mentors
+                const mentorUser = {
+                  id: mentor.id,
+                  email: mentor.email,
+                  username: mentor.email.split('@')[0], // Use email prefix as username
+                  fullName: mentor.name,
+                  isVerified: true,
+                  isAdmin: false,
+                  isMentor: true, // Special flag to identify mentors
+                  mentorProfile: {
+                    profession: mentor.profession,
+                    bio: mentor.bio,
+                    photo: mentor.photo,
+                  }
+                };
+                console.log(`Mentor login successful for: ${mentor.name}`);
+                return done(null, mentorUser);
+              }
             }
           }
 
           // No valid user or mentor found
+          console.log(`Login failed - no valid credentials found`);
+          console.log(`=== END LOGIN ATTEMPT ===`);
           return done(null, false);
         } catch (error) {
+          console.error(`Login error:`, error);
           return done(error);
         }
       }
