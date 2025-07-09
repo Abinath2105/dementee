@@ -69,132 +69,170 @@ export default function MentorProfilePage() {
   };
 
   return (
-    <div className="min-h-screen bg-background">
-      {/* Header */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white">
-        <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center space-x-6">
-              <Avatar className="h-24 w-24 border-4 border-white/20">
+    <div className="min-h-screen bg-gray-50">
+      {/* Navigation Bar */}
+      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-10">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Link href="/">
+                <div className="flex items-center cursor-pointer">
+                  <ArrowLeft className="h-5 w-5 text-gray-600 mr-2" />
+                  <span className="text-gray-900 font-medium">Back</span>
+                </div>
+              </Link>
+            </div>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => logoutMutation.mutate()}
+              disabled={logoutMutation.isPending}
+            >
+              <LogOut className="h-4 w-4 mr-2" />
+              Sign out
+            </Button>
+          </div>
+        </div>
+      </nav>
+
+      {/* Profile Header */}
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8">
+          {/* Cover Photo Area */}
+          <div className="h-48 bg-gradient-to-r from-blue-600 to-indigo-700 rounded-t-lg -mb-16 relative overflow-hidden">
+            <div className="absolute inset-0 bg-black/10"></div>
+          </div>
+          
+          {/* Profile Info */}
+          <div className="relative px-6 pb-6">
+            <div className="flex flex-col sm:flex-row sm:items-end sm:space-x-6">
+              <Avatar className="h-32 w-32 border-4 border-white shadow-lg bg-white relative z-10">
                 <AvatarImage 
                   src={mentorProfile.photo || undefined} 
                   alt={mentorProfile.name}
                 />
-                <AvatarFallback className="text-2xl font-bold bg-white/10 text-white">
+                <AvatarFallback className="text-3xl font-bold bg-blue-600 text-white">
                   {getInitials(mentorProfile.name)}
                 </AvatarFallback>
               </Avatar>
-              <div>
-                <h1 className="text-3xl font-bold">{mentorProfile.name}</h1>
-                <p className="text-xl opacity-90 mt-1">{mentorProfile.profession}</p>
-                <div className="flex items-center mt-2">
-                  {mentorProfile.isActive ? (
-                    <>
-                      <CheckCircle className="h-5 w-5 mr-2" />
-                      <span className="text-sm">Active Mentor</span>
-                    </>
-                  ) : (
-                    <>
-                      <User className="h-5 w-5 mr-2" />
-                      <span className="text-sm">Pending Activation</span>
-                    </>
-                  )}
+              
+              <div className="mt-4 sm:mt-0 flex-1">
+                <h1 className="text-3xl font-bold text-gray-900">{mentorProfile.name}</h1>
+                <p className="text-xl text-gray-600 mt-1">{mentorProfile.profession}</p>
+                <p className="text-gray-500 mt-1">{mentorProfile.experience} experience</p>
+                
+                <div className="flex items-center mt-3 space-x-4">
+                  <div className="flex items-center">
+                    {mentorProfile.isActive ? (
+                      <>
+                        <CheckCircle className="h-5 w-5 text-green-500 mr-2" />
+                        <span className="text-sm text-green-700 font-medium">Active Mentor</span>
+                      </>
+                    ) : (
+                      <>
+                        <User className="h-5 w-5 text-yellow-500 mr-2" />
+                        <span className="text-sm text-yellow-700 font-medium">Pending Activation</span>
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center text-gray-500">
+                    <Mail className="h-4 w-4 mr-2" />
+                    <span className="text-sm">{mentorProfile.email}</span>
+                  </div>
                 </div>
               </div>
-            </div>
-            <div className="flex items-center space-x-3">
-              <Link href="/">
-                <Button 
-                  variant="outline" 
-                  className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                >
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Home
-                </Button>
-              </Link>
-              <Button 
-                variant="outline" 
-                className="bg-white/10 border-white/20 text-white hover:bg-white/20"
-                onClick={() => logoutMutation.mutate()}
-                disabled={logoutMutation.isPending}
-              >
-                <LogOut className="h-4 w-4 mr-2" />
-                Logout
-              </Button>
             </div>
           </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Profile Details */}
+          {/* Main Content Area */}
           <div className="lg:col-span-2 space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <User className="h-5 w-5 mr-2" />
-                  About Me
-                </CardTitle>
+            {/* About Section */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold">About</CardTitle>
               </CardHeader>
               <CardContent>
-                <p className="text-gray-600 leading-relaxed">
+                <p className="text-gray-700 leading-relaxed">
                   Passionate software engineer with over 10 years of experience in full-stack development, cloud architecture, and team leadership. I love mentoring developers and sharing knowledge about modern web technologies, DevOps practices, and career growth in tech.
                 </p>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Video className="h-5 w-5 mr-2" />
-                  Mentor Information
+            {/* Experience Section */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold flex items-center">
+                  <Briefcase className="h-5 w-5 mr-2 text-gray-600" />
+                  Professional Experience
                 </CardTitle>
-                <CardDescription>
-                  Your role and expertise areas
-                </CardDescription>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Profession:</span>
-                    <span className="text-sm">{mentorProfile.profession}</span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm font-medium text-gray-600">Status:</span>
-                    <Badge variant={mentorProfile.isActive ? "default" : "secondary"}>
-                      {mentorProfile.isActive ? "Active" : "Inactive"}
-                    </Badge>
-                  </div>
-                  {mentorProfile.activatedAt && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm font-medium text-gray-600">Activated:</span>
-                      <span className="text-sm">{formatDate(mentorProfile.activatedAt)}</span>
+                <div className="space-y-4">
+                  <div className="flex items-start space-x-4">
+                    <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                      <Briefcase className="h-6 w-6 text-blue-600" />
                     </div>
-                  )}
+                    <div className="flex-1">
+                      <h3 className="font-semibold text-gray-900">{mentorProfile.profession}</h3>
+                      <p className="text-gray-600">VideoLearn Pro Platform</p>
+                      <p className="text-sm text-gray-500 mt-1">{mentorProfile.experience}</p>
+                      <div className="flex items-center mt-2">
+                        <Calendar className="h-4 w-4 text-gray-400 mr-1" />
+                        <span className="text-sm text-gray-500">
+                          Since {formatDate(mentorProfile.createdAt)}
+                        </span>
+                      </div>
+                    </div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle className="flex items-center">
-                  <Users className="h-5 w-5 mr-2" />
-                  Account Information
+            {/* Skills & Expertise */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold">Skills & Expertise</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="flex flex-wrap gap-2">
+                  <Badge variant="secondary" className="text-sm py-1 px-3">React Development</Badge>
+                  <Badge variant="secondary" className="text-sm py-1 px-3">Node.js</Badge>
+                  <Badge variant="secondary" className="text-sm py-1 px-3">TypeScript</Badge>
+                  <Badge variant="secondary" className="text-sm py-1 px-3">System Design</Badge>
+                  <Badge variant="secondary" className="text-sm py-1 px-3">Cloud Architecture</Badge>
+                  <Badge variant="secondary" className="text-sm py-1 px-3">Team Leadership</Badge>
+                  <Badge variant="secondary" className="text-sm py-1 px-3">Mentoring</Badge>
+                  <Badge variant="secondary" className="text-sm py-1 px-3">DevOps</Badge>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Activity Section */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold flex items-center">
+                  <Video className="h-5 w-5 mr-2 text-gray-600" />
+                  Teaching Activity
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                  <div className="text-center p-4 bg-blue-50 rounded-lg">
-                    <div className="text-lg font-bold text-blue-600">
-                      {mentorProfile.hasCredentials ? "Yes" : "No"}
-                    </div>
-                    <div className="text-sm text-gray-600">Account Setup</div>
+                <div className="grid grid-cols-3 gap-6 text-center">
+                  <div>
+                    <div className="text-2xl font-bold text-blue-600">24</div>
+                    <div className="text-sm text-gray-600">Videos Created</div>
                   </div>
-                  <div className="text-center p-4 bg-green-50 rounded-lg">
-                    <div className="text-lg font-bold text-green-600">Mentor</div>
-                    <div className="text-sm text-gray-600">Account Type</div>
+                  <div>
+                    <div className="text-2xl font-bold text-green-600">1,247</div>
+                    <div className="text-sm text-gray-600">Total Views</div>
+                  </div>
+                  <div>
+                    <div className="text-2xl font-bold text-purple-600">89</div>
+                    <div className="text-sm text-gray-600">Students Mentored</div>
                   </div>
                 </div>
               </CardContent>
@@ -203,70 +241,69 @@ export default function MentorProfilePage() {
 
           {/* Sidebar */}
           <div className="space-y-6">
-            <Card>
-              <CardHeader>
-                <CardTitle>Contact Information</CardTitle>
+            {/* Contact Info */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold">Contact Info</CardTitle>
               </CardHeader>
               <CardContent className="space-y-4">
                 <div className="flex items-center space-x-3">
-                  <Mail className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">{mentorProfile.email}</span>
+                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Mail className="h-4 w-4 text-gray-600" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">Email</div>
+                    <div className="text-sm text-gray-600">{mentorProfile.email}</div>
+                  </div>
                 </div>
                 <div className="flex items-center space-x-3">
-                  <Briefcase className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">{mentorProfile.profession}</span>
-                </div>
-                <div className="flex items-center space-x-3">
-                  <Calendar className="h-4 w-4 text-gray-400" />
-                  <span className="text-sm">
-                    Joined {formatDate(mentorProfile.createdAt)}
-                  </span>
+                  <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center">
+                    <Briefcase className="h-4 w-4 text-gray-600" />
+                  </div>
+                  <div>
+                    <div className="text-sm font-medium">Position</div>
+                    <div className="text-sm text-gray-600">{mentorProfile.profession}</div>
+                  </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Account Status</CardTitle>
+            {/* Account Status */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold">Account Status</CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="space-y-3">
+                <div className="space-y-4">
                   <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Status</span>
+                    <span className="text-sm font-medium text-gray-700">Status</span>
                     <Badge variant={mentorProfile.isActive ? "default" : "secondary"} 
-                           className={mentorProfile.isActive ? "bg-green-500" : ""}>
-                      {mentorProfile.isActive ? (
-                        <>
-                          <CheckCircle className="h-3 w-3 mr-1" />
-                          Active
-                        </>
-                      ) : (
-                        <>
-                          <User className="h-3 w-3 mr-1" />
-                          Inactive
-                        </>
-                      )}
+                           className={mentorProfile.isActive ? "bg-green-500 hover:bg-green-600" : ""}>
+                      {mentorProfile.isActive ? "Active" : "Inactive"}
                     </Badge>
                   </div>
                   {mentorProfile.activatedAt && (
                     <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Activated</span>
-                      <span className="text-sm">
+                      <span className="text-sm font-medium text-gray-700">Activated</span>
+                      <span className="text-sm text-gray-600">
                         {formatDate(mentorProfile.activatedAt)}
                       </span>
                     </div>
                   )}
-                  <Separator />
-                  <div className="text-xs text-gray-500">
-                    Last updated: {formatDate(mentorProfile.updatedAt)}
+                  <div className="flex items-center justify-between">
+                    <span className="text-sm font-medium text-gray-700">Joined</span>
+                    <span className="text-sm text-gray-600">
+                      {formatDate(mentorProfile.createdAt)}
+                    </span>
                   </div>
                 </div>
               </CardContent>
             </Card>
 
-            <Card>
-              <CardHeader>
-                <CardTitle>Quick Actions</CardTitle>
+            {/* Quick Actions */}
+            <Card className="shadow-sm">
+              <CardHeader className="pb-4">
+                <CardTitle className="text-lg font-semibold">Quick Actions</CardTitle>
               </CardHeader>
               <CardContent className="space-y-3">
                 <Button variant="outline" className="w-full justify-start">
@@ -275,11 +312,11 @@ export default function MentorProfilePage() {
                 </Button>
                 <Button variant="outline" className="w-full justify-start">
                   <Video className="h-4 w-4 mr-2" />
-                  My Videos
+                  Manage Videos
                 </Button>
                 <Button variant="outline" className="w-full justify-start">
                   <Users className="h-4 w-4 mr-2" />
-                  Student Analytics
+                  View Analytics
                 </Button>
               </CardContent>
             </Card>
