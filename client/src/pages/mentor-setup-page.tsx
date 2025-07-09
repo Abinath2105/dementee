@@ -8,10 +8,12 @@ import { Label } from "@/components/ui/label";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { CheckCircle, User, Lock, ArrowRight } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { useAuth } from "@/hooks/use-auth";
 
 export default function MentorSetupPage() {
   const [location, navigate] = useLocation();
   const { toast } = useToast();
+  const { user } = useAuth();
   
   // Extract token from URL
   const urlParams = new URLSearchParams(location.split('?')[1] || '');
@@ -21,7 +23,7 @@ export default function MentorSetupPage() {
   console.log('Location:', location);
   console.log('Token:', token);
   console.log('URL Search:', location.split('?')[1] || 'No query string');
-  console.log('Full URL to test: https://053c500c-736b-4cd2-9361-58b3f106515b-00-11w8zsf6byy25.spock.replit.dev/mentor/setup?token=u9GRbrLBuRBFce4Ng8KIXXVM8tclIsi8');
+  console.log('Current user:', user);
   
   // Form state
   const [password, setPassword] = useState("");
@@ -34,6 +36,30 @@ export default function MentorSetupPage() {
       navigate('/auth');
     }
   }, [token, navigate]);
+
+  // Show notice if user is already logged in
+  if (user) {
+    return (
+      <div className="min-h-screen bg-gray-50 dark:bg-gray-900 flex items-center justify-center p-4">
+        <Card className="w-full max-w-md">
+          <CardHeader className="text-center">
+            <div className="mx-auto w-16 h-16 bg-blue-100 dark:bg-blue-900 rounded-full flex items-center justify-center mb-4">
+              <User className="h-8 w-8 text-blue-600 dark:text-blue-400" />
+            </div>
+            <CardTitle className="text-2xl">Already Logged In</CardTitle>
+          </CardHeader>
+          <CardContent className="text-center space-y-4">
+            <p className="text-gray-600 dark:text-gray-400">
+              You are already logged in as {user.fullName}. Please log out first to set up a mentor account.
+            </p>
+            <Button onClick={() => navigate('/')} className="w-full">
+              Go to Dashboard
+            </Button>
+          </CardContent>
+        </Card>
+      </div>
+    );
+  }
 
   // Validate invitation token
   const { data: invitation, isLoading, error } = useQuery({
