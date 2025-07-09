@@ -59,16 +59,16 @@ export default function AuthPage() {
         <p className="text-gray-600 mt-2 text-lg">Transform Your Learning Journey</p>
       </div>
 
-      <div className="flex flex-col lg:flex-row max-w-7xl mx-auto p-8 gap-8">
-        {/* Main Student Login Section */}
-        <div className="flex-1 lg:flex-[2]">
+      <div className="flex flex-col lg:flex-row max-w-6xl mx-auto p-8 gap-8">
+        {/* Student Login Section */}
+        <div className="flex-1">
           <div className="bg-white rounded-xl shadow-lg p-8">
             <div className="text-center mb-6">
               <div className="flex items-center justify-center mb-4">
-                <GraduationCap className="h-10 w-10 text-blue-600 mr-2" />
-                <h2 className="text-2xl font-bold text-gray-900">Student Portal</h2>
+                <GraduationCap className="h-12 w-12 text-blue-600 mr-3" />
+                <h2 className="text-3xl font-bold text-gray-900">Student Portal</h2>
               </div>
-              <p className="text-gray-600">Join thousands of learners advancing their skills</p>
+              <p className="text-gray-600 text-lg">Join thousands of learners advancing their skills</p>
             </div>
 
             <Tabs defaultValue="student-login" className="w-full">
@@ -135,6 +135,13 @@ export default function AuthPage() {
                             <span className="text-xs text-gray-700">Community</span>
                           </div>
                         </div>
+                      </div>
+
+                      {/* Demo Credentials */}
+                      <div className="mt-4 p-3 bg-gray-50 rounded-lg">
+                        <p className="text-xs text-gray-600 text-center">
+                          <strong>Demo:</strong> test@example.com / password123
+                        </p>
                       </div>
                     </form>
                   </CardContent>
@@ -208,117 +215,96 @@ export default function AuthPage() {
           </div>
         </div>
 
-        {/* Sidebar - Admin & Mentor Login */}
-        <div className="lg:flex-1 space-y-6">
-          {/* Admin Section */}
-          <Card className="bg-gradient-to-r from-red-50 to-red-100 border-red-200">
-            <CardHeader className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <Shield className="h-8 w-8 text-red-600 mr-2" />
-                <CardTitle className="text-lg text-red-800">Admin Portal</CardTitle>
+        {/* Admin & Mentor Login Section */}
+        <div className="flex-1">
+          <div className="bg-white rounded-xl shadow-lg p-8">
+            <div className="text-center mb-6">
+              <div className="flex items-center justify-center mb-4">
+                <div className="flex space-x-2">
+                  <Shield className="h-12 w-12 text-red-600" />
+                  <UserCheck className="h-12 w-12 text-purple-600" />
+                </div>
               </div>
-              <CardDescription className="text-red-700">Platform administration access</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLogin} className="space-y-3">
-                <Input
-                  name="email"
-                  type="email"
-                  placeholder="Admin email"
-                  defaultValue="admin@example.com"
-                  className="h-10"
-                />
-                <Input
-                  name="password"
-                  type="password"
-                  placeholder="Admin password"
-                  defaultValue="admin123"
-                  className="h-10"
-                />
-                <Button 
-                  type="submit" 
-                  variant="outline"
-                  className="w-full border-red-300 text-red-700 hover:bg-red-50"
-                  disabled={loginMutation.isPending}
-                >
-                  <Shield className="h-4 w-4 mr-2" />
-                  Admin Login
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+              <h2 className="text-3xl font-bold text-gray-900">Mentor & Admin Portal</h2>
+              <p className="text-gray-600 text-lg">Platform management and instruction access</p>
+            </div>
 
-          {/* Mentor Section */}
-          <Card className="bg-gradient-to-r from-purple-50 to-purple-100 border-purple-200">
-            <CardHeader className="text-center">
-              <div className="flex items-center justify-center mb-2">
-                <UserCheck className="h-8 w-8 text-purple-600 mr-2" />
-                <CardTitle className="text-lg text-purple-800">Mentor Portal</CardTitle>
-              </div>
-              <CardDescription className="text-purple-700">Instructor and mentor access</CardDescription>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLogin} className="space-y-3">
-                <Input
-                  name="email"
-                  type="email"
-                  placeholder="Mentor email"
-                  defaultValue="mentor@example.com"
-                  className="h-10"
-                />
-                <Input
-                  name="password"
-                  type="password"
-                  placeholder="Mentor password"
-                  defaultValue="mentor123"
-                  className="h-10"
-                />
-                <Button 
-                  type="submit" 
-                  variant="outline"
-                  className="w-full border-purple-300 text-purple-700 hover:bg-purple-50"
-                  disabled={loginMutation.isPending}
-                >
-                  <UserCheck className="h-4 w-4 mr-2" />
-                  Mentor Login
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+            <div className="space-y-6">
+              {/* Admin Login */}
+              <Card className="border border-red-200 bg-gradient-to-r from-red-50 to-red-100">
+                <CardHeader className="text-center pb-4">
+                  <div className="flex items-center justify-center mb-2">
+                    <Shield className="h-8 w-8 text-red-600 mr-2" />
+                    <CardTitle className="text-xl text-red-800">Admin Access</CardTitle>
+                  </div>
+                  <CardDescription className="text-red-700">Platform administration</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <Input
+                      name="email"
+                      type="email"
+                      placeholder="Admin email"
+                      defaultValue="admin@example.com"
+                      className="h-12"
+                    />
+                    <Input
+                      name="password"
+                      type="password"
+                      placeholder="Admin password"
+                      defaultValue="admin123"
+                      className="h-12"
+                    />
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 bg-red-600 hover:bg-red-700 text-white"
+                      disabled={loginMutation.isPending}
+                    >
+                      <Shield className="h-4 w-4 mr-2" />
+                      Admin Login
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
 
-          {/* Student Demo Section */}
-          <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-blue-200">
-            <CardHeader className="text-center">
-              <CardTitle className="text-sm text-blue-800">Quick Demo Access</CardTitle>
-            </CardHeader>
-            <CardContent>
-              <form onSubmit={handleLogin} className="space-y-3">
-                <Input
-                  name="email"
-                  type="email"
-                  placeholder="Student email"
-                  defaultValue="test@example.com"
-                  className="h-10"
-                />
-                <Input
-                  name="password"
-                  type="password"
-                  placeholder="Student password"
-                  defaultValue="password123"
-                  className="h-10"
-                />
-                <Button 
-                  type="submit" 
-                  variant="outline"
-                  className="w-full border-blue-300 text-blue-700 hover:bg-blue-50"
-                  disabled={loginMutation.isPending}
-                >
-                  <GraduationCap className="h-4 w-4 mr-2" />
-                  Demo Student
-                </Button>
-              </form>
-            </CardContent>
-          </Card>
+              {/* Mentor Login */}
+              <Card className="border border-purple-200 bg-gradient-to-r from-purple-50 to-purple-100">
+                <CardHeader className="text-center pb-4">
+                  <div className="flex items-center justify-center mb-2">
+                    <UserCheck className="h-8 w-8 text-purple-600 mr-2" />
+                    <CardTitle className="text-xl text-purple-800">Mentor Access</CardTitle>
+                  </div>
+                  <CardDescription className="text-purple-700">Instructor and mentor portal</CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <Input
+                      name="email"
+                      type="email"
+                      placeholder="Mentor email"
+                      defaultValue="mentor@example.com"
+                      className="h-12"
+                    />
+                    <Input
+                      name="password"
+                      type="password"
+                      placeholder="Mentor password"
+                      defaultValue="mentor123"
+                      className="h-12"
+                    />
+                    <Button 
+                      type="submit" 
+                      className="w-full h-12 bg-purple-600 hover:bg-purple-700 text-white"
+                      disabled={loginMutation.isPending}
+                    >
+                      <UserCheck className="h-4 w-4 mr-2" />
+                      Mentor Login
+                    </Button>
+                  </form>
+                </CardContent>
+              </Card>
+            </div>
+          </div>
         </div>
       </div>
 
