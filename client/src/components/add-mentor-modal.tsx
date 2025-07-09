@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { useMutation } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
-import { User, Mail, Briefcase, Award, Save } from "lucide-react";
+import { User, Mail, Briefcase, Award, Save, Upload, X } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import type { InsertMentor } from "@shared/schema";
@@ -24,6 +24,9 @@ export function AddMentorModal({ isOpen, onClose }: AddMentorModalProps) {
   const [profession, setProfession] = useState("");
   const [experience, setExperience] = useState("");
   const [photo, setPhoto] = useState("");
+  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoPreview, setPhotoPreview] = useState<string>("");
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const addMentorMutation = useMutation({
     mutationFn: async (mentorData: InsertMentor) => {
@@ -85,10 +88,51 @@ export function AddMentorModal({ isOpen, onClose }: AddMentorModalProps) {
       email: email.trim().toLowerCase(),
       profession: profession.trim(),
       experience: experience.trim(),
-      photo: photo.trim() || undefined,
+      photo: photoPreview || photo.trim() || undefined,
     };
 
     addMentorMutation.mutate(mentorData);
+  };
+
+  const handleFileSelect = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      if (file.size > 5 * 1024 * 1024) { // 5MB limit
+        toast({
+          title: "File too large",
+          description: "Please select an image smaller than 5MB",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      if (!file.type.startsWith('image/')) {
+        toast({
+          title: "Invalid file type",
+          description: "Please select an image file",
+          variant: "destructive",
+        });
+        return;
+      }
+
+      setPhotoFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setPhotoPreview(e.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setPhotoFile(null);
+    setPhotoPreview("");
+    setPhoto("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
   };
 
   const handleClose = () => {
@@ -97,6 +141,11 @@ export function AddMentorModal({ isOpen, onClose }: AddMentorModalProps) {
     setProfession("");
     setExperience("");
     setPhoto("");
+    setPhotoFile(null);
+    setPhotoPreview("");
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
     onClose();
   };
 
@@ -160,17 +209,59 @@ export function AddMentorModal({ isOpen, onClose }: AddMentorModalProps) {
           </div>
 
           <div>
-            <Label htmlFor="photo">Profile Photo URL (Optional)</Label>
-            <Input
-              id="photo"
-              type="url"
-              value={photo}
-              onChange={(e) => setPhoto(e.target.value)}
-              placeholder="https://example.com/photo.jpg"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Provide a URL to the mentor's profile photo
-            </p>
+            <Label htmlFor="photo">Profile Photo (Optional)</Label>
+            <div className="space-y-3">
+              {photoPreview && (
+                <div className="flex items-center space-x-3">
+                  <img 
+                    src={photoPreview} 
+                    alt="Preview" 
+                    className="w-16 h-16 object-cover rounded-full border"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    size="sm"
+                    onClick={handleRemovePhoto}
+                  >
+                    <X className="h-4 w-4 mr-2" />
+                    Remove
+                  </Button>
+                </div>
+              )}
+              
+              <div className="flex items-center space-x-2">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => fileInputRef.current?.click()}
+                  className="flex items-center space-x-2"
+                >
+                  <Upload className="h-4 w-4" />
+                  <span>Upload Photo</span>
+                </Button>
+                <span className="text-sm text-gray-500">or</span>
+                <Input
+                  type="url"
+                  value={photo}
+                  onChange={(e) => setPhoto(e.target.value)}
+                  placeholder="Enter photo URL"
+                  className="flex-1"
+                />
+              </div>
+              
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="hidden"
+              />
+              
+              <p className="text-xs text-gray-500">
+                Upload an image file (max 5MB) or provide a URL
+              </p>
+            </div>
           </div>
 
           <div className="bg-blue-50 dark:bg-blue-950 p-4 rounded-lg border border-blue-200 dark:border-blue-800">
