@@ -62,10 +62,45 @@ export const mentors = pgTable("mentors", {
   backgroundImage: text("background_image"),
   profession: text("profession").notNull(),
   experience: text("experience").notNull(),
+  bio: text("bio"),
+  location: text("location"),
+  skills: text("skills").array(),
+  openToOpportunities: text("open_to_opportunities").array(),
   isActive: boolean("is_active").default(false).notNull(),
   invitedAt: timestamp("invited_at").defaultNow().notNull(),
   activatedAt: timestamp("activated_at"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+// Mentor profile sections
+export const mentorSections = pgTable("mentor_sections", {
+  id: serial("id").primaryKey(),
+  mentorId: integer("mentor_id").references(() => mentors.id, { onDelete: "cascade" }),
+  type: text("type").notNull(), // about, experience, education, certifications, projects
+  title: text("title"),
+  description: text("description"),
+  company: text("company"),
+  startDate: timestamp("start_date"),
+  endDate: timestamp("end_date"),
+  isCurrent: boolean("is_current").default(false),
+  orderIndex: integer("order_index").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+// Mentor resources
+export const mentorResources = pgTable("mentor_resources", {
+  id: serial("id").primaryKey(),
+  mentorId: integer("mentor_id").references(() => mentors.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  description: text("description"),
+  type: text("type").notNull(), // video, document, link, download
+  url: text("url"),
+  filePath: text("file_path"),
+  fileSize: integer("file_size"),
+  duration: text("duration"),
+  category: text("category"), // learning, tools, external
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
 });
 
 export const mentorCredentials = pgTable("mentor_credentials", {
@@ -156,6 +191,16 @@ export const videoViewsRelations = relations(videoViews, ({ one }) => ({
 export const mentorsRelations = relations(mentors, ({ one, many }) => ({
   credentials: one(mentorCredentials),
   invitations: many(mentorInvitations),
+  sections: many(mentorSections),
+  resources: many(mentorResources),
+}));
+
+export const mentorSectionsRelations = relations(mentorSections, ({ one }) => ({
+  mentor: one(mentors, { fields: [mentorSections.mentorId], references: [mentors.id] }),
+}));
+
+export const mentorResourcesRelations = relations(mentorResources, ({ one }) => ({
+  mentor: one(mentors, { fields: [mentorResources.mentorId], references: [mentors.id] }),
 }));
 
 export const mentorCredentialsRelations = relations(mentorCredentials, ({ one }) => ({
@@ -243,6 +288,36 @@ export const insertMentorSchema = createInsertSchema(mentors).pick({
   backgroundImage: true,
   profession: true,
   experience: true,
+  bio: true,
+  location: true,
+  skills: true,
+  openToOpportunities: true,
+  isActive: true,
+});
+
+export const insertMentorSectionSchema = createInsertSchema(mentorSections).pick({
+  mentorId: true,
+  type: true,
+  title: true,
+  description: true,
+  company: true,
+  startDate: true,
+  endDate: true,
+  isCurrent: true,
+  orderIndex: true,
+});
+
+export const insertMentorResourceSchema = createInsertSchema(mentorResources).pick({
+  mentorId: true,
+  title: true,
+  description: true,
+  type: true,
+  url: true,
+  filePath: true,
+  fileSize: true,
+  duration: true,
+  category: true,
+  isActive: true,
 });
 
 export const insertMentorCredentialsSchema = createInsertSchema(mentorCredentials).pick({
@@ -294,6 +369,10 @@ export type MentorCredentials = typeof mentorCredentials.$inferSelect;
 export type InsertMentorCredentials = z.infer<typeof insertMentorCredentialsSchema>;
 export type MentorInvitation = typeof mentorInvitations.$inferSelect;
 export type InsertMentorInvitation = z.infer<typeof insertMentorInvitationSchema>;
+export type MentorSection = typeof mentorSections.$inferSelect;
+export type InsertMentorSection = z.infer<typeof insertMentorSectionSchema>;
+export type MentorResource = typeof mentorResources.$inferSelect;
+export type InsertMentorResource = z.infer<typeof insertMentorResourceSchema>;
 export type VideoProgress = typeof videoProgress.$inferSelect;
 export type InsertVideoProgress = z.infer<typeof insertVideoProgressSchema>;
 export type VideoBookmark = typeof videoBookmarks.$inferSelect;

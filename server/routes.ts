@@ -939,6 +939,166 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Update mentor profile
+  app.put("/api/mentor/profile", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const mentor = await storage.getMentorByEmail(req.user.email);
+      if (!mentor) {
+        return res.status(404).json({ message: "Mentor profile not found" });
+      }
+      
+      const updatedMentor = await storage.updateMentorProfile(mentor.id, req.body);
+      res.json(updatedMentor);
+    } catch (error) {
+      console.error("Error updating mentor profile:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Mentor sections
+  app.get("/api/mentor/sections", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const mentor = await storage.getMentorByEmail(req.user.email);
+      if (!mentor) {
+        return res.status(404).json({ message: "Mentor profile not found" });
+      }
+      
+      const sections = await storage.getMentorSections(mentor.id);
+      res.json(sections);
+    } catch (error) {
+      console.error("Error fetching mentor sections:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/mentor/sections", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const mentor = await storage.getMentorByEmail(req.user.email);
+      if (!mentor) {
+        return res.status(404).json({ message: "Mentor profile not found" });
+      }
+      
+      const section = await storage.createMentorSection({
+        ...req.body,
+        mentorId: mentor.id
+      });
+      res.json(section);
+    } catch (error) {
+      console.error("Error creating mentor section:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.put("/api/mentor/sections/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const section = await storage.updateMentorSection(parseInt(req.params.id), req.body);
+      res.json(section);
+    } catch (error) {
+      console.error("Error updating mentor section:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/mentor/sections/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      await storage.deleteMentorSection(parseInt(req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting mentor section:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  // Mentor resources
+  app.get("/api/mentor/resources", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const mentor = await storage.getMentorByEmail(req.user.email);
+      if (!mentor) {
+        return res.status(404).json({ message: "Mentor profile not found" });
+      }
+      
+      const resources = await storage.getMentorResources(mentor.id);
+      res.json(resources);
+    } catch (error) {
+      console.error("Error fetching mentor resources:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.post("/api/mentor/resources", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const mentor = await storage.getMentorByEmail(req.user.email);
+      if (!mentor) {
+        return res.status(404).json({ message: "Mentor profile not found" });
+      }
+      
+      const resource = await storage.createMentorResource({
+        ...req.body,
+        mentorId: mentor.id
+      });
+      res.json(resource);
+    } catch (error) {
+      console.error("Error creating mentor resource:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.put("/api/mentor/resources/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      const resource = await storage.updateMentorResource(parseInt(req.params.id), req.body);
+      res.json(resource);
+    } catch (error) {
+      console.error("Error updating mentor resource:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
+  app.delete("/api/mentor/resources/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).send("Unauthorized");
+    }
+
+    try {
+      await storage.deleteMentorResource(parseInt(req.params.id));
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting mentor resource:", error);
+      res.status(500).json({ error: "Internal server error" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -1,6 +1,6 @@
-import { users, videos, categories, otpCodes, videoViews, mentors, mentorCredentials, mentorInvitations, videoProgress, videoBookmarks, userWatchlist, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type Mentor, type InsertMentor, type MentorWithStats, type MentorCredentials, type InsertMentorCredentials, type MentorInvitation, type InsertMentorInvitation, type VideoProgress, type InsertVideoProgress, type VideoBookmark, type InsertVideoBookmark, type UserWatchlist, type InsertUserWatchlist } from "@shared/schema";
+import { users, videos, categories, otpCodes, videoViews, mentors, mentorCredentials, mentorInvitations, videoProgress, videoBookmarks, userWatchlist, mentorSections, mentorResources, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type Mentor, type InsertMentor, type MentorWithStats, type MentorCredentials, type InsertMentorCredentials, type MentorInvitation, type InsertMentorInvitation, type VideoProgress, type InsertVideoProgress, type VideoBookmark, type InsertVideoBookmark, type UserWatchlist, type InsertUserWatchlist, type MentorSection, type InsertMentorSection, type MentorResource, type InsertMentorResource } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, sql, and, or, ilike, count, sum } from "drizzle-orm";
+import { eq, desc, sql, and, or, ilike, count, sum, asc } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -79,6 +79,21 @@ export interface IStorage {
   createMentorInvitation(invitation: InsertMentorInvitation): Promise<MentorInvitation>;
   getMentorInvitationByToken(token: string): Promise<MentorInvitation | undefined>;
   markInvitationAsUsed(id: number): Promise<void>;
+
+  // Mentor profile sections
+  getMentorSections(mentorId: number): Promise<MentorSection[]>;
+  createMentorSection(section: InsertMentorSection): Promise<MentorSection>;
+  updateMentorSection(id: number, section: Partial<InsertMentorSection>): Promise<MentorSection>;
+  deleteMentorSection(id: number): Promise<void>;
+
+  // Mentor resources
+  getMentorResources(mentorId: number): Promise<MentorResource[]>;
+  createMentorResource(resource: InsertMentorResource): Promise<MentorResource>;
+  updateMentorResource(id: number, resource: Partial<InsertMentorResource>): Promise<MentorResource>;
+  deleteMentorResource(id: number): Promise<void>;
+
+  // Mentor profile data
+  updateMentorProfile(mentorId: number, data: Partial<InsertMentor>): Promise<Mentor>;
 
   sessionStore: any;
 }
@@ -573,6 +588,76 @@ export class DatabaseStorage implements IStorage {
       .where(and(eq(userWatchlist.userId, userId), eq(userWatchlist.videoId, videoId)))
       .limit(1);
     return !!exists;
+  }
+
+  // Mentor profile sections
+  async getMentorSections(mentorId: number): Promise<MentorSection[]> {
+    return await db
+      .select()
+      .from(mentorSections)
+      .where(eq(mentorSections.mentorId, mentorId))
+      .orderBy(asc(mentorSections.orderIndex));
+  }
+
+  async createMentorSection(section: InsertMentorSection): Promise<MentorSection> {
+    const [newSection] = await db
+      .insert(mentorSections)
+      .values(section)
+      .returning();
+    return newSection;
+  }
+
+  async updateMentorSection(id: number, section: Partial<InsertMentorSection>): Promise<MentorSection> {
+    const [updatedSection] = await db
+      .update(mentorSections)
+      .set(section)
+      .where(eq(mentorSections.id, id))
+      .returning();
+    return updatedSection;
+  }
+
+  async deleteMentorSection(id: number): Promise<void> {
+    await db.delete(mentorSections).where(eq(mentorSections.id, id));
+  }
+
+  // Mentor resources
+  async getMentorResources(mentorId: number): Promise<MentorResource[]> {
+    return await db
+      .select()
+      .from(mentorResources)
+      .where(and(eq(mentorResources.mentorId, mentorId), eq(mentorResources.isActive, true)))
+      .orderBy(asc(mentorResources.createdAt));
+  }
+
+  async createMentorResource(resource: InsertMentorResource): Promise<MentorResource> {
+    const [newResource] = await db
+      .insert(mentorResources)
+      .values(resource)
+      .returning();
+    return newResource;
+  }
+
+  async updateMentorResource(id: number, resource: Partial<InsertMentorResource>): Promise<MentorResource> {
+    const [updatedResource] = await db
+      .update(mentorResources)
+      .set(resource)
+      .where(eq(mentorResources.id, id))
+      .returning();
+    return updatedResource;
+  }
+
+  async deleteMentorResource(id: number): Promise<void> {
+    await db.delete(mentorResources).where(eq(mentorResources.id, id));
+  }
+
+  // Mentor profile data
+  async updateMentorProfile(mentorId: number, data: Partial<InsertMentor>): Promise<Mentor> {
+    const [updatedMentor] = await db
+      .update(mentors)
+      .set(data)
+      .where(eq(mentors.id, mentorId))
+      .returning();
+    return updatedMentor;
   }
 }
 
