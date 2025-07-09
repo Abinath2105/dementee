@@ -71,7 +71,7 @@ export function Navigation() {
           <Link href="/">
             <div className="flex items-center cursor-pointer">
               <Play className="h-8 w-8 text-primary mr-3" />
-              <span className="text-xl font-bold text-gray-900">VideoLearn Pro</span>
+              <span className="text-xl font-bold text-gray-900">De mentee Academy</span>
             </div>
           </Link>
 

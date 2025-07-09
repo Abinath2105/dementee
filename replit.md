@@ -1,8 +1,8 @@
-# VideoLearn Pro - Video Learning Management Platform
+# De mentee Academy - Video Learning Management Platform
 
 ## Overview
 
-VideoLearn Pro is a comprehensive Learning Management System (LMS) designed for video-based education and skill development. The platform provides a complete learning ecosystem with advanced features including user authentication with email verification, categorized content organization, admin management capabilities, YouTube video integration, assignments and quizzes, learning paths, achievements system, progress analytics, mentor profiles, and student learning tracking.
+De mentee Academy is a comprehensive Learning Management System (LMS) designed for video-based education and skill development. The platform provides a complete learning ecosystem with advanced features including user authentication with email verification, categorized content organization, admin management capabilities, YouTube video integration, assignments and quizzes, learning paths, achievements system, progress analytics, mentor profiles, and student learning tracking.
 
 ## System Architecture
 
@@ -159,6 +159,10 @@ VideoLearn Pro is a comprehensive Learning Management System (LMS) designed for 
 - July 09, 2025: Redesigned login page with separate sections for different user types (students as main focus)
 - July 09, 2025: Implemented smart navigation that adapts based on user role (Student/Admin/Mentor)
 - July 09, 2025: Added notifications badge and comprehensive user dropdown with profile access and role indicators
+- July 09, 2025: Updated platform name from "VideoLearn Pro" to "De mentee Academy" across all components
+- July 09, 2025: Implemented admin-configurable platform settings with logo upload functionality
+- July 09, 2025: Added platform settings database table with configurable name, logo, colors, and description
+- July 09, 2025: Created platform settings API endpoints for admins to customize branding
 
 ## User Preferences
 

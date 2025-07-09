@@ -66,7 +66,7 @@ export default function AuthPage() {
           <div className="flex items-center justify-center mb-4">
             <Play className="h-12 w-12 text-primary" />
           </div>
-          <h1 className="text-4xl font-bold text-gray-900">VideoLearn Pro</h1>
+          <h1 className="text-4xl font-bold text-gray-900">De mentee Academy</h1>
           <p className="text-gray-600 mt-2 text-lg">Transform Your Learning Journey</p>
         </div>
       </div>

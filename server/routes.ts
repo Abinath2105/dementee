@@ -426,6 +426,34 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Platform settings endpoints
+  app.get("/api/platform/settings", async (req, res) => {
+    try {
+      const settings = await storage.getPlatformSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Error getting platform settings:", error);
+      res.status(500).json({ error: "Failed to get platform settings" });
+    }
+  });
+
+  app.put("/api/platform/settings", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const settings = await storage.updatePlatformSettings({
+        ...req.body,
+        updatedBy: req.user.id,
+      });
+      res.json(settings);
+    } catch (error) {
+      console.error("Error updating platform settings:", error);
+      res.status(500).json({ error: "Failed to update platform settings" });
+    }
+  });
+
   // Test email endpoint (admin only)
   app.post("/api/test-email", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {

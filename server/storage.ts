@@ -1,4 +1,4 @@
-import { users, videos, categories, otpCodes, videoViews, mentors, mentorCredentials, mentorInvitations, videoProgress, videoBookmarks, userWatchlist, mentorSections, mentorResources, videoComments, videoRatings, commentLikes, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type Mentor, type InsertMentor, type MentorWithStats, type MentorCredentials, type InsertMentorCredentials, type MentorInvitation, type InsertMentorInvitation, type VideoProgress, type InsertVideoProgress, type VideoBookmark, type InsertVideoBookmark, type UserWatchlist, type InsertUserWatchlist, type MentorSection, type InsertMentorSection, type MentorResource, type InsertMentorResource, type VideoComment, type InsertVideoComment, type VideoRating, type InsertVideoRating, type CommentLike, type InsertCommentLike, type VideoCommentWithUser } from "@shared/schema";
+import { users, videos, categories, otpCodes, videoViews, mentors, mentorCredentials, mentorInvitations, videoProgress, videoBookmarks, userWatchlist, mentorSections, mentorResources, videoComments, videoRatings, commentLikes, platformSettings, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type Mentor, type InsertMentor, type MentorWithStats, type MentorCredentials, type InsertMentorCredentials, type MentorInvitation, type InsertMentorInvitation, type VideoProgress, type InsertVideoProgress, type VideoBookmark, type InsertVideoBookmark, type UserWatchlist, type InsertUserWatchlist, type MentorSection, type InsertMentorSection, type MentorResource, type InsertMentorResource, type VideoComment, type InsertVideoComment, type VideoRating, type InsertVideoRating, type CommentLike, type InsertCommentLike, type VideoCommentWithUser, type PlatformSettings, type InsertPlatformSettings } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or, ilike, count, sum, asc, avg, isNull } from "drizzle-orm";
 import session from "express-session";
@@ -108,6 +108,10 @@ export interface IStorage {
   updateMentorProfile(mentorId: number, data: Partial<InsertMentor>): Promise<Mentor>;
 
   sessionStore: any;
+
+  // Platform settings
+  getPlatformSettings(): Promise<PlatformSettings>;
+  updatePlatformSettings(settings: Partial<InsertPlatformSettings>): Promise<PlatformSettings>;
 
   // LMS Methods
   getAssignments(userId: number): Promise<any[]>;
@@ -941,6 +945,41 @@ export class DatabaseStorage implements IStorage {
 
       return { liked: true, likeCount: comment.likeCount };
     }
+  }
+
+  async getPlatformSettings(): Promise<PlatformSettings> {
+    const [settings] = await db.select().from(platformSettings).limit(1);
+    
+    if (!settings) {
+      // Create default settings if none exist
+      const [defaultSettings] = await db
+        .insert(platformSettings)
+        .values({
+          platformName: "De mentee Academy",
+          description: "Transform Your Learning Journey",
+          primaryColor: "#2563eb",
+          secondaryColor: "#64748b",
+        })
+        .returning();
+      return defaultSettings;
+    }
+    
+    return settings;
+  }
+
+  async updatePlatformSettings(settings: Partial<InsertPlatformSettings>): Promise<PlatformSettings> {
+    const existingSettings = await this.getPlatformSettings();
+    
+    const [updatedSettings] = await db
+      .update(platformSettings)
+      .set({
+        ...settings,
+        updatedAt: new Date(),
+      })
+      .where(eq(platformSettings.id, existingSettings.id))
+      .returning();
+    
+    return updatedSettings;
   }
 }
 

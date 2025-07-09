@@ -3,6 +3,18 @@ import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
+export const platformSettings = pgTable("platform_settings", {
+  id: serial("id").primaryKey(),
+  platformName: text("platform_name").notNull().default("De mentee Academy"),
+  logoUrl: text("logo_url"),
+  faviconUrl: text("favicon_url"),
+  primaryColor: text("primary_color").default("#2563eb"),
+  secondaryColor: text("secondary_color").default("#64748b"),
+  description: text("description").default("Transform Your Learning Journey"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+  updatedBy: integer("updated_by").references(() => users.id),
+});
+
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
@@ -635,7 +647,19 @@ export const insertCommentLikeSchema = createInsertSchema(commentLikes).pick({
   userId: true,
 });
 
+export const insertPlatformSettingsSchema = createInsertSchema(platformSettings).pick({
+  platformName: true,
+  logoUrl: true,
+  faviconUrl: true,
+  primaryColor: true,
+  secondaryColor: true,
+  description: true,
+  updatedBy: true,
+});
+
 // Types
+export type PlatformSettings = typeof platformSettings.$inferSelect;
+export type InsertPlatformSettings = z.infer<typeof insertPlatformSettingsSchema>;
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type OtpCode = typeof otpCodes.$inferSelect;
