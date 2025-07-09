@@ -123,6 +123,7 @@ async function createTestMentor() {
       name: "Dr. Sarah Johnson",
       email: "mentor@example.com",
       profession: "Senior Software Engineer & Tech Lead",
+      experience: "10+ years",
       bio: "Passionate software engineer with over 10 years of experience in full-stack development, cloud architecture, and team leadership. I love mentoring developers and sharing knowledge about modern web technologies, DevOps practices, and career growth in tech.",
       photo: null,
       isActive: true,

@@ -683,20 +683,44 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      // Check if user is a mentor by looking up mentor credentials
+      // First check if the authenticated user is a mentor (has isMentor flag)
+      if (req.user.isMentor) {
+        const mentor = await storage.getMentorByEmail(req.user.email);
+        if (!mentor) {
+          return res.status(404).json({ message: "Mentor profile not found" });
+        }
+
+        res.json({
+          ...mentor,
+          hasCredentials: true,
+        });
+        return;
+      }
+
+      // Check if there's a mentor with the same email as the logged-in user
+      const mentor = await storage.getMentorByEmail(req.user.email);
+      if (mentor) {
+        res.json({
+          ...mentor,
+          hasCredentials: true,
+        });
+        return;
+      }
+
+      // Finally, check if regular user has mentor credentials
       const mentorCredentials = await storage.getMentorCredentials(req.user.id);
       if (!mentorCredentials) {
         return res.status(404).json({ message: "Mentor profile not found" });
       }
 
       // Get mentor details
-      const mentor = await storage.getMentor(mentorCredentials.mentorId);
-      if (!mentor) {
+      const mentorDetails = await storage.getMentor(mentorCredentials.mentorId);
+      if (!mentorDetails) {
         return res.status(404).json({ message: "Mentor not found" });
       }
 
       res.json({
-        ...mentor,
+        ...mentorDetails,
         hasCredentials: true,
       });
     } catch (error) {

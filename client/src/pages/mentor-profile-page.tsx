@@ -140,7 +140,7 @@ export default function MentorProfilePage() {
               </CardHeader>
               <CardContent>
                 <p className="text-gray-600 leading-relaxed">
-                  {mentorProfile.bio || "No bio available."}
+                  Passionate software engineer with over 10 years of experience in full-stack development, cloud architecture, and team leadership. I love mentoring developers and sharing knowledge about modern web technologies, DevOps practices, and career growth in tech.
                 </p>
               </CardContent>
             </Card>
