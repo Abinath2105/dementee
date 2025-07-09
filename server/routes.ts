@@ -261,6 +261,156 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Video Comments and Ratings Routes
+  app.get("/api/videos/:videoId/comments", async (req, res) => {
+    try {
+      const videoId = parseInt(req.params.videoId);
+      const comments = await storage.getVideoComments(videoId);
+      res.json(comments);
+    } catch (error) {
+      console.error("Error fetching comments:", error);
+      res.status(500).json({ message: "Failed to fetch comments" });
+    }
+  });
+
+  app.post("/api/videos/:videoId/comments", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const videoId = parseInt(req.params.videoId);
+      const { content, parentId } = req.body;
+      
+      const comment = await storage.createComment({
+        videoId,
+        userId: req.user!.id,
+        content,
+        parentId: parentId || undefined,
+      });
+      
+      res.status(201).json(comment);
+    } catch (error) {
+      console.error("Error creating comment:", error);
+      res.status(500).json({ message: "Failed to create comment" });
+    }
+  });
+
+  app.put("/api/comments/:commentId", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const commentId = parseInt(req.params.commentId);
+      const { content } = req.body;
+      
+      const comment = await storage.updateComment(commentId, content);
+      res.json(comment);
+    } catch (error) {
+      console.error("Error updating comment:", error);
+      res.status(500).json({ message: "Failed to update comment" });
+    }
+  });
+
+  app.delete("/api/comments/:commentId", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const commentId = parseInt(req.params.commentId);
+      await storage.deleteComment(commentId);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting comment:", error);
+      res.status(500).json({ message: "Failed to delete comment" });
+    }
+  });
+
+  app.post("/api/comments/:commentId/like", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const commentId = parseInt(req.params.commentId);
+      const result = await storage.toggleCommentLike(commentId, req.user!.id);
+      res.json(result);
+    } catch (error) {
+      console.error("Error toggling comment like:", error);
+      res.status(500).json({ message: "Failed to toggle like" });
+    }
+  });
+
+  // Video Ratings Routes
+  app.get("/api/videos/:videoId/rating", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const videoId = parseInt(req.params.videoId);
+      const rating = await storage.getVideoRating(videoId, req.user!.id);
+      res.json(rating);
+    } catch (error) {
+      console.error("Error fetching user rating:", error);
+      res.status(500).json({ message: "Failed to fetch rating" });
+    }
+  });
+
+  app.post("/api/videos/:videoId/rating", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const videoId = parseInt(req.params.videoId);
+      const { rating } = req.body;
+      
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ message: "Rating must be between 1 and 5" });
+      }
+      
+      const videoRating = await storage.createOrUpdateRating({
+        videoId,
+        userId: req.user!.id,
+        rating,
+      });
+      
+      res.json(videoRating);
+    } catch (error) {
+      console.error("Error creating/updating rating:", error);
+      res.status(500).json({ message: "Failed to create/update rating" });
+    }
+  });
+
+  app.delete("/api/videos/:videoId/rating", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const videoId = parseInt(req.params.videoId);
+      await storage.deleteRating(videoId, req.user!.id);
+      res.status(204).send();
+    } catch (error) {
+      console.error("Error deleting rating:", error);
+      res.status(500).json({ message: "Failed to delete rating" });
+    }
+  });
+
+  app.get("/api/videos/:videoId/rating-stats", async (req, res) => {
+    try {
+      const videoId = parseInt(req.params.videoId);
+      const stats = await storage.getVideoRatingStats(videoId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching rating stats:", error);
+      res.status(500).json({ message: "Failed to fetch rating stats" });
+    }
+  });
+
   // Admin stats
   app.get("/api/admin/stats", async (req, res) => {
     try {

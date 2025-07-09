@@ -1,6 +1,6 @@
-import { users, videos, categories, otpCodes, videoViews, mentors, mentorCredentials, mentorInvitations, videoProgress, videoBookmarks, userWatchlist, mentorSections, mentorResources, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type Mentor, type InsertMentor, type MentorWithStats, type MentorCredentials, type InsertMentorCredentials, type MentorInvitation, type InsertMentorInvitation, type VideoProgress, type InsertVideoProgress, type VideoBookmark, type InsertVideoBookmark, type UserWatchlist, type InsertUserWatchlist, type MentorSection, type InsertMentorSection, type MentorResource, type InsertMentorResource } from "@shared/schema";
+import { users, videos, categories, otpCodes, videoViews, mentors, mentorCredentials, mentorInvitations, videoProgress, videoBookmarks, userWatchlist, mentorSections, mentorResources, videoComments, videoRatings, commentLikes, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type Mentor, type InsertMentor, type MentorWithStats, type MentorCredentials, type InsertMentorCredentials, type MentorInvitation, type InsertMentorInvitation, type VideoProgress, type InsertVideoProgress, type VideoBookmark, type InsertVideoBookmark, type UserWatchlist, type InsertUserWatchlist, type MentorSection, type InsertMentorSection, type MentorResource, type InsertMentorResource, type VideoComment, type InsertVideoComment, type VideoRating, type InsertVideoRating, type CommentLike, type InsertCommentLike, type VideoCommentWithUser } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, sql, and, or, ilike, count, sum, asc } from "drizzle-orm";
+import { eq, desc, sql, and, or, ilike, count, sum, asc, avg, isNull } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -40,6 +40,17 @@ export interface IStorage {
   addToWatchlist(userId: number, videoId: number): Promise<UserWatchlist>;
   removeFromWatchlist(userId: number, videoId: number): Promise<void>;
   isInWatchlist(userId: number, videoId: number): Promise<boolean>;
+
+  // Video comments and ratings
+  getVideoComments(videoId: number): Promise<VideoCommentWithUser[]>;
+  createComment(comment: InsertVideoComment): Promise<VideoComment>;
+  updateComment(id: number, content: string): Promise<VideoComment>;
+  deleteComment(id: number): Promise<void>;
+  getVideoRating(videoId: number, userId: number): Promise<VideoRating | undefined>;
+  createOrUpdateRating(rating: InsertVideoRating): Promise<VideoRating>;
+  deleteRating(videoId: number, userId: number): Promise<void>;
+  getVideoRatingStats(videoId: number): Promise<{ averageRating: number; totalRatings: number }>;
+  toggleCommentLike(commentId: number, userId: number): Promise<{ liked: boolean; likeCount: number }>;
 
   // OTP management
   createOtp(otp: InsertOtp): Promise<OtpCode>;
@@ -759,6 +770,177 @@ export class DatabaseStorage implements IStorage {
 
   async markNotificationAsRead(notificationId: number, userId: number): Promise<void> {
     // Mark notification as read
+  }
+
+  // Video Comments and Ratings Implementation
+  async getVideoComments(videoId: number): Promise<VideoCommentWithUser[]> {
+    const comments = await db
+      .select({
+        id: videoComments.id,
+        videoId: videoComments.videoId,
+        userId: videoComments.userId,
+        content: videoComments.content,
+        parentId: videoComments.parentId,
+        isEdited: videoComments.isEdited,
+        likeCount: videoComments.likeCount,
+        createdAt: videoComments.createdAt,
+        updatedAt: videoComments.updatedAt,
+        user: {
+          id: users.id,
+          username: users.username,
+          avatar: users.avatar,
+        }
+      })
+      .from(videoComments)
+      .innerJoin(users, eq(videoComments.userId, users.id))
+      .where(and(eq(videoComments.videoId, videoId), isNull(videoComments.parentId)))
+      .orderBy(desc(videoComments.createdAt));
+
+    // Get replies for each comment
+    const commentsWithReplies = await Promise.all(
+      comments.map(async (comment) => {
+        const replies = await db
+          .select({
+            id: videoComments.id,
+            videoId: videoComments.videoId,
+            userId: videoComments.userId,
+            content: videoComments.content,
+            parentId: videoComments.parentId,
+            isEdited: videoComments.isEdited,
+            likeCount: videoComments.likeCount,
+            createdAt: videoComments.createdAt,
+            updatedAt: videoComments.updatedAt,
+            user: {
+              id: users.id,
+              username: users.username,
+              avatar: users.avatar,
+            }
+          })
+          .from(videoComments)
+          .innerJoin(users, eq(videoComments.userId, users.id))
+          .where(eq(videoComments.parentId, comment.id))
+          .orderBy(asc(videoComments.createdAt));
+
+        return { ...comment, replies };
+      })
+    );
+
+    return commentsWithReplies;
+  }
+
+  async createComment(insertComment: InsertVideoComment): Promise<VideoComment> {
+    const [comment] = await db
+      .insert(videoComments)
+      .values(insertComment)
+      .returning();
+    return comment;
+  }
+
+  async updateComment(id: number, content: string): Promise<VideoComment> {
+    const [comment] = await db
+      .update(videoComments)
+      .set({ content, isEdited: true, updatedAt: new Date() })
+      .where(eq(videoComments.id, id))
+      .returning();
+    return comment;
+  }
+
+  async deleteComment(id: number): Promise<void> {
+    await db.delete(videoComments).where(eq(videoComments.id, id));
+  }
+
+  async getVideoRating(videoId: number, userId: number): Promise<VideoRating | undefined> {
+    const [rating] = await db
+      .select()
+      .from(videoRatings)
+      .where(and(eq(videoRatings.videoId, videoId), eq(videoRatings.userId, userId)));
+    return rating;
+  }
+
+  async createOrUpdateRating(insertRating: InsertVideoRating): Promise<VideoRating> {
+    const existingRating = await this.getVideoRating(insertRating.videoId, insertRating.userId);
+    
+    if (existingRating) {
+      const [updatedRating] = await db
+        .update(videoRatings)
+        .set({ rating: insertRating.rating, updatedAt: new Date() })
+        .where(and(eq(videoRatings.videoId, insertRating.videoId), eq(videoRatings.userId, insertRating.userId)))
+        .returning();
+      return updatedRating;
+    } else {
+      const [newRating] = await db
+        .insert(videoRatings)
+        .values(insertRating)
+        .returning();
+      return newRating;
+    }
+  }
+
+  async deleteRating(videoId: number, userId: number): Promise<void> {
+    await db
+      .delete(videoRatings)
+      .where(and(eq(videoRatings.videoId, videoId), eq(videoRatings.userId, userId)));
+  }
+
+  async getVideoRatingStats(videoId: number): Promise<{ averageRating: number; totalRatings: number }> {
+    const result = await db
+      .select({
+        averageRating: avg(videoRatings.rating),
+        totalRatings: count(videoRatings.id),
+      })
+      .from(videoRatings)
+      .where(eq(videoRatings.videoId, videoId));
+
+    const stats = result[0];
+    return {
+      averageRating: Number(stats.averageRating) || 0,
+      totalRatings: Number(stats.totalRatings) || 0,
+    };
+  }
+
+  async toggleCommentLike(commentId: number, userId: number): Promise<{ liked: boolean; likeCount: number }> {
+    const existingLike = await db
+      .select()
+      .from(commentLikes)
+      .where(and(eq(commentLikes.commentId, commentId), eq(commentLikes.userId, userId)));
+
+    if (existingLike.length > 0) {
+      // Remove like
+      await db
+        .delete(commentLikes)
+        .where(and(eq(commentLikes.commentId, commentId), eq(commentLikes.userId, userId)));
+      
+      // Decrement like count
+      await db
+        .update(videoComments)
+        .set({ likeCount: sql`${videoComments.likeCount} - 1` })
+        .where(eq(videoComments.id, commentId));
+
+      const [comment] = await db
+        .select({ likeCount: videoComments.likeCount })
+        .from(videoComments)
+        .where(eq(videoComments.id, commentId));
+
+      return { liked: false, likeCount: comment.likeCount };
+    } else {
+      // Add like
+      await db
+        .insert(commentLikes)
+        .values({ commentId, userId });
+      
+      // Increment like count
+      await db
+        .update(videoComments)
+        .set({ likeCount: sql`${videoComments.likeCount} + 1` })
+        .where(eq(videoComments.id, commentId));
+
+      const [comment] = await db
+        .select({ likeCount: videoComments.likeCount })
+        .from(videoComments)
+        .where(eq(videoComments.id, commentId));
+
+      return { liked: true, likeCount: comment.likeCount };
+    }
   }
 }
 

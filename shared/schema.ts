@@ -323,12 +323,48 @@ export const notifications = pgTable("notifications", {
   createdAt: timestamp("created_at").defaultNow(),
 });
 
+// Video Comments and Rating System
+export const videoComments = pgTable("video_comments", {
+  id: serial("id").primaryKey(),
+  videoId: integer("video_id").references(() => videos.id, { onDelete: "cascade" }).notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  content: text("content").notNull(),
+  parentId: integer("parent_id").references(() => videoComments.id, { onDelete: "cascade" }), // For replies
+  isEdited: boolean("is_edited").default(false).notNull(),
+  likeCount: integer("like_count").default(0).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const videoRatings = pgTable("video_ratings", {
+  id: serial("id").primaryKey(),
+  videoId: integer("video_id").references(() => videos.id, { onDelete: "cascade" }).notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  rating: integer("rating").notNull(), // 1-5 stars
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserVideo: unique().on(table.userId, table.videoId), // One rating per user per video
+}));
+
+export const commentLikes = pgTable("comment_likes", {
+  id: serial("id").primaryKey(),
+  commentId: integer("comment_id").references(() => videoComments.id, { onDelete: "cascade" }).notNull(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserComment: unique().on(table.userId, table.commentId), // One like per user per comment
+}));
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   videoViews: many(videoViews),
   videoProgress: many(videoProgress),
   videoBookmarks: many(videoBookmarks),
   watchlist: many(userWatchlist),
+  comments: many(videoComments),
+  ratings: many(videoRatings),
+  commentLikes: many(commentLikes),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -344,6 +380,8 @@ export const videosRelations = relations(videos, ({ one, many }) => ({
   progress: many(videoProgress),
   bookmarks: many(videoBookmarks),
   watchlistEntries: many(userWatchlist),
+  comments: many(videoComments),
+  ratings: many(videoRatings),
 }));
 
 export const videoViewsRelations = relations(videoViews, ({ one }) => ({
@@ -410,6 +448,45 @@ export const userWatchlistRelations = relations(userWatchlist, ({ one }) => ({
   video: one(videos, {
     fields: [userWatchlist.videoId],
     references: [videos.id],
+  }),
+}));
+
+export const videoCommentsRelations = relations(videoComments, ({ one, many }) => ({
+  video: one(videos, {
+    fields: [videoComments.videoId],
+    references: [videos.id],
+  }),
+  user: one(users, {
+    fields: [videoComments.userId],
+    references: [users.id],
+  }),
+  parent: one(videoComments, {
+    fields: [videoComments.parentId],
+    references: [videoComments.id],
+  }),
+  replies: many(videoComments),
+  likes: many(commentLikes),
+}));
+
+export const videoRatingsRelations = relations(videoRatings, ({ one }) => ({
+  video: one(videos, {
+    fields: [videoRatings.videoId],
+    references: [videos.id],
+  }),
+  user: one(users, {
+    fields: [videoRatings.userId],
+    references: [users.id],
+  }),
+}));
+
+export const commentLikesRelations = relations(commentLikes, ({ one }) => ({
+  comment: one(videoComments, {
+    fields: [commentLikes.commentId],
+    references: [videoComments.id],
+  }),
+  user: one(users, {
+    fields: [commentLikes.userId],
+    references: [users.id],
   }),
 }));
 
@@ -540,6 +617,24 @@ export const insertUserWatchlistSchema = createInsertSchema(userWatchlist).pick(
   videoId: true,
 });
 
+export const insertVideoCommentSchema = createInsertSchema(videoComments).pick({
+  videoId: true,
+  userId: true,
+  content: true,
+  parentId: true,
+});
+
+export const insertVideoRatingSchema = createInsertSchema(videoRatings).pick({
+  videoId: true,
+  userId: true,
+  rating: true,
+});
+
+export const insertCommentLikeSchema = createInsertSchema(commentLikes).pick({
+  commentId: true,
+  userId: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -567,11 +662,30 @@ export type VideoBookmark = typeof videoBookmarks.$inferSelect;
 export type InsertVideoBookmark = z.infer<typeof insertVideoBookmarkSchema>;
 export type UserWatchlist = typeof userWatchlist.$inferSelect;
 export type InsertUserWatchlist = z.infer<typeof insertUserWatchlistSchema>;
+export type VideoComment = typeof videoComments.$inferSelect;
+export type InsertVideoComment = z.infer<typeof insertVideoCommentSchema>;
+export type VideoRating = typeof videoRatings.$inferSelect;
+export type InsertVideoRating = z.infer<typeof insertVideoRatingSchema>;
+export type CommentLike = typeof commentLikes.$inferSelect;
+export type InsertCommentLike = z.infer<typeof insertCommentLikeSchema>;
 
 // Extended types for API responses
 export type VideoWithCategory = Video & {
   category: Category | null;
   viewCount: number;
+  averageRating?: number;
+  totalRatings?: number;
+  commentsCount?: number;
+};
+
+export type VideoCommentWithUser = VideoComment & {
+  user: {
+    id: number;
+    username: string;
+    avatar?: string;
+  };
+  replies?: VideoCommentWithUser[];
+  userLiked?: boolean;
 };
 
 export type MentorWithStats = Mentor & {

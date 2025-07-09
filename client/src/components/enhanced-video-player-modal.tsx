@@ -7,11 +7,14 @@ import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { Separator } from "@/components/ui/separator";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import { X, Bookmark, BookmarkPlus, Play, Pause, Clock, CheckCircle, Heart, HeartOff, Trash2 } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { X, Bookmark, BookmarkPlus, Play, Pause, Clock, CheckCircle, Heart, HeartOff, Trash2, MessageCircle, Star } from "lucide-react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import { useAuth } from "@/hooks/use-auth";
+import { VideoComments } from "./video-comments";
+import { VideoRating } from "./video-rating";
 import type { VideoWithCategory, VideoProgress, VideoBookmark } from "@shared/schema";
 
 interface EnhancedVideoPlayerModalProps {
@@ -297,70 +300,122 @@ export function EnhancedVideoPlayerModal({ video, isOpen, onClose }: EnhancedVid
             </div>
           </div>
           
-          <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-            {/* Video Info */}
-            <div className="lg:col-span-2 space-y-4">
-              {video.description && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Description</h4>
-                  <p className="text-gray-600 whitespace-pre-wrap">{video.description}</p>
-                </div>
-              )}
-              
-              {video.tags && video.tags.length > 0 && (
-                <div>
-                  <h4 className="font-medium text-gray-900 mb-2">Tags</h4>
-                  <div className="flex flex-wrap gap-2">
-                    {video.tags.map((tag, index) => (
-                      <Badge key={index} variant="outline" className="text-xs">
-                        {tag}
-                      </Badge>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
-            
-            {/* Bookmarks Sidebar */}
-            <div className="space-y-4">
-              <div>
-                <h4 className="font-medium text-gray-900 mb-2 flex items-center">
-                  <Bookmark className="h-4 w-4 mr-2" />
-                  Bookmarks ({bookmarks.length})
-                </h4>
-                <ScrollArea className="h-64 w-full rounded border p-2">
-                  {bookmarks.length === 0 ? (
-                    <p className="text-sm text-gray-500 text-center py-4">
-                      No bookmarks yet. Create one while watching!
-                    </p>
-                  ) : (
-                    <div className="space-y-2">
-                      {bookmarks.map((bookmark) => (
-                        <div key={bookmark.id} className="border rounded p-2 text-sm">
-                          <div className="flex items-center justify-between mb-1">
-                            <span className="font-medium text-blue-600">
-                              {formatTime(bookmark.timestampSeconds)}
-                            </span>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => deleteBookmarkMutation.mutate(bookmark.id)}
-                              disabled={deleteBookmarkMutation.isPending}
-                            >
-                              <Trash2 className="h-3 w-3" />
-                            </Button>
-                          </div>
-                          {bookmark.note && (
-                            <p className="text-gray-600">{bookmark.note}</p>
-                          )}
-                        </div>
-                      ))}
+          <Tabs defaultValue="info" className="w-full">
+            <TabsList className="grid w-full grid-cols-4">
+              <TabsTrigger value="info">Info & Bookmarks</TabsTrigger>
+              <TabsTrigger value="progress">Progress</TabsTrigger>
+              <TabsTrigger value="ratings">Ratings</TabsTrigger>
+              <TabsTrigger value="comments">Comments</TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="info" className="mt-4">
+              <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                {/* Video Info */}
+                <div className="lg:col-span-2 space-y-4">
+                  {video.description && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">Description</h4>
+                      <p className="text-gray-600 whitespace-pre-wrap">{video.description}</p>
                     </div>
                   )}
-                </ScrollArea>
+                  
+                  {video.tags && video.tags.length > 0 && (
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">Tags</h4>
+                      <div className="flex flex-wrap gap-2">
+                        {video.tags.map((tag, index) => (
+                          <Badge key={index} variant="outline" className="text-xs">
+                            {tag}
+                          </Badge>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+                
+                {/* Bookmarks Sidebar */}
+                <div className="space-y-4">
+                  <div>
+                    <h4 className="font-medium text-gray-900 mb-2 flex items-center">
+                      <Bookmark className="h-4 w-4 mr-2" />
+                      Bookmarks ({bookmarks.length})
+                    </h4>
+                    <ScrollArea className="h-64 w-full rounded border p-2">
+                      {bookmarks.length === 0 ? (
+                        <p className="text-sm text-gray-500 text-center py-4">
+                          No bookmarks yet. Create one while watching!
+                        </p>
+                      ) : (
+                        <div className="space-y-2">
+                          {bookmarks.map((bookmark) => (
+                            <div key={bookmark.id} className="border rounded p-2 text-sm">
+                              <div className="flex items-center justify-between mb-1">
+                                <span className="font-medium text-blue-600">
+                                  {formatTime(bookmark.timestampSeconds)}
+                                </span>
+                                <Button
+                                  variant="ghost"
+                                  size="sm"
+                                  onClick={() => deleteBookmarkMutation.mutate(bookmark.id)}
+                                  disabled={deleteBookmarkMutation.isPending}
+                                >
+                                  <Trash2 className="h-3 w-3" />
+                                </Button>
+                              </div>
+                              {bookmark.note && (
+                                <p className="text-gray-600">{bookmark.note}</p>
+                              )}
+                            </div>
+                          ))}
+                        </div>
+                      )}
+                    </ScrollArea>
+                  </div>
+                </div>
               </div>
-            </div>
-          </div>
+            </TabsContent>
+
+            <TabsContent value="progress" className="mt-4">
+              {user && progress ? (
+                <div className="space-y-4">
+                  <h4 className="font-medium flex items-center gap-2">
+                    <Clock className="h-4 w-4" />
+                    Detailed Progress
+                  </h4>
+                  <div className="space-y-3">
+                    <div className="flex items-center justify-between text-sm">
+                      <span>Progress: {Math.round((progress.currentTimeSeconds / progress.durationSeconds) * 100)}%</span>
+                      <span>{formatTime(progress.currentTimeSeconds)} / {formatTime(progress.durationSeconds)}</span>
+                    </div>
+                    <div className="w-full bg-gray-200 rounded-full h-3">
+                      <div 
+                        className="bg-primary h-3 rounded-full transition-all"
+                        style={{ width: `${(progress.currentTimeSeconds / progress.durationSeconds) * 100}%` }}
+                      />
+                    </div>
+                    {progress.isCompleted && (
+                      <div className="flex items-center gap-2 text-sm text-green-600">
+                        <CheckCircle className="h-4 w-4" />
+                        Video completed!
+                      </div>
+                    )}
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  {user ? "No progress recorded yet" : "Please log in to track your progress"}
+                </div>
+              )}
+            </TabsContent>
+
+            <TabsContent value="ratings" className="mt-4">
+              <VideoRating videoId={video.id} />
+            </TabsContent>
+
+            <TabsContent value="comments" className="mt-4">
+              <VideoComments videoId={video.id} />
+            </TabsContent>
+          </Tabs>
         </DialogContent>
       </Dialog>
 
