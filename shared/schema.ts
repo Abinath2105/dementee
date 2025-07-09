@@ -171,6 +171,158 @@ export const userWatchlist = pgTable("user_watchlist", {
   uniqueUserVideo: unique("unique_user_video_watchlist").on(table.userId, table.videoId),
 }));
 
+// LMS Tables
+export const assignments = pgTable("assignments", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  instructions: text("instructions"),
+  type: text("type").notNull().default("quiz"),
+  difficultyLevel: text("difficulty_level").default("beginner"),
+  points: integer("points").default(100),
+  timeLimit: integer("time_limit"),
+  dueDate: timestamp("due_date"),
+  categoryId: integer("category_id").references(() => categories.id),
+  createdBy: integer("created_by").references(() => users.id),
+  isPublished: boolean("is_published").default(false),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const assignmentQuestions = pgTable("assignment_questions", {
+  id: serial("id").primaryKey(),
+  assignmentId: integer("assignment_id").references(() => assignments.id, { onDelete: "cascade" }),
+  questionText: text("question_text").notNull(),
+  questionType: text("question_type").notNull().default("multiple_choice"),
+  options: jsonb("options"),
+  correctAnswer: text("correct_answer"),
+  points: integer("points").default(10),
+  orderIndex: integer("order_index").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const assignmentSubmissions = pgTable("assignment_submissions", {
+  id: serial("id").primaryKey(),
+  assignmentId: integer("assignment_id").references(() => assignments.id, { onDelete: "cascade" }),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  answers: jsonb("answers").notNull(),
+  score: integer("score"),
+  maxScore: integer("max_score"),
+  status: text("status").default("in_progress"),
+  startedAt: timestamp("started_at").defaultNow(),
+  submittedAt: timestamp("submitted_at"),
+  gradedAt: timestamp("graded_at"),
+  feedback: text("feedback"),
+  timeSpent: integer("time_spent").default(0),
+}, (table) => ({
+  userAssignmentUnique: unique().on(table.assignmentId, table.userId),
+}));
+
+export const learningPaths = pgTable("learning_paths", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  difficultyLevel: text("difficulty_level").default("beginner"),
+  estimatedDuration: text("estimated_duration"),
+  coverImage: text("cover_image"),
+  isPublished: boolean("is_published").default(false),
+  createdBy: integer("created_by").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const learningPathItems = pgTable("learning_path_items", {
+  id: serial("id").primaryKey(),
+  learningPathId: integer("learning_path_id").references(() => learningPaths.id, { onDelete: "cascade" }),
+  itemType: text("item_type").notNull(),
+  itemId: integer("item_id").notNull(),
+  orderIndex: integer("order_index").default(0),
+  isRequired: boolean("is_required").default(true),
+  unlockAfter: integer("unlock_after"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userLearningPaths = pgTable("user_learning_paths", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  learningPathId: integer("learning_path_id").references(() => learningPaths.id, { onDelete: "cascade" }),
+  status: text("status").default("enrolled"),
+  progressPercentage: integer("progress_percentage").default(0),
+  currentItemId: integer("current_item_id").references(() => learningPathItems.id),
+  enrolledAt: timestamp("enrolled_at").defaultNow(),
+  startedAt: timestamp("started_at"),
+  completedAt: timestamp("completed_at"),
+}, (table) => ({
+  userPathUnique: unique().on(table.userId, table.learningPathId),
+}));
+
+export const achievements = pgTable("achievements", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  badgeIcon: text("badge_icon"),
+  badgeColor: text("badge_color").default("#3B82F6"),
+  criteria: jsonb("criteria").notNull(),
+  points: integer("points").default(50),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const userAchievements = pgTable("user_achievements", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  achievementId: integer("achievement_id").references(() => achievements.id, { onDelete: "cascade" }),
+  earnedAt: timestamp("earned_at").defaultNow(),
+}, (table) => ({
+  userAchievementUnique: unique().on(table.userId, table.achievementId),
+}));
+
+export const studySessions = pgTable("study_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  sessionType: text("session_type").notNull(),
+  itemId: integer("item_id"),
+  duration: integer("duration").notNull(),
+  startedAt: timestamp("started_at").notNull(),
+  endedAt: timestamp("ended_at").notNull(),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
+export const forumTopics = pgTable("forum_topics", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  categoryId: integer("category_id").references(() => categories.id),
+  createdBy: integer("created_by").references(() => users.id),
+  isPinned: boolean("is_pinned").default(false),
+  isLocked: boolean("is_locked").default(false),
+  views: integer("views").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const forumPosts = pgTable("forum_posts", {
+  id: serial("id").primaryKey(),
+  topicId: integer("topic_id").references(() => forumTopics.id, { onDelete: "cascade" }),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  isSolution: boolean("is_solution").default(false),
+  likes: integer("likes").default(0),
+  createdAt: timestamp("created_at").defaultNow(),
+  updatedAt: timestamp("updated_at").defaultNow(),
+});
+
+export const notifications = pgTable("notifications", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").default("info"),
+  isRead: boolean("is_read").default(false),
+  actionUrl: text("action_url"),
+  createdAt: timestamp("created_at").defaultNow(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   videoViews: many(videoViews),
@@ -434,4 +586,60 @@ export type AdminStats = {
   totalMentors: number;
   activeMentors: number;
   totalWatchTime: string;
+};
+
+// LMS Types
+export type Assignment = typeof assignments.$inferSelect;
+export type InsertAssignment = typeof assignments.$inferInsert;
+export type AssignmentQuestion = typeof assignmentQuestions.$inferSelect;
+export type InsertAssignmentQuestion = typeof assignmentQuestions.$inferInsert;
+export type AssignmentSubmission = typeof assignmentSubmissions.$inferSelect;
+export type InsertAssignmentSubmission = typeof assignmentSubmissions.$inferInsert;
+export type LearningPath = typeof learningPaths.$inferSelect;
+export type InsertLearningPath = typeof learningPaths.$inferInsert;
+export type LearningPathItem = typeof learningPathItems.$inferSelect;
+export type InsertLearningPathItem = typeof learningPathItems.$inferInsert;
+export type UserLearningPath = typeof userLearningPaths.$inferSelect;
+export type InsertUserLearningPath = typeof userLearningPaths.$inferInsert;
+export type Achievement = typeof achievements.$inferSelect;
+export type InsertAchievement = typeof achievements.$inferInsert;
+export type UserAchievement = typeof userAchievements.$inferSelect;
+export type InsertUserAchievement = typeof userAchievements.$inferInsert;
+export type StudySession = typeof studySessions.$inferSelect;
+export type InsertStudySession = typeof studySessions.$inferInsert;
+export type ForumTopic = typeof forumTopics.$inferSelect;
+export type InsertForumTopic = typeof forumTopics.$inferInsert;
+export type ForumPost = typeof forumPosts.$inferSelect;
+export type InsertForumPost = typeof forumPosts.$inferInsert;
+export type Notification = typeof notifications.$inferSelect;
+export type InsertNotification = typeof notifications.$inferInsert;
+
+// Extended types with relations
+export type AssignmentWithQuestions = Assignment & {
+  questions: AssignmentQuestion[];
+};
+
+export type AssignmentSubmissionWithDetails = AssignmentSubmission & {
+  assignment: Assignment;
+  user: UserType;
+};
+
+export type LearningPathWithItems = LearningPath & {
+  items: (LearningPathItem & { video?: Video; assignment?: Assignment })[];
+  userProgress?: UserLearningPath;
+};
+
+export type ForumTopicWithPosts = ForumTopic & {
+  posts: (ForumPost & { user: UserType })[];
+  creator: UserType;
+};
+
+export type UserProgress = {
+  totalPoints: number;
+  completedAssignments: number;
+  completedVideos: number;
+  studyTimeMinutes: number;
+  achievements: UserAchievement[];
+  currentStreak: number;
+  level: number;
 };

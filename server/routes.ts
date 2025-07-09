@@ -217,6 +217,50 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // LMS Routes - Assignments
+  app.get("/api/assignments", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    try {
+      const assignments = await storage.getAssignments(req.user!.id);
+      res.json(assignments);
+    } catch (error) {
+      console.error("Error fetching assignments:", error);
+      res.status(500).send("Failed to fetch assignments");
+    }
+  });
+
+  app.get("/api/assignments/stats", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    try {
+      const stats = await storage.getAssignmentStats(req.user!.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching assignment stats:", error);
+      res.status(500).send("Failed to fetch assignment stats");
+    }
+  });
+
+  // LMS Routes - Advanced Dashboard
+  app.get("/api/dashboard/advanced", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+    
+    try {
+      const dashboardData = await storage.getAdvancedDashboardData(req.user!.id);
+      res.json(dashboardData);
+    } catch (error) {
+      console.error("Error fetching advanced dashboard data:", error);
+      res.status(500).send("Failed to fetch dashboard data");
+    }
+  });
+
   // Admin stats
   app.get("/api/admin/stats", async (req, res) => {
     try {

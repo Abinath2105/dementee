@@ -55,6 +55,18 @@ export default function HomePage() {
                   My Dashboard
                 </Button>
               </Link>
+              <Link href="/advanced-dashboard">
+                <Button variant="outline" size="sm">
+                  <TrendingUp className="h-4 w-4 mr-2" />
+                  Advanced Dashboard
+                </Button>
+              </Link>
+              <Link href="/assignments">
+                <Button variant="outline" size="sm">
+                  <BookOpen className="h-4 w-4 mr-2" />
+                  Assignments
+                </Button>
+              </Link>
               <Link href="/mentor/profile">
                 <Button variant="outline" size="sm">
                   <User className="h-4 w-4 mr-2" />

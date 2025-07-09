@@ -1,0 +1,126 @@
+1. Dashboard
+Personalized welcome
+
+Overview of enrolled courses
+
+Progress indicators
+
+Upcoming assignments & deadlines
+
+Notifications (new lectures, announcements, grades)
+
+📚 2. Course Enrollment & Access
+Browse available courses
+
+Self-enroll or join via invite/code
+
+Access syllabus and course materials (videos, PDFs, PPTs)
+
+View instructor details and office hours
+
+🎥 3. Learning Materials
+Watch recorded lectures or attend live sessions
+
+Downloadable notes/resources
+
+Embedded quizzes or checkpoints
+
+Mobile-friendly content playback
+
+✅ 4. Assignments & Projects
+Submit assignments online (file upload, typing, links)
+
+View submission deadlines
+
+Check grading rubric
+
+See feedback from instructors
+
+🧪 5. Quizzes & Exams
+Timed quizzes and tests
+
+Instant grading (auto or manual)
+
+Retake options (if allowed)
+
+View past attempts and scores
+
+📈 6. Progress Tracking
+Course completion status
+
+Module/lesson-level tracking
+
+Performance analytics
+
+Badges or certificates
+
+📅 7. Calendar & Reminders
+Sync with Google/Outlook calendar
+
+Assignment/exam schedules
+
+Class sessions and events
+
+Alerts & push/email notifications
+
+💬 8. Communication Tools
+Course announcements
+
+Direct messages to instructors
+
+Group chats or discussion forums
+
+Peer collaboration spaces
+
+📂 9. Resources & Downloads
+Lecture slides, eBooks, PDFs
+
+Additional readings and links
+
+Practice problems/solutions
+
+💻 10. Virtual Classroom (Live Sessions)
+Zoom, Google Meet, or built-in video conferencing
+
+Raise hand, polls, breakout rooms
+
+Recording access after session
+
+📜 11. Certification
+Downloadable certificates after course completion
+
+Badge or points system
+
+Shareable on LinkedIn/Resume
+
+⚙️ 12. Profile & Settings
+Edit profile, upload photo
+
+Change language/theme
+
+Notification preferences
+
+Privacy and security settings
+
+🧑‍🤝‍🧑 13. Peer Interaction & Collaboration
+Group assignments
+
+Forums/Threads
+
+Feedback on peer work
+
+Study groups or project teams
+
+💳 14. Payment History (if applicable)
+Track course payments/subscriptions
+
+Invoices or receipts
+
+Refunds/cancellation info
+
+🔍 15. Search & Navigation
+Global search across content
+
+Filters for courses, topics, deadlines
+
+Bookmark or favorite lessons
