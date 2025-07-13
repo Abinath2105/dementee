@@ -99,7 +99,7 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
-      formData.append("file", file);
+      formData.append("image", file);
       const response = await fetch("/api/admin/upload", {
         method: "POST",
         body: formData,
@@ -182,24 +182,38 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
               name="appLogo"
               render={({ field }) => (
                 <FormItem>
-                  <FormLabel>App Logo URL</FormLabel>
-                  <div className="flex space-x-2">
-                    <FormControl>
-                      <Input placeholder="https://example.com/logo.png" {...field} />
-                    </FormControl>
-                    <label className="cursor-pointer">
-                      <Button type="button" variant="outline" size="icon" asChild>
-                        <span>
-                          <Upload className="h-4 w-4" />
-                        </span>
-                      </Button>
-                      <input
-                        type="file"
-                        accept="image/*"
-                        className="hidden"
-                        onChange={(e) => handleFileUpload(e, "appLogo")}
-                      />
-                    </label>
+                  <FormLabel>App Logo</FormLabel>
+                  <div className="space-y-2">
+                    {field.value && (
+                      <div className="w-32 h-16 border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
+                        <img 
+                          src={field.value} 
+                          alt="App Logo Preview" 
+                          className="max-w-full max-h-full object-contain"
+                          onError={(e) => {
+                            (e.target as HTMLImageElement).style.display = 'none';
+                          }}
+                        />
+                      </div>
+                    )}
+                    <div className="flex space-x-2">
+                      <FormControl>
+                        <Input placeholder="https://example.com/logo.png" {...field} />
+                      </FormControl>
+                      <label className="cursor-pointer">
+                        <Button type="button" variant="outline" size="icon" asChild>
+                          <span>
+                            <Upload className="h-4 w-4" />
+                          </span>
+                        </Button>
+                        <input
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={(e) => handleFileUpload(e, "appLogo")}
+                        />
+                      </label>
+                    </div>
                   </div>
                   <FormMessage />
                 </FormItem>
