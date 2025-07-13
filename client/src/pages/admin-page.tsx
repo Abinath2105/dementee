@@ -608,7 +608,7 @@ export default function AdminPage() {
                         <TableHead>User</TableHead>
                         <TableHead>Email</TableHead>
                         <TableHead>Status</TableHead>
-                        <TableHead>Admin</TableHead>
+                        <TableHead>Role</TableHead>
                         <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
@@ -644,8 +644,20 @@ export default function AdminPage() {
                         users.map((userItem) => (
                           <TableRow key={userItem.id}>
                             <TableCell>
-                              <div className="font-medium text-gray-900">
-                                {userItem.username}
+                              <div className="flex items-center space-x-3">
+                                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                                  <span className="text-sm font-semibold text-blue-600">
+                                    {userItem.fullName.split(' ').map(n => n[0]).join('').toUpperCase()}
+                                  </span>
+                                </div>
+                                <div>
+                                  <div className="font-medium text-gray-900">
+                                    {userItem.fullName}
+                                  </div>
+                                  <div className="text-sm text-gray-500">
+                                    @{userItem.username}
+                                  </div>
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -665,9 +677,16 @@ export default function AdminPage() {
                                   onCheckedChange={(checked) => handleAdminToggle(userItem.id, checked)}
                                   disabled={updateUserAdminMutation.isPending || userItem.id === user?.id}
                                 />
-                                {userItem.isAdmin && (
-                                  <Shield className="h-4 w-4 text-blue-600" />
-                                )}
+                                <div className="flex items-center space-x-1">
+                                  {userItem.isAdmin ? (
+                                    <>
+                                      <Shield className="h-4 w-4 text-blue-600" />
+                                      <span className="text-xs text-blue-600 font-medium">Admin</span>
+                                    </>
+                                  ) : (
+                                    <span className="text-xs text-gray-600">Student</span>
+                                  )}
+                                </div>
                               </div>
                             </TableCell>
                             <TableCell>
@@ -677,9 +696,13 @@ export default function AdminPage() {
                                   variant="outline"
                                   onClick={() => handleAssignCategory(userItem)}
                                   disabled={userItem.isAdmin}
-                                  title={userItem.isAdmin ? "Admins have access to all categories" : "Assign categories"}
+                                  title={userItem.isAdmin ? "Admins have access to all categories" : "Manage category access"}
+                                  className="relative"
                                 >
                                   <UserCheck className="h-4 w-4" />
+                                  {!userItem.isAdmin && (
+                                    <span className="sr-only">Assign Categories</span>
+                                  )}
                                 </Button>
                                 <Button
                                   size="sm"
