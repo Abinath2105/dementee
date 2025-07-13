@@ -50,6 +50,22 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.put("/api/categories/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const categoryId = parseInt(req.params.id);
+      const parsed = insertCategorySchema.parse(req.body);
+      const category = await storage.updateCategory(categoryId, parsed);
+      res.json(category);
+    } catch (error) {
+      console.error('Update category error:', error);
+      res.status(500).json({ message: "Failed to update category" });
+    }
+  });
+
   app.delete("/api/categories/:id", async (req, res) => {
     try {
       if (!req.isAuthenticated() || !req.user?.isAdmin) {

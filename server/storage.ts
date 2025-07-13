@@ -36,6 +36,7 @@ export interface IStorage {
   getCategories(): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
   getCategoryBySlug(slug: string): Promise<Category | undefined>;
+  updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category>;
   deleteCategory(id: number): Promise<void>;
 
   // Video management
@@ -158,6 +159,15 @@ export class DatabaseStorage implements IStorage {
   async getCategoryBySlug(slug: string): Promise<Category | undefined> {
     const [category] = await db.select().from(categories).where(eq(categories.slug, slug));
     return category || undefined;
+  }
+
+  async updateCategory(id: number, updateData: Partial<InsertCategory>): Promise<Category> {
+    const [category] = await db
+      .update(categories)
+      .set(updateData as any)
+      .where(eq(categories.id, id))
+      .returning();
+    return category;
   }
 
   async getVideos(search?: string, categoryId?: number): Promise<VideoWithCategory[]> {

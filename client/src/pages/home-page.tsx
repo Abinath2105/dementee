@@ -92,18 +92,45 @@ export default function HomePage() {
       </nav>
 
       {/* Banner Carousel */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-        <BannerCarousel 
-          banners={appSettings?.bannerImages || []}
-          className="mb-8"
-        />
-      </div>
+      {appSettings?.bannerImages && appSettings.bannerImages.length > 0 && (
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <BannerCarousel 
+            banners={appSettings.bannerImages}
+            className="mb-8"
+          />
+        </div>
+      )}
+
+      {/* Categories Section */}
+      {categories.length > 0 && (
+        <div className="bg-gray-50 py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-8">
+              <h2 className="text-3xl font-bold text-gray-900 mb-2">Browse Categories</h2>
+              <p className="text-gray-600">Explore our organized learning content</p>
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {categories.map((category) => {
+                const categoryVideoCount = videos.filter(v => v.categoryId === category.id).length;
+                return (
+                  <CategoryCard
+                    key={category.id}
+                    category={category}
+                    videoCount={categoryVideoCount}
+                    onClick={() => setSelectedCategory(category.id.toString())}
+                  />
+                );
+              })}
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Search Section */}
       <div className="bg-white border-b border-gray-200 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">Discover Knowledge</h1>
-          <p className="text-xl mb-8 text-gray-600">Access curated video content to enhance your skills</p>
+          <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">Video Library</h1>
+          <p className="text-lg mb-8 text-gray-600">Find and watch educational videos</p>
           
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto relative">
@@ -150,7 +177,12 @@ export default function HomePage() {
       {/* Video Library */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
         <div className="flex justify-between items-center mb-8">
-          <h2 className="text-2xl font-bold text-gray-900">Video Library</h2>
+          <h2 className="text-xl font-semibold text-gray-900">
+            {selectedCategory && selectedCategory !== "all" 
+              ? `${categories.find(c => c.id.toString() === selectedCategory)?.name || "Category"} Videos`
+              : "All Videos"
+            }
+          </h2>
           <div className="text-secondary">
             <span>{videos.length}</span> videos available
           </div>

@@ -14,6 +14,7 @@ import { EditVideoModal } from "@/components/edit-video-modal";
 import { InviteUserModal } from "@/components/invite-user-modal";
 import { AppSettingsModal } from "@/components/app-settings-modal";
 import { AddCategoryModal } from "@/components/add-category-modal";
+import { EditCategoryModal } from "@/components/edit-category-modal";
 import { CategoryCard } from "@/components/category-card";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -28,6 +29,8 @@ export default function AdminPage() {
   const [showInviteUser, setShowInviteUser] = useState(false);
   const [showAppSettings, setShowAppSettings] = useState(false);
   const [showAddCategory, setShowAddCategory] = useState(false);
+  const [showEditCategory, setShowEditCategory] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const { toast } = useToast();
 
   // Redirect if not admin
@@ -243,6 +246,16 @@ export default function AdminPage() {
   const handleCloseEditVideo = () => {
     setEditingVideo(null);
     setShowEditVideo(false);
+  };
+
+  const handleEditCategory = (category: Category) => {
+    setEditingCategory(category);
+    setShowEditCategory(true);
+  };
+
+  const handleCloseEditCategory = () => {
+    setEditingCategory(null);
+    setShowEditCategory(false);
   };
 
   return (
@@ -536,7 +549,14 @@ export default function AdminPage() {
                       videoCount={categoryVideoCount}
                       onClick={() => {}}
                     />
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity space-x-1">
+                      <Button
+                        size="sm"
+                        variant="outline"
+                        onClick={() => handleEditCategory(category)}
+                      >
+                        <Edit className="h-4 w-4" />
+                      </Button>
                       <Button
                         size="sm"
                         variant="destructive"
@@ -795,6 +815,12 @@ export default function AdminPage() {
       <AddCategoryModal
         isOpen={showAddCategory}
         onClose={() => setShowAddCategory(false)}
+      />
+
+      <EditCategoryModal
+        category={editingCategory}
+        isOpen={showEditCategory}
+        onClose={handleCloseEditCategory}
       />
     </div>
   );
