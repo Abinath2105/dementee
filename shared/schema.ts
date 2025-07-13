@@ -33,6 +33,8 @@ export const categories = pgTable("categories", {
   name: text("name").notNull().unique(),
   slug: text("slug").notNull().unique(),
   mentorName: text("mentor_name"),
+  description: text("description"),
+  coverImage: text("cover_image"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -156,6 +158,8 @@ export const insertCategorySchema = createInsertSchema(categories).pick({
   name: true,
   slug: true,
   mentorName: true,
+  description: true,
+  coverImage: true,
 });
 
 export const insertVideoSchema = createInsertSchema(videos).pick({

@@ -8,12 +8,12 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, Play, Shield } from "lucide-react";
 
-export default function AuthPage() {
+export default function StudentLogin() {
   const { user, loginMutation } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Redirect if already logged in
+  // Redirect if already authenticated
   if (user) {
     return <Redirect to="/" />;
   }

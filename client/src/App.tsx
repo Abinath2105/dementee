@@ -7,6 +7,8 @@ import { ProtectedRoute } from "./lib/protected-route";
 import HomePage from "@/pages/home-page";
 import AuthPage from "@/pages/auth-page";
 import AdminPage from "@/pages/admin-page";
+import AdminLogin from "@/pages/admin-login";
+import StudentLogin from "@/pages/student-login";
 import InvitationPage from "@/pages/invitation-page";
 import NotFound from "@/pages/not-found";
 
@@ -15,7 +17,8 @@ function Router() {
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
-      <Route path="/auth" component={AuthPage} />
+      <Route path="/auth" component={StudentLogin} />
+      <Route path="/admin/login" component={AdminLogin} />
       <Route path="/invite/:token" component={InvitationPage} />
       <Route component={NotFound} />
     </Switch>

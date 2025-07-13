@@ -13,6 +13,8 @@ import { AddVideoModal } from "@/components/add-video-modal";
 import { EditVideoModal } from "@/components/edit-video-modal";
 import { InviteUserModal } from "@/components/invite-user-modal";
 import { AppSettingsModal } from "@/components/app-settings-modal";
+import { AddCategoryModal } from "@/components/add-category-modal";
+import { CategoryCard } from "@/components/category-card";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { VideoWithCategory, AdminStats, User, Category, UserInvitation } from "@shared/schema";
@@ -25,6 +27,7 @@ export default function AdminPage() {
   const [showEditVideo, setShowEditVideo] = useState(false);
   const [showInviteUser, setShowInviteUser] = useState(false);
   const [showAppSettings, setShowAppSettings] = useState(false);
+  const [showAddCategory, setShowAddCategory] = useState(false);
   const { toast } = useToast();
 
   // Redirect if not admin
@@ -348,8 +351,9 @@ export default function AdminPage() {
 
         {/* Tabs for different management sections */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-5">
             <TabsTrigger value="videos">Videos</TabsTrigger>
+            <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="invitations">Invitations</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
@@ -509,42 +513,54 @@ export default function AdminPage() {
               </CardContent>
             </Card>
 
-            {/* Categories Management */}
-            <Card className="mt-6">
-              <CardHeader>
-                <CardTitle>Categories Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                  {categories.map((category) => (
-                    <div key={category.id} className="flex items-center justify-between p-4 border rounded-lg">
-                      <div>
-                        <h3 className="font-medium text-gray-900">{category.name}</h3>
-                        {category.mentorName && (
-                          <p className="text-sm text-gray-500">Mentor: {category.mentorName}</p>
-                        )}
-                      </div>
+
+          </TabsContent>
+
+          <TabsContent value="categories" className="mt-6">
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-4 mb-6">
+              <Button onClick={() => setShowAddCategory(true)}>
+                <Plus className="h-4 w-4 mr-2" />
+                Add Category
+              </Button>
+            </div>
+
+            {/* Categories Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+              {categories.map((category) => {
+                const categoryVideoCount = videos.filter(v => v.categoryId === category.id).length;
+                return (
+                  <div key={category.id} className="relative group">
+                    <CategoryCard
+                      category={category}
+                      videoCount={categoryVideoCount}
+                      onClick={() => {}}
+                    />
+                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity">
                       <Button
                         size="sm"
-                        variant="ghost"
+                        variant="destructive"
                         onClick={() => handleDeleteCategory(category.id)}
                         disabled={deleteCategoryMutation.isPending}
-                        className="text-red-600 hover:text-red-800"
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
                     </div>
-                  ))}
-                  {categories.length === 0 && (
-                    <div className="col-span-full text-center py-8 text-gray-500">
-                      No categories found. Create one using the "Add Video or Category" button.
-                    </div>
-                  )}
+                  </div>
+                );
+              })}
+              
+              {categories.length === 0 && (
+                <div className="col-span-full text-center py-12">
+                  <div className="text-gray-400 text-lg mb-4">No categories yet</div>
+                  <Button onClick={() => setShowAddCategory(true)}>
+                    Create your first category
+                  </Button>
                 </div>
-              </CardContent>
-            </Card>
+              )}
+            </div>
           </TabsContent>
-          
+
           <TabsContent value="users" className="mt-6">
             {/* User Management Table */}
             <Card>
@@ -774,6 +790,11 @@ export default function AdminPage() {
       <AppSettingsModal
         isOpen={showAppSettings}
         onClose={() => setShowAppSettings(false)}
+      />
+
+      <AddCategoryModal
+        isOpen={showAddCategory}
+        onClose={() => setShowAddCategory(false)}
       />
     </div>
   );

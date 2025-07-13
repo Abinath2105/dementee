@@ -6,15 +6,20 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Alert, AlertDescription } from "@/components/ui/alert";
-import { Loader2, Play, Shield } from "lucide-react";
+import { Loader2, Shield, User } from "lucide-react";
 
-export default function AuthPage() {
+export default function AdminLogin() {
   const { user, loginMutation } = useAuth();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  // Redirect if already logged in
-  if (user) {
+  // Redirect if already authenticated as admin
+  if (user?.isAdmin) {
+    return <Redirect to="/admin" />;
+  }
+  
+  // Redirect regular users to home
+  if (user && !user.isAdmin) {
     return <Redirect to="/" />;
   }
 
@@ -24,21 +29,21 @@ export default function AuthPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center px-4">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4">
       <div className="max-w-md w-full space-y-8">
         <div className="text-center">
-          <Play className="mx-auto h-12 w-12 text-blue-600" />
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Student Login</h2>
+          <Shield className="mx-auto h-12 w-12 text-gray-700" />
+          <h2 className="mt-6 text-3xl font-bold text-gray-900">Admin Login</h2>
           <p className="mt-2 text-sm text-gray-600">
-            Access your learning dashboard
+            Access the administration panel
           </p>
         </div>
 
         <Card>
           <CardHeader>
-            <CardTitle>Sign in to your account</CardTitle>
+            <CardTitle>Administrator Access</CardTitle>
             <CardDescription>
-              Enter your credentials to access the platform
+              Enter your admin credentials to continue
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -50,7 +55,7 @@ export default function AuthPage() {
                   type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
-                  placeholder="Enter your email"
+                  placeholder="Enter your admin email"
                   required
                 />
               </div>
@@ -62,7 +67,7 @@ export default function AuthPage() {
                   type="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Enter your password"
+                  placeholder="Enter your admin password"
                   required
                 />
               </div>
@@ -86,16 +91,16 @@ export default function AuthPage() {
                     Signing in...
                   </>
                 ) : (
-                  "Sign in"
+                  "Sign in as Admin"
                 )}
               </Button>
             </form>
 
             <div className="mt-6 text-center">
-              <Link href="/admin/login">
+              <Link href="/auth">
                 <Button variant="link" className="text-sm">
-                  <Shield className="mr-2 h-4 w-4" />
-                  Admin Login
+                  <User className="mr-2 h-4 w-4" />
+                  Student Login
                 </Button>
               </Link>
             </div>
@@ -104,7 +109,7 @@ export default function AuthPage() {
 
         <div className="text-center text-sm text-gray-600">
           <p>
-            Don't have an account? Contact your administrator for an invitation.
+            Restricted area. Admin access only.
           </p>
         </div>
       </div>

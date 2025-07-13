@@ -10,6 +10,7 @@ import { Play, Search, Settings, LogOut } from "lucide-react";
 import { VideoCard } from "@/components/video-card";
 import { VideoPlayerModal } from "@/components/video-player-modal";
 import { BannerCarousel } from "@/components/banner-carousel";
+import { CategoryCard } from "@/components/category-card";
 import type { VideoWithCategory, Category, AppSettings } from "@shared/schema";
 
 export default function HomePage() {
