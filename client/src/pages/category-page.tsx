@@ -6,13 +6,18 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { VideoPlayerModal } from "@/components/video-player-modal";
-import { type VideoWithCategory } from "@shared/schema";
+import { type VideoWithCategory, type AppSettings } from "@shared/schema";
 
 export function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
   const [selectedVideo, setSelectedVideo] = useState<VideoWithCategory | null>(null);
   const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+
+  // Fetch app settings for branding
+  const { data: appSettings } = useQuery<AppSettings>({
+    queryKey: ["/api/settings"],
+  });
 
   // Fetch category details
   const { data: category, isLoading: categoryLoading } = useQuery({
@@ -93,26 +98,38 @@ export function CategoryPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
-          <div className="flex items-center justify-between">
-            <Link href="/">
-              <Button variant="ghost" size="sm">
-                <ArrowLeft className="h-4 w-4 mr-2" />
-                Back to Categories
-              </Button>
-            </Link>
+      {/* Header with App Branding */}
+      <div className="bg-white shadow-sm border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            <div className="flex items-center">
+              <Link href="/">
+                <Button variant="ghost" size="sm" className="mr-4">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Home
+                </Button>
+              </Link>
+              <div className="flex items-center">
+                {appSettings?.appLogo ? (
+                  <img src={appSettings.appLogo} alt="Logo" className="h-8 w-8 mr-3" />
+                ) : (
+                  <Play className="h-8 w-8 text-primary mr-3" />
+                )}
+                <span className="text-xl font-bold text-gray-900">
+                  {appSettings?.appName || "VideoLearn Pro"}
+                </span>
+              </div>
+            </div>
           </div>
         </div>
       </div>
 
       {/* Category Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+      <div className="bg-white border-b">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex items-start space-x-6">
+          <div className="flex items-start space-x-8">
             {category.coverImage && (
-              <div className="flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden bg-white/20">
+              <div className="flex-shrink-0 w-40 h-40 rounded-xl overflow-hidden shadow-lg bg-gray-100">
                 <img
                   src={category.coverImage}
                   alt={category.name}
@@ -121,17 +138,28 @@ export function CategoryPage() {
               </div>
             )}
             <div className="flex-1">
-              <h1 className="text-3xl font-bold mb-2">{category.name}</h1>
-              {category.description && (
-                <p className="text-lg text-white/90 mb-4">{category.description}</p>
-              )}
-              {category.mentorName && (
-                <p className="text-white/80 mb-4">by {category.mentorName}</p>
-              )}
-              <div className="flex items-center space-x-4 text-sm text-white/80">
-                <span>{filteredVideos.length} videos</span>
-                <span>•</span>
-                <span>Learning Playlist</span>
+              <div className="mb-4">
+                <Badge variant="secondary" className="mb-3">Category</Badge>
+                <h1 className="text-4xl font-bold text-gray-900 mb-4">{category.name}</h1>
+                {category.description && (
+                  <p className="text-lg text-gray-600 mb-4 leading-relaxed">{category.description}</p>
+                )}
+                {category.mentorName && (
+                  <p className="text-gray-600 mb-4 flex items-center">
+                    <span className="font-medium text-gray-900">Instructor:</span>
+                    <span className="ml-2">{category.mentorName}</span>
+                  </p>
+                )}
+              </div>
+              <div className="flex items-center space-x-6 text-sm text-gray-600">
+                <div className="flex items-center space-x-2">
+                  <Play className="h-4 w-4" />
+                  <span>{filteredVideos.length} videos</span>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Clock className="h-4 w-4" />
+                  <span>Learning Playlist</span>
+                </div>
               </div>
             </div>
           </div>
@@ -139,7 +167,8 @@ export function CategoryPage() {
       </div>
 
       {/* Content */}
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+      <div className="bg-gray-50 min-h-screen">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
         {/* Search */}
         <div className="mb-6">
           <div className="relative max-w-md">
@@ -236,6 +265,7 @@ export function CategoryPage() {
             ))}
           </div>
         )}
+        </div>
       </div>
 
       {/* Video Player Modal */}
