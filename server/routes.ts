@@ -637,6 +637,63 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Fee Dashboard API endpoints
+  app.get("/api/admin/payment-stats", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const stats = await storage.getPaymentStats();
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching payment stats:", error);
+      res.status(500).json({ error: "Failed to fetch payment statistics" });
+    }
+  });
+
+  app.get("/api/admin/payment-records", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const records = await storage.getPaymentRecords();
+      res.json(records);
+    } catch (error) {
+      console.error("Error fetching payment records:", error);
+      res.status(500).json({ error: "Failed to fetch payment records" });
+    }
+  });
+
+  app.get("/api/admin/monthly-payment-data", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const data = await storage.getMonthlyPaymentData();
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching monthly payment data:", error);
+      res.status(500).json({ error: "Failed to fetch monthly payment data" });
+    }
+  });
+
+  app.get("/api/admin/course-revenue", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const data = await storage.getCourseRevenueData();
+      res.json(data);
+    } catch (error) {
+      console.error("Error fetching course revenue data:", error);
+      res.status(500).json({ error: "Failed to fetch course revenue data" });
+    }
+  });
+
   app.post("/api/admin/orientation-sessions", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
       return res.status(403).json({ error: "Admin access required" });

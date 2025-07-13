@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, Settings, GraduationCap } from "lucide-react";
+import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, Settings, GraduationCap, CreditCard } from "lucide-react";
 import { AddVideoModal } from "@/components/add-video-modal";
 import { EditVideoModal } from "@/components/edit-video-modal";
 import { AddMentorModal } from "@/components/add-mentor-modal";
@@ -290,6 +290,12 @@ export default function AdminPage() {
                 <Button variant="outline" size="sm">
                   <GraduationCap className="h-4 w-4 mr-2" />
                   Student Admissions
+                </Button>
+              </Link>
+              <Link href="/admin/fee-dashboard">
+                <Button variant="outline" size="sm">
+                  <CreditCard className="h-4 w-4 mr-2" />
+                  Fee Dashboard
                 </Button>
               </Link>
               <Link href="/admin/platform-settings">
