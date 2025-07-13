@@ -7,7 +7,7 @@ import express from "express";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { fetchYouTubeVideoInfo } from "./services/youtube";
-import { insertVideoSchema, insertCategorySchema, insertUserInvitationSchema, insertAppSettingsSchema } from "@shared/schema";
+import { insertVideoSchema, insertCategorySchema, insertUserInvitationSchema, insertAppSettingsSchema, insertUserCategoryAccessSchema } from "@shared/schema";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -50,7 +50,8 @@ export function registerRoutes(app: Express): Server {
   // Categories
   app.get("/api/categories", async (req, res) => {
     try {
-      const categories = await storage.getCategories();
+      const userId = req.user?.id;
+      const categories = await storage.getCategories(userId);
       res.json(categories);
     } catch (error) {
       console.error('Get categories error:', error);
@@ -382,6 +383,69 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Delete invitation error:", error);
       res.status(500).json({ message: "Failed to delete invitation" });
+    }
+  });
+
+  // User category access routes (admin only)
+  app.post("/api/admin/users/:userId/categories/:categoryId", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const userId = parseInt(req.params.userId);
+      const categoryId = parseInt(req.params.categoryId);
+      const access = await storage.assignUserToCategory(userId, categoryId, req.user.id);
+      res.status(201).json(access);
+    } catch (error) {
+      console.error("Assign category error:", error);
+      res.status(500).json({ message: "Failed to assign category to user" });
+    }
+  });
+
+  app.delete("/api/admin/users/:userId/categories/:categoryId", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const userId = parseInt(req.params.userId);
+      const categoryId = parseInt(req.params.categoryId);
+      await storage.removeUserFromCategory(userId, categoryId);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error("Remove category access error:", error);
+      res.status(500).json({ message: "Failed to remove category access" });
+    }
+  });
+
+  app.get("/api/admin/users/:userId/categories", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const userId = parseInt(req.params.userId);
+      const access = await storage.getUserCategoryAccess(userId);
+      res.json(access);
+    } catch (error) {
+      console.error("Get user category access error:", error);
+      res.status(500).json({ message: "Failed to fetch user category access" });
+    }
+  });
+
+  app.get("/api/admin/categories/:categoryId/users", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const categoryId = parseInt(req.params.categoryId);
+      const users = await storage.getCategoryUsers(categoryId);
+      res.json(users);
+    } catch (error) {
+      console.error("Get category users error:", error);
+      res.status(500).json({ message: "Failed to fetch category users" });
     }
   });
 

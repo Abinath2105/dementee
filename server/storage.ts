@@ -1,4 +1,4 @@
-import { users, videos, categories, otpCodes, videoViews, appSettings, userInvitations, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation } from "@shared/schema";
+import { users, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or, ilike } from "drizzle-orm";
 import session from "express-session";
@@ -33,11 +33,17 @@ export interface IStorage {
   markOtpAsUsed(id: number): Promise<void>;
 
   // Category management
-  getCategories(): Promise<Category[]>;
+  getCategories(userId?: number): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
   getCategoryBySlug(slug: string): Promise<Category | undefined>;
   updateCategory(id: number, category: Partial<InsertCategory>): Promise<Category>;
   deleteCategory(id: number): Promise<void>;
+
+  // User category access management
+  assignUserToCategory(userId: number, categoryId: number, assignedBy: number): Promise<UserCategoryAccess>;
+  removeUserFromCategory(userId: number, categoryId: number): Promise<void>;
+  getUserCategoryAccess(userId: number): Promise<UserCategoryAccess[]>;
+  getCategoryUsers(categoryId: number): Promise<User[]>;
 
   // Video management
   getVideos(search?: string, categoryId?: number): Promise<VideoWithCategory[]>;
@@ -144,8 +150,27 @@ export class DatabaseStorage implements IStorage {
       .where(eq(otpCodes.id, id));
   }
 
-  async getCategories(): Promise<Category[]> {
-    return await db.select().from(categories).orderBy(categories.name);
+  async getCategories(userId?: number): Promise<Category[]> {
+    if (!userId) {
+      // Admin view - return all categories
+      return await db.select().from(categories).orderBy(categories.name);
+    }
+
+    // Check if user is admin
+    const user = await this.getUser(userId);
+    if (user?.isAdmin) {
+      return await db.select().from(categories).orderBy(categories.name);
+    }
+
+    // Regular user - return only assigned categories
+    const userCategories = await db
+      .select({ category: categories })
+      .from(categories)
+      .innerJoin(userCategoryAccess, eq(categories.id, userCategoryAccess.categoryId))
+      .where(eq(userCategoryAccess.userId, userId))
+      .orderBy(categories.name);
+    
+    return userCategories.map(row => row.category);
   }
 
   async createCategory(insertCategory: InsertCategory): Promise<Category> {
@@ -273,7 +298,64 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteCategory(id: number): Promise<void> {
+    // First remove all user access assignments for this category
+    await db.delete(userCategoryAccess).where(eq(userCategoryAccess.categoryId, id));
+    // Then delete the category
     await db.delete(categories).where(eq(categories.id, id));
+  }
+
+  // User category access management methods
+  async assignUserToCategory(userId: number, categoryId: number, assignedBy: number): Promise<UserCategoryAccess> {
+    // Check if assignment already exists
+    const [existing] = await db
+      .select()
+      .from(userCategoryAccess)
+      .where(and(
+        eq(userCategoryAccess.userId, userId),
+        eq(userCategoryAccess.categoryId, categoryId)
+      ));
+
+    if (existing) {
+      return existing;
+    }
+
+    const [access] = await db
+      .insert(userCategoryAccess)
+      .values({
+        userId,
+        categoryId,
+        assignedBy,
+      })
+      .returning();
+    return access;
+  }
+
+  async removeUserFromCategory(userId: number, categoryId: number): Promise<void> {
+    await db
+      .delete(userCategoryAccess)
+      .where(and(
+        eq(userCategoryAccess.userId, userId),
+        eq(userCategoryAccess.categoryId, categoryId)
+      ));
+  }
+
+  async getUserCategoryAccess(userId: number): Promise<UserCategoryAccess[]> {
+    return await db
+      .select()
+      .from(userCategoryAccess)
+      .where(eq(userCategoryAccess.userId, userId))
+      .orderBy(userCategoryAccess.createdAt);
+  }
+
+  async getCategoryUsers(categoryId: number): Promise<User[]> {
+    const categoryUsers = await db
+      .select({ user: users })
+      .from(users)
+      .innerJoin(userCategoryAccess, eq(users.id, userCategoryAccess.userId))
+      .where(eq(userCategoryAccess.categoryId, categoryId))
+      .orderBy(users.username);
+    
+    return categoryUsers.map(row => row.user);
   }
 
   async incrementVideoViews(videoId: number, userId?: number, ipAddress?: string): Promise<void> {

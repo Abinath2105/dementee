@@ -15,6 +15,7 @@ import { InviteUserModal } from "@/components/invite-user-modal";
 import { AppSettingsModal } from "@/components/app-settings-modal";
 import { AddCategoryModal } from "@/components/add-category-modal";
 import { EditCategoryModal } from "@/components/edit-category-modal";
+import { AssignCategoryModal } from "@/components/assign-category-modal";
 import { CategoryCard } from "@/components/category-card";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -31,6 +32,8 @@ export default function AdminPage() {
   const [showAddCategory, setShowAddCategory] = useState(false);
   const [showEditCategory, setShowEditCategory] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [showAssignCategory, setShowAssignCategory] = useState(false);
+  const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const { toast } = useToast();
 
   // Redirect if not admin
@@ -256,6 +259,16 @@ export default function AdminPage() {
   const handleCloseEditCategory = () => {
     setEditingCategory(null);
     setShowEditCategory(false);
+  };
+
+  const handleAssignCategory = (userItem: User) => {
+    setSelectedUser(userItem);
+    setShowAssignCategory(true);
+  };
+
+  const handleCloseAssignCategory = () => {
+    setSelectedUser(null);
+    setShowAssignCategory(false);
   };
 
   return (
@@ -658,14 +671,25 @@ export default function AdminPage() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleDeleteUser(userItem.id)}
-                                disabled={deleteUserMutation.isPending || userItem.id === user?.id}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              </Button>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleAssignCategory(userItem)}
+                                  disabled={userItem.isAdmin}
+                                  title={userItem.isAdmin ? "Admins have access to all categories" : "Assign categories"}
+                                >
+                                  <UserCheck className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDeleteUser(userItem.id)}
+                                  disabled={deleteUserMutation.isPending || userItem.id === user?.id}
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))
@@ -821,6 +845,12 @@ export default function AdminPage() {
         category={editingCategory}
         isOpen={showEditCategory}
         onClose={handleCloseEditCategory}
+      />
+
+      <AssignCategoryModal
+        user={selectedUser}
+        isOpen={showAssignCategory}
+        onClose={handleCloseAssignCategory}
       />
     </div>
   );

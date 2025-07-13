@@ -50,7 +50,8 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - Toast notifications for user feedback
 
 ### Content Organization
-- Categories for video classification
+- Categories for video classification with role-based access control
+- User-category assignment system for restricted access
 - Tag-based metadata system
 - View counting and popularity tracking
 - Admin statistics dashboard
@@ -118,6 +119,10 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 13, 2025: Fixed invitation system domain URLs to use proper Replit domain instead of localhost
 - January 13, 2025: Fixed critical password hashing bug in invitation acceptance (similar to Menor project fix)
 - January 13, 2025: Added proper password hashing to setUserPassword method for security
+- January 13, 2025: Implemented role-based category access control system
+- January 13, 2025: Added user-category assignment functionality in admin panel
+- January 13, 2025: Created userCategoryAccess junction table for permissions management
+- January 13, 2025: Updated category fetching to respect user access permissions
 
 ## User Preferences
 

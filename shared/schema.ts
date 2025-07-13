@@ -85,10 +85,20 @@ export const userInvitations = pgTable("user_invitations", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// User category access control
+export const userCategoryAccess = pgTable("user_category_access", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  categoryId: integer("category_id").references(() => categories.id).notNull(),
+  assignedBy: integer("assigned_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   videoViews: many(videoViews),
   invitedUsers: many(userInvitations, { foreignKey: userInvitations.invitedBy }),
+  categoryAccess: many(userCategoryAccess, { foreignKey: userCategoryAccess.userId }),
   invitedBy: one(users, {
     fields: [users.invitedBy],
     references: [users.id],
@@ -97,6 +107,22 @@ export const usersRelations = relations(users, ({ many, one }) => ({
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
   videos: many(videos),
+  userAccess: many(userCategoryAccess, { foreignKey: userCategoryAccess.categoryId }),
+}));
+
+export const userCategoryAccessRelations = relations(userCategoryAccess, ({ one }) => ({
+  user: one(users, {
+    fields: [userCategoryAccess.userId],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [userCategoryAccess.categoryId],
+    references: [categories.id],
+  }),
+  assignedBy: one(users, {
+    fields: [userCategoryAccess.assignedBy],
+    references: [users.id],
+  }),
 }));
 
 export const videosRelations = relations(videos, ({ one, many }) => ({
@@ -179,6 +205,11 @@ export const insertVideoViewSchema = createInsertSchema(videoViews).pick({
   ipAddress: true,
 });
 
+export const insertUserCategoryAccessSchema = createInsertSchema(userCategoryAccess).pick({
+  userId: true,
+  categoryId: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -195,6 +226,8 @@ export type AppSettings = typeof appSettings.$inferSelect;
 export type InsertAppSettings = z.infer<typeof insertAppSettingsSchema>;
 export type UserInvitation = typeof userInvitations.$inferSelect;
 export type InsertUserInvitation = z.infer<typeof insertUserInvitationSchema>;
+export type UserCategoryAccess = typeof userCategoryAccess.$inferSelect;
+export type InsertUserCategoryAccess = z.infer<typeof insertUserCategoryAccessSchema>;
 
 // Extended types for API responses
 export type VideoWithCategory = Video & {
