@@ -1,5 +1,10 @@
 import nodemailer from 'nodemailer';
 
+// Check if SMTP is properly configured
+const isSmtpConfigured = () => {
+  return !!(process.env.SMTP_USER && process.env.SMTP_PASS);
+};
+
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'smtp.gmail.com',
   port: parseInt(process.env.SMTP_PORT || '587'),
@@ -26,6 +31,11 @@ export async function testEmailConnection(): Promise<boolean> {
 }
 
 export async function sendOtpEmail(email: string, otp: string): Promise<void> {
+  if (!isSmtpConfigured()) {
+    console.warn('SMTP not configured - OTP email not sent. Set SMTP_USER and SMTP_PASS environment variables.');
+    return;
+  }
+  
   try {
     const mailOptions = {
       from: process.env.SMTP_USER,
@@ -70,6 +80,11 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
 }
 
 export async function sendInvitationEmail(email: string, token: string, role: string): Promise<void> {
+  if (!isSmtpConfigured()) {
+    console.warn('SMTP not configured - Invitation email not sent. Set SMTP_USER and SMTP_PASS environment variables.');
+    return;
+  }
+  
   try {
     // Use the proper Replit domain or fallback to localhost for development
     const baseUrl = process.env.REPLIT_DEV_DOMAIN 

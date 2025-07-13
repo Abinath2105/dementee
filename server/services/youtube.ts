@@ -16,7 +16,7 @@ export async function fetchYouTubeVideoInfo(url: string): Promise<YouTubeVideoIn
   
   // If no API key, return fallback data
   if (!apiKey) {
-    console.log('No YouTube API key provided, using fallback data');
+    console.warn('YOUTUBE_API_KEY not configured - using basic video information. Set YOUTUBE_API_KEY for enhanced video metadata.');
     return {
       id: videoId,
       title: `YouTube Video ${videoId}`,
