@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { fetchYouTubeVideoInfo } from "./services/youtube";
-import { insertVideoSchema, insertCategorySchema } from "@shared/schema";
+import { insertVideoSchema, insertCategorySchema, insertUserInvitationSchema, insertAppSettingsSchema } from "@shared/schema";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -258,6 +258,132 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error("Delete user error:", error);
       res.status(500).json({ message: "Failed to delete user" });
+    }
+  });
+
+  // User invitation routes (admin only)
+  app.post("/api/admin/invitations", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const parsed = insertUserInvitationSchema.parse(req.body);
+      const invitation = await storage.createUserInvitation({
+        ...parsed,
+        invitedBy: req.user.id,
+      });
+      
+      // Send invitation email
+      const { sendInvitationEmail } = await import("./services/email");
+      await sendInvitationEmail(invitation.email, invitation.inviteToken, parsed.role);
+      
+      res.status(201).json(invitation);
+    } catch (error) {
+      console.error("Create invitation error:", error);
+      res.status(500).json({ message: "Failed to create invitation" });
+    }
+  });
+
+  app.get("/api/admin/invitations", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const invitations = await storage.getAllInvitations();
+      res.json(invitations);
+    } catch (error) {
+      console.error("Get invitations error:", error);
+      res.status(500).json({ message: "Failed to fetch invitations" });
+    }
+  });
+
+  app.delete("/api/admin/invitations/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteInvitation(id);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error("Delete invitation error:", error);
+      res.status(500).json({ message: "Failed to delete invitation" });
+    }
+  });
+
+  // Public invitation acceptance route
+  app.get("/api/invitation/:token", async (req, res) => {
+    try {
+      const invitation = await storage.getUserInvitation(req.params.token);
+      if (!invitation) {
+        return res.status(404).json({ message: "Invalid or expired invitation" });
+      }
+      res.json({ email: invitation.email, role: invitation.role });
+    } catch (error) {
+      console.error("Get invitation error:", error);
+      res.status(500).json({ message: "Failed to fetch invitation" });
+    }
+  });
+
+  app.post("/api/invitation/:token/accept", async (req, res) => {
+    try {
+      const { username, fullName, password } = req.body;
+      const user = await storage.acceptUserInvitation(req.params.token, {
+        username,
+        fullName,
+        password,
+      });
+      
+      const { password: _, ...safeUser } = user;
+      res.status(201).json(safeUser);
+    } catch (error) {
+      console.error("Accept invitation error:", error);
+      res.status(500).json({ message: "Failed to accept invitation" });
+    }
+  });
+
+  // App settings routes (admin only)
+  app.get("/api/settings", async (req, res) => {
+    try {
+      const settings = await storage.getAppSettings();
+      res.json(settings);
+    } catch (error) {
+      console.error("Get app settings error:", error);
+      res.status(500).json({ message: "Failed to fetch app settings" });
+    }
+  });
+
+  app.put("/api/admin/settings", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const parsed = insertAppSettingsSchema.partial().parse(req.body);
+      const settings = await storage.updateAppSettings(parsed);
+      res.json(settings);
+    } catch (error) {
+      console.error("Update app settings error:", error);
+      res.status(500).json({ message: "Failed to update app settings" });
+    }
+  });
+
+  // File upload route for banners and logos (admin only)
+  app.post("/api/admin/upload", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      // For now, return a mock URL - this would need proper file upload handling
+      const mockUrl = `/uploads/${Date.now()}-banner.jpg`;
+      res.json({ url: mockUrl });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(500).json({ message: "Failed to upload file" });
     }
   });
 

@@ -7,10 +7,15 @@ export const users = pgTable("users", {
   id: serial("id").primaryKey(),
   username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
-  password: text("password").notNull(),
+  password: text("password"),
   fullName: text("full_name").notNull(),
+  role: text("role").notNull().default("student"), // 'admin', 'student'
   isAdmin: boolean("is_admin").default(false).notNull(),
   isVerified: boolean("is_verified").default(false).notNull(),
+  invitedBy: integer("invited_by").references(() => users.id),
+  inviteToken: text("invite_token"),
+  inviteExpiry: timestamp("invite_expiry"),
+  profilePicture: text("profile_picture"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
@@ -54,9 +59,38 @@ export const videoViews = pgTable("video_views", {
   viewedAt: timestamp("viewed_at").defaultNow().notNull(),
 });
 
+// App settings for customization
+export const appSettings = pgTable("app_settings", {
+  id: serial("id").primaryKey(),
+  appName: text("app_name").notNull().default("VideoLearn Pro"),
+  appLogo: text("app_logo"),
+  primaryColor: text("primary_color").notNull().default("#3b82f6"),
+  secondaryColor: text("secondary_color").notNull().default("#1f2937"),
+  bannerImages: jsonb("banner_images").$type<string[]>().default([]),
+  footerText: text("footer_text"),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User invitations
+export const userInvitations = pgTable("user_invitations", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull(),
+  role: text("role").notNull().default("student"),
+  inviteToken: text("invite_token").notNull().unique(),
+  invitedBy: integer("invited_by").references(() => users.id).notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  acceptedAt: timestamp("accepted_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 // Relations
-export const usersRelations = relations(users, ({ many }) => ({
+export const usersRelations = relations(users, ({ many, one }) => ({
   videoViews: many(videoViews),
+  invitedUsers: many(userInvitations, { foreignKey: userInvitations.invitedBy }),
+  invitedBy: one(users, {
+    fields: [users.invitedBy],
+    references: [users.id],
+  }),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
@@ -82,12 +116,34 @@ export const videoViewsRelations = relations(videoViews, ({ one }) => ({
   }),
 }));
 
+export const userInvitationsRelations = relations(userInvitations, ({ one }) => ({
+  invitedBy: one(users, {
+    fields: [userInvitations.invitedBy],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
   email: true,
   password: true,
   fullName: true,
+  role: true,
+});
+
+export const insertUserInvitationSchema = createInsertSchema(userInvitations).pick({
+  email: true,
+  role: true,
+});
+
+export const insertAppSettingsSchema = createInsertSchema(appSettings).pick({
+  appName: true,
+  appLogo: true,
+  primaryColor: true,
+  secondaryColor: true,
+  bannerImages: true,
+  footerText: true,
 });
 
 export const insertOtpSchema = createInsertSchema(otpCodes).pick({
@@ -122,6 +178,7 @@ export const insertVideoViewSchema = createInsertSchema(videoViews).pick({
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
+export type SelectUser = User;
 export type OtpCode = typeof otpCodes.$inferSelect;
 export type InsertOtp = z.infer<typeof insertOtpSchema>;
 export type Category = typeof categories.$inferSelect;
@@ -130,6 +187,10 @@ export type Video = typeof videos.$inferSelect;
 export type InsertVideo = z.infer<typeof insertVideoSchema>;
 export type VideoView = typeof videoViews.$inferSelect;
 export type InsertVideoView = z.infer<typeof insertVideoViewSchema>;
+export type AppSettings = typeof appSettings.$inferSelect;
+export type InsertAppSettings = z.infer<typeof insertAppSettingsSchema>;
+export type UserInvitation = typeof userInvitations.$inferSelect;
+export type InsertUserInvitation = z.infer<typeof insertUserInvitationSchema>;
 
 // Extended types for API responses
 export type VideoWithCategory = Video & {

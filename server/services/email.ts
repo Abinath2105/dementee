@@ -68,3 +68,59 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
     throw new Error('Failed to send verification email');
   }
 }
+
+export async function sendInvitationEmail(email: string, token: string, role: string): Promise<void> {
+  try {
+    const inviteUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/invite/${token}`;
+    
+    const mailOptions = {
+      from: process.env.SMTP_USER,
+      to: email,
+      subject: `VideoLearn Pro - You're invited as a ${role}`,
+      html: `
+        <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
+          <div style="text-align: center; margin-bottom: 30px;">
+            <h1 style="color: #2563EB; margin: 0;">VideoLearn Pro</h1>
+            <p style="color: #64748B; margin: 5px 0;">Learning Management Platform</p>
+          </div>
+          
+          <div style="background: #F8FAFC; padding: 30px; border-radius: 12px;">
+            <h2 style="color: #1E293B; margin-bottom: 20px; text-align: center;">You're Invited!</h2>
+            <p style="color: #64748B; margin-bottom: 20px;">
+              You have been invited to join VideoLearn Pro as a <strong>${role}</strong>.
+            </p>
+            <p style="color: #64748B; margin-bottom: 30px;">
+              Click the button below to accept your invitation and set up your account:
+            </p>
+            
+            <div style="text-align: center; margin: 30px 0;">
+              <a href="${inviteUrl}" 
+                 style="background-color: #2563EB; color: white; padding: 15px 30px; 
+                        text-decoration: none; border-radius: 8px; display: inline-block; font-weight: bold;">
+                Accept Invitation
+              </a>
+            </div>
+            
+            <div style="background: white; padding: 15px; border-radius: 8px; margin: 20px 0; border: 1px solid #E2E8F0;">
+              <p style="margin: 0; color: #64748B; font-size: 14px;">Or copy and paste this link:</p>
+              <p style="margin: 5px 0 0 0; color: #2563EB; word-break: break-all;">${inviteUrl}</p>
+            </div>
+            
+            <p style="color: #64748B; font-size: 14px; margin-top: 20px;">
+              This invitation will expire in 7 days. If you didn't expect this invitation, please ignore this email.
+            </p>
+          </div>
+          
+          <div style="text-align: center; margin-top: 30px; color: #64748B; font-size: 12px;">
+            <p>© 2024 VideoLearn Pro. All rights reserved.</p>
+          </div>
+        </div>
+      `,
+    };
+
+    await transporter.sendMail(mailOptions);
+  } catch (error) {
+    console.error('Invitation email sending error:', error);
+    throw new Error('Failed to send invitation email');
+  }
+}

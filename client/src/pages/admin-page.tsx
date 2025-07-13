@@ -8,12 +8,14 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff } from "lucide-react";
+import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, UserPlus, Mail, Palette } from "lucide-react";
 import { AddVideoModal } from "@/components/add-video-modal";
 import { EditVideoModal } from "@/components/edit-video-modal";
+import { InviteUserModal } from "@/components/invite-user-modal";
+import { AppSettingsModal } from "@/components/app-settings-modal";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
-import type { VideoWithCategory, AdminStats, User, Category } from "@shared/schema";
+import type { VideoWithCategory, AdminStats, User, Category, UserInvitation } from "@shared/schema";
 
 export default function AdminPage() {
   const { user, logoutMutation } = useAuth();
@@ -21,6 +23,8 @@ export default function AdminPage() {
   const [activeTab, setActiveTab] = useState("videos");
   const [editingVideo, setEditingVideo] = useState<VideoWithCategory | null>(null);
   const [showEditVideo, setShowEditVideo] = useState(false);
+  const [showInviteUser, setShowInviteUser] = useState(false);
+  const [showAppSettings, setShowAppSettings] = useState(false);
   const { toast } = useToast();
 
   // Redirect if not admin
@@ -42,6 +46,10 @@ export default function AdminPage() {
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
+  });
+
+  const { data: invitations = [] } = useQuery<UserInvitation[]>({
+    queryKey: ["/api/admin/invitations"],
   });
 
   const deleteVideoMutation = useMutation({
@@ -194,6 +202,36 @@ export default function AdminPage() {
     updateVideoVisibilityMutation.mutate({ videoId, isPublic });
   };
 
+  const deleteInvitationMutation = useMutation({
+    mutationFn: async (invitationId: number) => {
+      const response = await fetch(`/api/admin/invitations/${invitationId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to delete invitation");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/invitations"] });
+      toast({
+        title: "Invitation deleted",
+        description: "Invitation deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeleteInvitation = (invitationId: number) => {
+    if (confirm("Are you sure you want to delete this invitation?")) {
+      deleteInvitationMutation.mutate(invitationId);
+    }
+  };
+
   const handleEditVideo = (video: VideoWithCategory) => {
     setEditingVideo(video);
     setShowEditVideo(true);
@@ -310,9 +348,11 @@ export default function AdminPage() {
 
         {/* Tabs for different management sections */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-2">
-            <TabsTrigger value="videos">Video Management</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-4">
+            <TabsTrigger value="videos">Videos</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="invitations">Invitations</TabsTrigger>
+            <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
           
           <TabsContent value="videos" className="mt-6">
@@ -600,6 +640,116 @@ export default function AdminPage() {
               </CardContent>
             </Card>
           </TabsContent>
+
+          <TabsContent value="invitations" className="mt-6">
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-4 mb-6">
+              <Button onClick={() => setShowInviteUser(true)}>
+                <UserPlus className="h-4 w-4 mr-2" />
+                Invite New User
+              </Button>
+            </div>
+
+            {/* Invitations Table */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Pending Invitations</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Role</TableHead>
+                        <TableHead>Invited Date</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {invitations.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={5} className="text-center text-gray-500 py-8">
+                            No pending invitations
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        invitations.map((invitation) => (
+                          <TableRow key={invitation.id}>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <Mail className="h-4 w-4 text-gray-400" />
+                                <span>{invitation.email}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={invitation.role === 'admin' ? 'destructive' : 'default'}>
+                                {invitation.role}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(invitation.createdAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">Pending</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeleteInvitation(invitation.id)}
+                                disabled={deleteInvitationMutation.isPending}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="settings" className="mt-6">
+            {/* Action Buttons */}
+            <div className="flex flex-wrap gap-4 mb-6">
+              <Button onClick={() => setShowAppSettings(true)}>
+                <Palette className="h-4 w-4 mr-2" />
+                Customize App
+              </Button>
+            </div>
+
+            {/* Settings Overview */}
+            <Card>
+              <CardHeader>
+                <CardTitle>App Configuration</CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-4">
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">Branding</h3>
+                      <p className="text-sm text-gray-600 mb-4">Customize your app's appearance and branding</p>
+                      <Button onClick={() => setShowAppSettings(true)}>
+                        Edit Branding
+                      </Button>
+                    </div>
+                    <div>
+                      <h3 className="text-lg font-medium mb-2">User Management</h3>
+                      <p className="text-sm text-gray-600 mb-4">Control user access through email invitations</p>
+                      <Button onClick={() => setShowInviteUser(true)}>
+                        Invite Users
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
         </Tabs>
       </div>
 
@@ -614,6 +764,16 @@ export default function AdminPage() {
         video={editingVideo}
         isOpen={showEditVideo}
         onClose={handleCloseEditVideo}
+      />
+
+      <InviteUserModal
+        isOpen={showInviteUser}
+        onClose={() => setShowInviteUser(false)}
+      />
+
+      <AppSettingsModal
+        isOpen={showAppSettings}
+        onClose={() => setShowAppSettings(false)}
       />
     </div>
   );

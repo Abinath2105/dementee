@@ -1,9 +1,10 @@
-import { users, videos, categories, otpCodes, videoViews, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats } from "@shared/schema";
+import { users, videos, categories, otpCodes, videoViews, appSettings, userInvitations, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or, ilike } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
+import crypto from "crypto";
 
 const PostgresSessionStore = connectPg(session);
 
@@ -17,6 +18,14 @@ export interface IStorage {
   getAllUsers(): Promise<User[]>;
   updateUserAdminStatus(userId: number, isAdmin: boolean): Promise<User>;
   deleteUser(userId: number): Promise<void>;
+  setUserPassword(userId: number, password: string): Promise<User>;
+
+  // User invitation management
+  createUserInvitation(invitation: InsertUserInvitation & { invitedBy: number }): Promise<UserInvitation>;
+  getUserInvitation(token: string): Promise<UserInvitation | undefined>;
+  acceptUserInvitation(token: string, userData: { username: string; fullName: string; password: string }): Promise<User>;
+  getAllInvitations(): Promise<UserInvitation[]>;
+  deleteInvitation(id: number): Promise<void>;
 
   // OTP management
   createOtp(otp: InsertOtp): Promise<OtpCode>;
@@ -36,6 +45,10 @@ export interface IStorage {
   updateVideo(id: number, video: Partial<InsertVideo>): Promise<Video>;
   deleteVideo(id: number): Promise<void>;
   incrementVideoViews(videoId: number, userId?: number, ipAddress?: string): Promise<void>;
+
+  // App settings management
+  getAppSettings(): Promise<AppSettings>;
+  updateAppSettings(settings: Partial<InsertAppSettings>): Promise<AppSettings>;
 
   // Admin stats
   getAdminStats(): Promise<AdminStats>;
@@ -268,6 +281,103 @@ export class DatabaseStorage implements IStorage {
         views: sql`${videos.views} + 1`,
       })
       .where(eq(videos.id, videoId));
+  }
+
+  async setUserPassword(userId: number, password: string): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ password })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async createUserInvitation(invitation: InsertUserInvitation & { invitedBy: number }): Promise<UserInvitation> {
+    const [inv] = await db
+      .insert(userInvitations)
+      .values({
+        ...invitation,
+        inviteToken: crypto.randomUUID(),
+        expiresAt: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000), // 7 days
+      })
+      .returning();
+    return inv;
+  }
+
+  async getUserInvitation(token: string): Promise<UserInvitation | undefined> {
+    const [invitation] = await db
+      .select()
+      .from(userInvitations)
+      .where(and(
+        eq(userInvitations.inviteToken, token),
+        sql`${userInvitations.expiresAt} > NOW()`,
+        sql`${userInvitations.acceptedAt} IS NULL`
+      ));
+    return invitation || undefined;
+  }
+
+  async acceptUserInvitation(token: string, userData: { username: string; fullName: string; password: string }): Promise<User> {
+    const invitation = await this.getUserInvitation(token);
+    if (!invitation) {
+      throw new Error("Invalid or expired invitation");
+    }
+
+    // Create user
+    const [user] = await db
+      .insert(users)
+      .values({
+        username: userData.username,
+        email: invitation.email,
+        password: userData.password,
+        fullName: userData.fullName,
+        role: invitation.role,
+        isAdmin: invitation.role === 'admin',
+        isVerified: true,
+        invitedBy: invitation.invitedBy,
+      })
+      .returning();
+
+    // Mark invitation as accepted
+    await db
+      .update(userInvitations)
+      .set({ acceptedAt: new Date() })
+      .where(eq(userInvitations.id, invitation.id));
+
+    return user;
+  }
+
+  async getAllInvitations(): Promise<UserInvitation[]> {
+    return await db.select().from(userInvitations).orderBy(desc(userInvitations.createdAt));
+  }
+
+  async deleteInvitation(id: number): Promise<void> {
+    await db.delete(userInvitations).where(eq(userInvitations.id, id));
+  }
+
+  async getAppSettings(): Promise<AppSettings> {
+    const [settings] = await db.select().from(appSettings).limit(1);
+    if (!settings) {
+      // Create default settings
+      const [defaultSettings] = await db
+        .insert(appSettings)
+        .values({
+          appName: "VideoLearn Pro",
+          primaryColor: "#3b82f6",
+          secondaryColor: "#1f2937",
+          bannerImages: [],
+        })
+        .returning();
+      return defaultSettings;
+    }
+    return settings;
+  }
+
+  async updateAppSettings(settings: Partial<InsertAppSettings>): Promise<AppSettings> {
+    const [updated] = await db
+      .update(appSettings)
+      .set({ ...settings, updatedAt: new Date() })
+      .returning();
+    return updated;
   }
 
   async getAdminStats(): Promise<AdminStats> {

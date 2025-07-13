@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Link } from "wouter";
@@ -9,13 +9,18 @@ import { Badge } from "@/components/ui/badge";
 import { Play, Search, Settings, LogOut } from "lucide-react";
 import { VideoCard } from "@/components/video-card";
 import { VideoPlayerModal } from "@/components/video-player-modal";
-import type { VideoWithCategory, Category } from "@shared/schema";
+import { BannerCarousel } from "@/components/banner-carousel";
+import type { VideoWithCategory, Category, AppSettings } from "@shared/schema";
 
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [selectedVideo, setSelectedVideo] = useState<VideoWithCategory | null>(null);
+
+  const { data: appSettings } = useQuery<AppSettings>({
+    queryKey: ["/api/settings"],
+  });
 
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
@@ -38,6 +43,14 @@ export default function HomePage() {
     // Search is handled automatically via query key changes
   };
 
+  // Apply custom CSS variables for theming
+  useEffect(() => {
+    if (appSettings) {
+      document.documentElement.style.setProperty('--primary', appSettings.primaryColor);
+      document.documentElement.style.setProperty('--secondary', appSettings.secondaryColor);
+    }
+  }, [appSettings]);
+
   return (
     <div className="min-h-screen bg-background">
       {/* Navigation */}
@@ -45,8 +58,14 @@ export default function HomePage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="flex justify-between items-center h-16">
             <div className="flex items-center">
-              <Play className="h-8 w-8 text-primary mr-3" />
-              <span className="text-xl font-bold text-gray-900">VideoLearn Pro</span>
+              {appSettings?.appLogo ? (
+                <img src={appSettings.appLogo} alt="Logo" className="h-8 w-8 mr-3" />
+              ) : (
+                <Play className="h-8 w-8 text-primary mr-3" />
+              )}
+              <span className="text-xl font-bold text-gray-900">
+                {appSettings?.appName || "VideoLearn Pro"}
+              </span>
             </div>
             <div className="flex items-center space-x-4">
               {user?.isAdmin && (
@@ -71,11 +90,19 @@ export default function HomePage() {
         </div>
       </nav>
 
-      {/* Hero Section */}
-      <div className="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
+      {/* Banner Carousel */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <BannerCarousel 
+          banners={appSettings?.bannerImages || []}
+          className="mb-8"
+        />
+      </div>
+
+      {/* Search Section */}
+      <div className="bg-white border-b border-gray-200 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
-          <h1 className="text-4xl md:text-5xl font-bold mb-4">Discover Knowledge</h1>
-          <p className="text-xl mb-8 opacity-90">Access curated video content to enhance your skills</p>
+          <h1 className="text-4xl md:text-5xl font-bold mb-4 text-gray-900">Discover Knowledge</h1>
+          <p className="text-xl mb-8 text-gray-600">Access curated video content to enhance your skills</p>
           
           {/* Search Bar */}
           <div className="max-w-2xl mx-auto relative">
@@ -171,6 +198,15 @@ export default function HomePage() {
           isOpen={!!selectedVideo}
           onClose={() => setSelectedVideo(null)}
         />
+      )}
+
+      {/* Footer */}
+      {appSettings?.footerText && (
+        <footer className="bg-gray-50 border-t border-gray-200 py-8 mt-16">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+            <p className="text-gray-600">{appSettings.footerText}</p>
+          </div>
+        </footer>
       )}
     </div>
   );
