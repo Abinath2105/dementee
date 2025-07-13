@@ -82,11 +82,7 @@ async function createTestUser() {
     console.log("\n=== TEST LOGIN CREDENTIALS ===");
     console.log("Regular User: test@example.com / password123");
     console.log("Admin User: admin@example.com / admin123");
-    console.log("Mentor User: mentor@example.com / mentor123");
     console.log("==============================\n");
-
-    // Create test mentor
-    await createTestMentor();
 
     // Create default categories
     await createDefaultCategories();
@@ -98,48 +94,7 @@ async function createTestUser() {
   }
 }
 
-async function createTestMentor() {
-  try {
-    // Check if mentor already exists
-    const existingMentor = await storage.getMentorByEmail("mentor@example.com");
-    if (existingMentor) {
-      console.log("Test mentor already exists: mentor@example.com");
-      return;
-    }
 
-    // Create mentor user first
-    const hashedPassword = await hashPassword("mentor123");
-    const mentorUser = await storage.createUser({
-      email: "mentor@example.com",
-      username: "mentoruser",
-      password: hashedPassword,
-      fullName: "Dr. Sarah Johnson",
-      isVerified: true,
-      isAdmin: false,
-    });
-
-    // Create mentor profile
-    const mentor = await storage.createMentor({
-      name: "Dr. Sarah Johnson",
-      email: "mentor@example.com",
-      profession: "Senior Software Engineer & Tech Lead",
-      experience: "10+ years",
-      bio: "Passionate software engineer with over 10 years of experience in full-stack development, cloud architecture, and team leadership. I love mentoring developers and sharing knowledge about modern web technologies, DevOps practices, and career growth in tech.",
-      photo: null,
-      isActive: true,
-    });
-
-    // Create mentor credentials linking the user to the mentor
-    await storage.createMentorCredentials({
-      userId: mentorUser.id,
-      mentorId: mentor.id,
-    });
-
-    console.log("✓ Test mentor created: mentor@example.com / mentor123");
-  } catch (error) {
-    console.error("Error creating test mentor:", error);
-  }
-}
 
 async function createDefaultCategories() {
   try {
@@ -153,10 +108,16 @@ async function createDefaultCategories() {
     ];
 
     for (const category of defaultCategories) {
-      const existing = await storage.getCategoryBySlug(category.slug);
-      if (!existing) {
-        await storage.createCategory(category);
+      // For simplified app, just try to create the category
+      try {
+        await storage.createCategory({
+          name: category.name,
+          description: `Learn ${category.name} skills and techniques`
+        });
         console.log(`Created category: ${category.name}`);
+      } catch (error) {
+        // Category might already exist, ignore error
+        console.log(`Category ${category.name} already exists or error occurred`);
       }
     }
   } catch (error) {
@@ -192,55 +153,21 @@ export function setupAuth(app: Express) {
           console.log(`Email: ${email}`);
           console.log(`Password length: ${password.length}`);
           
-          // First, try to find a regular user
+          // Find user by email
           const user = await storage.getUserByEmail(email);
-          console.log(`Regular user found: ${!!user}`);
+          console.log(`User found: ${!!user}`);
           
           if (user && await comparePasswords(password, user.password)) {
-            console.log(`Regular user password valid`);
+            console.log(`User password valid`);
             if (!user.isVerified) {
-              console.log(`Regular user not verified`);
+              console.log(`User not verified`);
               return done(null, false, { message: 'Email not verified' });
             }
-            console.log(`Regular user login successful`);
+            console.log(`User login successful`);
             return done(null, user);
           }
 
-          // If no regular user found, check for mentor
-          const mentor = await storage.getMentorByEmail(email);
-          console.log(`Mentor found: ${!!mentor}, Active: ${mentor?.isActive}`);
-          
-          if (mentor && mentor.isActive) {
-            const mentorCredentials = await storage.getMentorCredentials(mentor.id);
-            console.log(`Mentor credentials found: ${!!mentorCredentials}`);
-            
-            if (mentorCredentials) {
-              const passwordMatch = await comparePasswords(password, mentorCredentials.password);
-              console.log(`Mentor password match: ${passwordMatch}`);
-              
-              if (passwordMatch) {
-                // Create a user-like object for mentors
-                const mentorUser = {
-                  id: mentor.id,
-                  email: mentor.email,
-                  username: mentor.email.split('@')[0], // Use email prefix as username
-                  fullName: mentor.name,
-                  isVerified: true,
-                  isAdmin: false,
-                  isMentor: true, // Special flag to identify mentors
-                  mentorProfile: {
-                    profession: mentor.profession,
-                    bio: mentor.bio,
-                    photo: mentor.photo,
-                  }
-                };
-                console.log(`Mentor login successful for: ${mentor.name}`);
-                return done(null, mentorUser);
-              }
-            }
-          }
-
-          // No valid user or mentor found
+          // No valid user found
           console.log(`Login failed - no valid credentials found`);
           console.log(`=== END LOGIN ATTEMPT ===`);
           return done(null, false);
@@ -253,38 +180,14 @@ export function setupAuth(app: Express) {
   );
 
   passport.serializeUser((user, done) => {
-    // Store both id and type for proper deserialization
-    done(null, { id: user.id, isMentor: user.isMentor || false });
+    done(null, user.id);
   });
   
-  passport.deserializeUser(async (data: { id: number; isMentor: boolean }, done) => {
+  passport.deserializeUser(async (id: number, done) => {
     try {
-      if (data.isMentor) {
-        // Deserialize mentor
-        const mentor = await storage.getMentor(data.id);
-        if (mentor && mentor.isActive) {
-          const mentorUser = {
-            id: mentor.id,
-            email: mentor.email,
-            username: mentor.email.split('@')[0],
-            fullName: mentor.name,
-            isVerified: true,
-            isAdmin: false,
-            isMentor: true,
-            mentorProfile: {
-              profession: mentor.profession,
-              bio: mentor.bio,
-              photo: mentor.photo,
-            }
-          };
-          return done(null, mentorUser);
-        }
-      } else {
-        // Deserialize regular user
-        const user = await storage.getUser(data.id);
-        if (user) {
-          return done(null, user);
-        }
+      const user = await storage.getUser(id);
+      if (user) {
+        return done(null, user);
       }
       done(null, false);
     } catch (error) {
@@ -302,10 +205,8 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Email already exists" });
       }
 
-      const existingUsername = await storage.getUserByUsername(username);
-      if (existingUsername) {
-        return res.status(400).json({ message: "Username already exists" });
-      }
+      // Note: In simplified app, we don't check username uniqueness
+      // since our storage interface doesn't have getUserByUsername
 
       // Create user (unverified)
       const hashedPassword = await hashPassword(password);

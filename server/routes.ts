@@ -3,7 +3,7 @@ import { createServer, type Server } from "http";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { fetchYouTubeVideoInfo } from "./services/youtube";
-import { insertVideoSchema, insertCategorySchema, insertMentorSchema } from "@shared/schema";
+import { insertVideoSchema, insertCategorySchema, insertCourseSchema } from "@shared/schema";
 import { sendMentorInvitationEmail } from "./services/email";
 import { nanoid } from "nanoid";
 import { scrypt, randomBytes, timingSafeEqual } from "crypto";
