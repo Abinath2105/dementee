@@ -39,7 +39,11 @@ export default function InvitationPage() {
 
   const { data: invitation, isLoading, error } = useQuery({
     queryKey: ["/api/invitation", token],
-    queryFn: () => apiRequest(`/api/invitation/${token}`),
+    queryFn: async () => {
+      const res = await fetch(`/api/invitation/${token}`, { credentials: "include" });
+      if (!res.ok) throw new Error("Failed to fetch invitation");
+      return res.json();
+    },
     enabled: !!token,
   });
 
@@ -55,11 +59,7 @@ export default function InvitationPage() {
 
   const acceptInvitationMutation = useMutation({
     mutationFn: async (data: Omit<AcceptInvitationData, "confirmPassword">) => {
-      return await apiRequest(`/api/invitation/${token}/accept`, {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
+      return await apiRequest("POST", `/api/invitation/${token}/accept`, data);
     },
     onSuccess: () => {
       setIsAccepted(true);

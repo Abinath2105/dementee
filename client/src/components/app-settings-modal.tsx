@@ -78,11 +78,7 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
 
   const updateSettingsMutation = useMutation({
     mutationFn: async (data: Partial<AppSettingsData>) => {
-      return await apiRequest("/api/admin/settings", {
-        method: "PUT",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
+      return await apiRequest("PUT", "/api/admin/settings", data);
     },
     onSuccess: () => {
       toast({

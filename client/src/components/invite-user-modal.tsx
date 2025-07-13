@@ -58,11 +58,7 @@ export function InviteUserModal({ isOpen, onClose }: InviteUserModalProps) {
 
   const inviteUserMutation = useMutation({
     mutationFn: async (data: InviteUserData) => {
-      return await apiRequest("/api/admin/invitations", {
-        method: "POST",
-        body: JSON.stringify(data),
-        headers: { "Content-Type": "application/json" },
-      });
+      return await apiRequest("POST", "/api/admin/invitations", data);
     },
     onSuccess: () => {
       toast({
