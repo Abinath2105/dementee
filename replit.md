@@ -115,6 +115,9 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 13, 2025: Implemented real file upload system using Multer for actual image handling
 - January 13, 2025: Fixed homepage layout with categories displayed prominently above video library
 - January 13, 2025: Replaced placeholder image system with proper file storage and serving
+- January 13, 2025: Fixed invitation system domain URLs to use proper Replit domain instead of localhost
+- January 13, 2025: Fixed critical password hashing bug in invitation acceptance (similar to Menor project fix)
+- January 13, 2025: Added proper password hashing to setUserPassword method for security
 
 ## User Preferences
 

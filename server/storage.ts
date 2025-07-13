@@ -294,9 +294,13 @@ export class DatabaseStorage implements IStorage {
   }
 
   async setUserPassword(userId: number, password: string): Promise<User> {
+    // Hash the password before storing
+    const { hashPassword } = await import("./auth");
+    const hashedPassword = await hashPassword(password);
+    
     const [user] = await db
       .update(users)
-      .set({ password })
+      .set({ password: hashedPassword })
       .where(eq(users.id, userId))
       .returning();
     return user;
@@ -332,13 +336,17 @@ export class DatabaseStorage implements IStorage {
       throw new Error("Invalid or expired invitation");
     }
 
+    // Hash the password before storing
+    const { hashPassword } = await import("./auth");
+    const hashedPassword = await hashPassword(userData.password);
+
     // Create user
     const [user] = await db
       .insert(users)
       .values({
         username: userData.username,
         email: invitation.email,
-        password: userData.password,
+        password: hashedPassword,
         fullName: userData.fullName,
         role: invitation.role,
         isAdmin: invitation.role === 'admin',
