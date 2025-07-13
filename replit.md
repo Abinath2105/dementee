@@ -198,6 +198,8 @@ De mentee Academy is a comprehensive Learning Management System (LMS) designed f
 - July 13, 2025: Added comprehensive API endpoints for fee payment deletion and student management operations
 - July 13, 2025: Built complete Student Management system with student list display, course assignment capabilities, bulk actions, progress tracking, and individual student management functionality
 - July 13, 2025: Integrated comprehensive student table with search, filtering, editing, and detailed student profiles including payment status, progress monitoring, and activity tracking
+- July 13, 2025: Cleaned up navigation bar by removing Student Admissions, Fee Dashboard, and Platform Settings from top nav and keeping them accessible within the Management tab
+- July 13, 2025: Made Create Course functionality fully functional with comprehensive course creation form including name, duration, description, price, level, category, mentor assignment, and course outline
 
 ## User Preferences
 

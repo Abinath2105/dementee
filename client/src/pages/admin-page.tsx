@@ -289,24 +289,6 @@ export default function AdminPage() {
               <span className="text-xl font-bold text-gray-900">De mentee Academy</span>
             </div>
             <div className="flex items-center space-x-4">
-              <Link href="/admin/student-admissions">
-                <Button variant="outline" size="sm">
-                  <GraduationCap className="h-4 w-4 mr-2" />
-                  Student Admissions
-                </Button>
-              </Link>
-              <Link href="/admin/fee-dashboard">
-                <Button variant="outline" size="sm">
-                  <CreditCard className="h-4 w-4 mr-2" />
-                  Fee Dashboard
-                </Button>
-              </Link>
-              <Link href="/admin/platform-settings">
-                <Button variant="outline" size="sm">
-                  <Settings className="h-4 w-4 mr-2" />
-                  Platform Settings
-                </Button>
-              </Link>
               <Link href="/">
                 <Button variant="outline" size="sm">
                   <ArrowLeft className="h-4 w-4 mr-2" />
@@ -844,10 +826,103 @@ export default function AdminPage() {
                     <FileVideo className="h-5 w-5" />
                     Course Management
                   </CardTitle>
-                  <Button onClick={() => setShowAddVideo(true)}>
-                    <Plus className="h-4 w-4 mr-2" />
-                    Create Course
-                  </Button>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Create Course
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-2xl">
+                      <DialogHeader>
+                        <DialogTitle>Create New Course</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm font-medium">Course Name</label>
+                            <Input placeholder="e.g., Advanced React Development" className="mt-1" />
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium">Course Duration</label>
+                            <Select>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Select duration" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="30-days">30 Days</SelectItem>
+                                <SelectItem value="60-days">60 Days</SelectItem>
+                                <SelectItem value="90-days">90 Days</SelectItem>
+                                <SelectItem value="6-months">6 Months</SelectItem>
+                                <SelectItem value="12-months">12 Months</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Course Description</label>
+                          <Input placeholder="Brief description of the course content and objectives" className="mt-1" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm font-medium">Course Price</label>
+                            <Input placeholder="₹50,000" className="mt-1" />
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium">Course Level</label>
+                            <Select>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Select level" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="beginner">Beginner</SelectItem>
+                                <SelectItem value="intermediate">Intermediate</SelectItem>
+                                <SelectItem value="advanced">Advanced</SelectItem>
+                                <SelectItem value="expert">Expert</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Course Category</label>
+                          <Select>
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder="Select category" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="programming">Programming</SelectItem>
+                              <SelectItem value="web-development">Web Development</SelectItem>
+                              <SelectItem value="ui-ux-design">UI/UX Design</SelectItem>
+                              <SelectItem value="data-science">Data Science</SelectItem>
+                              <SelectItem value="mobile-development">Mobile Development</SelectItem>
+                              <SelectItem value="digital-marketing">Digital Marketing</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Assigned Mentor</label>
+                          <Select>
+                            <SelectTrigger className="mt-1">
+                              <SelectValue placeholder="Select mentor" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="dr-sarah-johnson">Dr. Sarah Johnson</SelectItem>
+                              <SelectItem value="john-doe">John Doe</SelectItem>
+                              <SelectItem value="jane-smith">Jane Smith</SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Course Outline (Optional)</label>
+                          <Input placeholder="Week 1: Fundamentals, Week 2: Advanced Topics..." className="mt-1" />
+                        </div>
+                        <div className="flex justify-end gap-3 pt-4">
+                          <Button variant="outline">Cancel</Button>
+                          <Button>Create Course</Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 </div>
               </CardHeader>
               <CardContent>
@@ -1353,34 +1428,43 @@ export default function AdminPage() {
               </Card>
 
               {/* Fee Dashboard */}
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6 text-center">
+                  <CreditCard className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                  <h3 className="font-semibold text-gray-900 mb-2">Fee Dashboard</h3>
+                  <p className="text-sm text-gray-600 mb-4">Track payments and financial analytics</p>
                   <Link href="/admin/fee-dashboard">
-                    <CreditCard className="h-12 w-12 text-green-600 mx-auto mb-4" />
-                    <h3 className="font-semibold text-gray-900 mb-2">Fee Dashboard</h3>
-                    <p className="text-sm text-gray-600">Track payments and financial analytics</p>
+                    <Button className="w-full">
+                      Access Fee Dashboard
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
 
               {/* Student Admissions */}
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6 text-center">
+                  <GraduationCap className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+                  <h3 className="font-semibold text-gray-900 mb-2">Student Admissions</h3>
+                  <p className="text-sm text-gray-600 mb-4">Manage admission workflow and applications</p>
                   <Link href="/admin/student-admissions">
-                    <GraduationCap className="h-12 w-12 text-purple-600 mx-auto mb-4" />
-                    <h3 className="font-semibold text-gray-900 mb-2">Student Admissions</h3>
-                    <p className="text-sm text-gray-600">Manage admission workflow and applications</p>
+                    <Button className="w-full">
+                      Access Student Admissions
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
 
               {/* Platform Settings */}
-              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+              <Card className="hover:shadow-md transition-shadow">
                 <CardContent className="p-6 text-center">
+                  <Settings className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+                  <h3 className="font-semibold text-gray-900 mb-2">Platform Settings</h3>
+                  <p className="text-sm text-gray-600 mb-4">Configure platform branding and settings</p>
                   <Link href="/admin/platform-settings">
-                    <Settings className="h-12 w-12 text-gray-600 mx-auto mb-4" />
-                    <h3 className="font-semibold text-gray-900 mb-2">Platform Settings</h3>
-                    <p className="text-sm text-gray-600">Configure platform branding and settings</p>
+                    <Button className="w-full">
+                      Access Platform Settings
+                    </Button>
                   </Link>
                 </CardContent>
               </Card>
