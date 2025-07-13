@@ -32,9 +32,7 @@ export function AssignCategoryModal({ user, isOpen, onClose }: AssignCategoryMod
 
   const assignMutation = useMutation({
     mutationFn: async ({ userId, categoryId }: { userId: number; categoryId: number }) => {
-      return apiRequest(`/api/admin/users/${userId}/categories/${categoryId}`, {
-        method: "POST",
-      });
+      return apiRequest("POST", `/api/admin/users/${userId}/categories/${categoryId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users", user?.id, "categories"] });
@@ -54,9 +52,7 @@ export function AssignCategoryModal({ user, isOpen, onClose }: AssignCategoryMod
 
   const removeMutation = useMutation({
     mutationFn: async ({ userId, categoryId }: { userId: number; categoryId: number }) => {
-      return apiRequest(`/api/admin/users/${userId}/categories/${categoryId}`, {
-        method: "DELETE",
-      });
+      return apiRequest("DELETE", `/api/admin/users/${userId}/categories/${categoryId}`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/users", user?.id, "categories"] });
