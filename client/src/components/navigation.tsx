@@ -40,7 +40,6 @@ export function Navigation() {
   const isStudent = !isAdmin && !isMentor;
 
   const studentNavItems = [
-    { href: "/dashboard", label: "Dashboard", icon: BarChart3 },
     { href: "/advanced-dashboard", label: "Analytics", icon: TrendingUp },
     { href: "/assignments", label: "Assignments", icon: BookOpen },
   ];
@@ -48,7 +47,6 @@ export function Navigation() {
   const userMenuItems = [
     ...(isStudent ? [
       { href: "/student/profile", label: "My Profile", icon: User },
-      { href: "/dashboard", label: "Learning Dashboard", icon: BarChart3 },
       { href: "/watchlist", label: "Watchlist", icon: Heart },
       { href: "/bookmarks", label: "Bookmarks", icon: Bookmark },
       { href: "/achievements", label: "Achievements", icon: Award },

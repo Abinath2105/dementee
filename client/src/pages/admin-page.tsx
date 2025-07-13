@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, Settings, GraduationCap, CreditCard } from "lucide-react";
+import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, Settings, GraduationCap, CreditCard, BarChart3, FileVideo, BookOpen, Layout } from "lucide-react";
 import { AddVideoModal } from "@/components/add-video-modal";
 import { EditVideoModal } from "@/components/edit-video-modal";
 import { AddMentorModal } from "@/components/add-mentor-modal";
@@ -399,10 +399,12 @@ export default function AdminPage() {
 
         {/* Tabs for different management sections */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-3">
-            <TabsTrigger value="videos">Video Management</TabsTrigger>
-            <TabsTrigger value="users">User Management</TabsTrigger>
-            <TabsTrigger value="mentors">Mentor Management</TabsTrigger>
+          <TabsList className="grid w-full grid-cols-5">
+            <TabsTrigger value="videos">Videos</TabsTrigger>
+            <TabsTrigger value="courses">Courses</TabsTrigger>
+            <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="mentors">Mentors</TabsTrigger>
+            <TabsTrigger value="management">Management</TabsTrigger>
           </TabsList>
           
           <TabsContent value="videos" className="mt-6">
@@ -827,6 +829,134 @@ export default function AdminPage() {
                 </div>
               </CardContent>
             </Card>
+          </TabsContent>
+
+          {/* Courses Tab */}
+          <TabsContent value="courses" className="mt-6">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center gap-2">
+                    <FileVideo className="h-5 w-5" />
+                    Course Management
+                  </CardTitle>
+                  <Button onClick={() => setShowAddVideo(true)}>
+                    <Plus className="h-4 w-4 mr-2" />
+                    Create Course
+                  </Button>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <p className="text-gray-600 mb-4">
+                  Create comprehensive courses with video uploads, structured learning paths, and assignments.
+                </p>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  <Card className="cursor-pointer hover:shadow-md transition-shadow" onClick={() => setShowAddVideo(true)}>
+                    <CardContent className="p-6 text-center">
+                      <Plus className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <h3 className="font-semibold text-gray-900 mb-2">Create New Course</h3>
+                      <p className="text-sm text-gray-600">Upload videos and build structured learning experiences</p>
+                    </CardContent>
+                  </Card>
+                  
+                  {/* Course list would go here - for now showing placeholder */}
+                  <Card>
+                    <CardContent className="p-6">
+                      <div className="flex items-center gap-3 mb-3">
+                        <div className="w-12 h-12 bg-blue-100 rounded-lg flex items-center justify-center">
+                          <FileVideo className="h-6 w-6 text-blue-600" />
+                        </div>
+                        <div>
+                          <h3 className="font-semibold">30 Days UI/UX Course</h3>
+                          <p className="text-sm text-gray-600">4 videos • Active</p>
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Button size="sm" variant="outline">
+                          <Edit className="h-4 w-4 mr-2" />
+                          Edit
+                        </Button>
+                        <Button size="sm" variant="ghost">
+                          <Eye className="h-4 w-4 mr-2" />
+                          View
+                        </Button>
+                      </div>
+                    </CardContent>
+                  </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Management Tab */}
+          <TabsContent value="management" className="mt-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              
+              {/* Student Dashboard */}
+              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-6 text-center">
+                  <Link href="/dashboard">
+                    <BarChart3 className="h-12 w-12 text-blue-600 mx-auto mb-4" />
+                    <h3 className="font-semibold text-gray-900 mb-2">Student Dashboard</h3>
+                    <p className="text-sm text-gray-600">View student learning progress and analytics</p>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              {/* Fee Dashboard */}
+              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-6 text-center">
+                  <Link href="/admin/fee-dashboard">
+                    <CreditCard className="h-12 w-12 text-green-600 mx-auto mb-4" />
+                    <h3 className="font-semibold text-gray-900 mb-2">Fee Dashboard</h3>
+                    <p className="text-sm text-gray-600">Track payments and financial analytics</p>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              {/* Student Admissions */}
+              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-6 text-center">
+                  <Link href="/admin/student-admissions">
+                    <GraduationCap className="h-12 w-12 text-purple-600 mx-auto mb-4" />
+                    <h3 className="font-semibold text-gray-900 mb-2">Student Admissions</h3>
+                    <p className="text-sm text-gray-600">Manage admission workflow and applications</p>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              {/* Platform Settings */}
+              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-6 text-center">
+                  <Link href="/admin/platform-settings">
+                    <Settings className="h-12 w-12 text-gray-600 mx-auto mb-4" />
+                    <h3 className="font-semibold text-gray-900 mb-2">Platform Settings</h3>
+                    <p className="text-sm text-gray-600">Configure platform branding and settings</p>
+                  </Link>
+                </CardContent>
+              </Card>
+
+              {/* Batches Management */}
+              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-6 text-center">
+                  <Layout className="h-12 w-12 text-orange-600 mx-auto mb-4" />
+                  <h3 className="font-semibold text-gray-900 mb-2">Batches Management</h3>
+                  <p className="text-sm text-gray-600">Organize students into batches with mentors</p>
+                </CardContent>
+              </Card>
+
+              {/* Advanced Analytics */}
+              <Card className="cursor-pointer hover:shadow-md transition-shadow">
+                <CardContent className="p-6 text-center">
+                  <Link href="/advanced-dashboard">
+                    <BarChart3 className="h-12 w-12 text-indigo-600 mx-auto mb-4" />
+                    <h3 className="font-semibold text-gray-900 mb-2">Advanced Analytics</h3>
+                    <p className="text-sm text-gray-600">Detailed learning analytics and insights</p>
+                  </Link>
+                </CardContent>
+              </Card>
+
+            </div>
           </TabsContent>
         </Tabs>
       </div>

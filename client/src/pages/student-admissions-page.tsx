@@ -31,8 +31,12 @@ import {
   Download,
   Upload,
   Send,
-  UserPlus
+  UserPlus,
+  ArrowLeft,
+  Home,
+  User
 } from "lucide-react";
+import { Link } from "wouter";
 
 // Application form schema
 const applicationSchema = z.object({
@@ -289,15 +293,88 @@ export default function StudentAdmissionsPage() {
   };
 
   return (
-    <div className="container mx-auto px-4 py-8 max-w-7xl">
-      <div className="flex justify-between items-center mb-8">
-        <div>
-          <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Student Admissions</h1>
-          <p className="text-gray-600 dark:text-gray-400 mt-2">
-            Manage student applications, payments, and onboarding
-          </p>
+    <div className="min-h-screen bg-background">
+      {/* Navigation Header */}
+      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-40">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <div className="flex items-center space-x-4">
+              <Button variant="ghost" size="sm" asChild>
+                <Link href="/admin">
+                  <ArrowLeft className="h-4 w-4 mr-2" />
+                  Back to Admin
+                </Link>
+              </Button>
+              <div className="text-xl font-bold text-gray-900">De mentee Academy</div>
+            </div>
+            
+            {/* Admin Badge */}
+            <Badge variant="destructive" className="text-xs">Admin Panel</Badge>
+          </div>
         </div>
-        <Dialog open={showNewApplication} onOpenChange={setShowNewApplication}>
+      </div>
+
+      {/* Breadcrumbs */}
+      <div className="bg-gray-50 border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-3">
+          <nav className="flex" aria-label="Breadcrumb">
+            <ol className="flex items-center space-x-4">
+              <li>
+                <div>
+                  <Link href="/" className="text-gray-400 hover:text-gray-500">
+                    <Home className="h-5 w-5" aria-hidden="true" />
+                    <span className="sr-only">Home</span>
+                  </Link>
+                </div>
+              </li>
+              <li>
+                <div className="flex items-center">
+                  <svg
+                    className="h-5 w-5 text-gray-300"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                  >
+                    <path d="m5.555 17.776 4-16 .894.448-4 16-.894-.448z" />
+                  </svg>
+                  <Link
+                    href="/admin"
+                    className="ml-4 text-sm font-medium text-gray-500 hover:text-gray-700"
+                  >
+                    Admin Dashboard
+                  </Link>
+                </div>
+              </li>
+              <li>
+                <div className="flex items-center">
+                  <svg
+                    className="h-5 w-5 text-gray-300"
+                    fill="currentColor"
+                    viewBox="0 0 20 20"
+                    aria-hidden="true"
+                  >
+                    <path d="m5.555 17.776 4-16 .894.448-4 16-.894-.448z" />
+                  </svg>
+                  <span className="ml-4 text-sm font-medium text-gray-500" aria-current="page">
+                    Student Admissions
+                  </span>
+                </div>
+              </li>
+            </ol>
+          </nav>
+        </div>
+      </div>
+
+      <div className="container mx-auto px-4 py-8 max-w-7xl">
+        <div className="flex justify-between items-center mb-8">
+          <div>
+            <h1 className="text-3xl font-bold text-gray-900 dark:text-white">Student Admissions</h1>
+            <p className="text-gray-600 dark:text-gray-400 mt-2">
+              Manage student applications, payments, and onboarding
+            </p>
+          </div>
+          <Dialog open={showNewApplication} onOpenChange={setShowNewApplication}>
           <DialogTrigger asChild>
             <Button>
               <Plus className="h-4 w-4 mr-2" />
@@ -762,10 +839,30 @@ export default function StudentAdmissionsPage() {
                             <TableCell>{getStatusBadge(payment.paymentStatus)}</TableCell>
                             <TableCell>
                               <div className="flex items-center gap-2">
-                                <Button size="sm" variant="outline">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => downloadReceipt(selectedApplication.id)}
+                                  title="Download Receipt"
+                                >
                                   <Download className="h-4 w-4" />
                                 </Button>
-                                <Button size="sm" variant="outline">
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    // Pre-fill form with existing payment data
+                                    paymentForm.reset({
+                                      feePlan: payment.feePlan,
+                                      totalAmount: payment.totalAmount,
+                                      paidAmount: payment.paidAmount,
+                                      paymentMethod: payment.paymentMethod || 'UPI',
+                                      paymentDate: payment.paymentDate ? new Date(payment.paymentDate).toISOString().split('T')[0] : '',
+                                    });
+                                    setShowPaymentModal(true);
+                                  }}
+                                  title="Edit Payment"
+                                >
                                   <Edit className="h-4 w-4" />
                                 </Button>
                               </div>
@@ -1017,15 +1114,276 @@ export default function StudentAdmissionsPage() {
         <TabsContent value="batches">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Users className="h-5 w-5" />
-                Student Batches
-              </CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                  <Users className="h-5 w-5" />
+                  Student Batches
+                </CardTitle>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Batch
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Create New Batch</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium">Batch Name</label>
+                        <Input placeholder="e.g., DM-Weekend-01" className="mt-1" />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Course</label>
+                        <Select>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select course" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="ui-ux">UI/UX Design</SelectItem>
+                            <SelectItem value="web-dev">Web Development</SelectItem>
+                            <SelectItem value="data-science">Data Science</SelectItem>
+                            <SelectItem value="mobile-app">Mobile App Development</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Mentor</label>
+                        <Select>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Assign mentor" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="john-doe">John Doe - UI/UX Expert</SelectItem>
+                            <SelectItem value="jane-smith">Jane Smith - Full Stack Developer</SelectItem>
+                            <SelectItem value="mike-wilson">Mike Wilson - Data Scientist</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium">Start Date</label>
+                          <Input type="date" className="mt-1" />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Capacity</label>
+                          <Input type="number" placeholder="30" className="mt-1" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Schedule</label>
+                        <Select>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select schedule" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="weekday">Weekday (Mon-Fri 10AM-2PM)</SelectItem>
+                            <SelectItem value="weekend">Weekend (Sat-Sun 9AM-6PM)</SelectItem>
+                            <SelectItem value="evening">Evening (Mon-Fri 6PM-9PM)</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex justify-end gap-3 pt-4">
+                        <Button variant="outline">Cancel</Button>
+                        <Button>Create Batch</Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 dark:text-gray-400">
-                Batch management interface will be displayed here.
-              </p>
+              <div className="space-y-6">
+                {/* Batch Statistics */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-2xl font-bold text-blue-600">8</div>
+                      <p className="text-sm text-gray-600">Active Batches</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-2xl font-bold text-green-600">156</div>
+                      <p className="text-sm text-gray-600">Total Students</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-2xl font-bold text-orange-600">12</div>
+                      <p className="text-sm text-gray-600">Mentors Assigned</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-2xl font-bold text-purple-600">85%</div>
+                      <p className="text-sm text-gray-600">Average Capacity</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Batches Table */}
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Batch Details</TableHead>
+                        <TableHead>Course</TableHead>
+                        <TableHead>Mentor</TableHead>
+                        <TableHead>Schedule</TableHead>
+                        <TableHead>Students</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {/* Sample batch data */}
+                      <TableRow>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">DM-Weekend-01</div>
+                            <div className="text-sm text-gray-600">Started: Jan 15, 2025</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">UI/UX Design</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
+                              <User className="h-4 w-4 text-blue-600" />
+                            </div>
+                            <span className="text-sm">John Doe</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div>Weekend</div>
+                            <div className="text-gray-600">Sat-Sun 9AM-6PM</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div className="font-medium">25/30</div>
+                            <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                              <div className="bg-green-600 h-2 rounded-full" style={{width: '83%'}}></div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="default">Active</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      
+                      <TableRow>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">DM-Weekday-03</div>
+                            <div className="text-sm text-gray-600">Started: Jan 8, 2025</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">Web Development</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-green-100 rounded-full flex items-center justify-center">
+                              <User className="h-4 w-4 text-green-600" />
+                            </div>
+                            <span className="text-sm">Jane Smith</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div>Weekday</div>
+                            <div className="text-gray-600">Mon-Fri 10AM-2PM</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div className="font-medium">18/20</div>
+                            <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                              <div className="bg-blue-600 h-2 rounded-full" style={{width: '90%'}}></div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="default">Active</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      
+                      <TableRow>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">DM-Evening-02</div>
+                            <div className="text-sm text-gray-600">Starts: Jan 22, 2025</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">Data Science</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <div className="w-8 h-8 bg-purple-100 rounded-full flex items-center justify-center">
+                              <User className="h-4 w-4 text-purple-600" />
+                            </div>
+                            <span className="text-sm">Mike Wilson</span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div>Evening</div>
+                            <div className="text-gray-600">Mon-Fri 6PM-9PM</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div className="font-medium">12/25</div>
+                            <div className="w-full bg-gray-200 rounded-full h-2 mt-1">
+                              <div className="bg-orange-600 h-2 rounded-full" style={{width: '48%'}}></div>
+                            </div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">Upcoming</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="outline">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
@@ -1064,6 +1422,7 @@ export default function StudentAdmissionsPage() {
           </Card>
         </TabsContent>
       </Tabs>
+      </div>
     </div>
   );
 }
