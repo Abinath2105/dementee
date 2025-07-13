@@ -111,6 +111,10 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 13, 2025: Created clean homepage displaying categories and courses
 - January 13, 2025: App running successfully with core admin/student functionality only
 - January 13, 2025: Version marked as stable and live (commit: 6718dbd3d6284526d7d2112ca821afd7108c49a6)
+- January 13, 2025: Enhanced category management with editable functionality and cover image uploads
+- January 13, 2025: Implemented real file upload system using Multer for actual image handling
+- January 13, 2025: Fixed homepage layout with categories displayed prominently above video library
+- January 13, 2025: Replaced placeholder image system with proper file storage and serving
 
 ## User Preferences
 

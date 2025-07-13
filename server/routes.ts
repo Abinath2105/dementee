@@ -1,5 +1,9 @@
 import type { Express } from "express";
 import { createServer, type Server } from "http";
+import multer from "multer";
+import path from "path";
+import fs from "fs";
+import express from "express";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { fetchYouTubeVideoInfo } from "./services/youtube";
@@ -7,6 +11,41 @@ import { insertVideoSchema, insertCategorySchema, insertUserInvitationSchema, in
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
+
+  // Configure multer for file uploads
+  const uploadsDir = path.join(process.cwd(), 'uploads');
+  if (!fs.existsSync(uploadsDir)) {
+    fs.mkdirSync(uploadsDir, { recursive: true });
+  }
+
+  const upload = multer({
+    storage: multer.diskStorage({
+      destination: (req, file, cb) => {
+        cb(null, uploadsDir);
+      },
+      filename: (req, file, cb) => {
+        const uniqueSuffix = Date.now() + '-' + Math.round(Math.random() * 1E9);
+        cb(null, file.fieldname + '-' + uniqueSuffix + path.extname(file.originalname));
+      },
+    }),
+    limits: {
+      fileSize: 5 * 1024 * 1024, // 5MB limit
+    },
+    fileFilter: (req, file, cb) => {
+      if (file.mimetype.startsWith('image/')) {
+        cb(null, true);
+      } else {
+        cb(new Error('Only image files are allowed!'), false);
+      }
+    },
+  });
+
+  // Serve uploaded files statically
+  app.use('/uploads', (req, res, next) => {
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    next();
+  });
+  app.use('/uploads', express.static(uploadsDir));
 
   // Categories
   app.get("/api/categories", async (req, res) => {
@@ -404,22 +443,19 @@ export function registerRoutes(app: Express): Server {
   });
 
   // File upload route for banners and logos (admin only)
-  app.post("/api/admin/upload", async (req, res) => {
+  app.post("/api/admin/upload", upload.single('image'), async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
       return res.status(403).json({ message: "Admin access required" });
     }
 
     try {
-      // For demo purposes, we'll use placeholder image URLs
-      const placeholderImages = [
-        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=400&fit=crop",
-        "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&h=400&fit=crop",
-        "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&h=400&fit=crop",
-        "https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=1200&h=400&fit=crop"
-      ];
-      
-      const randomImage = placeholderImages[Math.floor(Math.random() * placeholderImages.length)];
-      res.json({ url: randomImage });
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const fileUrl = `/uploads/${req.file.filename}`;
+      console.log('File uploaded:', fileUrl);
+      res.json({ url: fileUrl });
     } catch (error) {
       console.error("Upload error:", error);
       res.status(500).json({ message: "Failed to upload file" });
@@ -427,24 +463,19 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Image upload route for category covers (admin only)
-  app.post("/api/upload/image", async (req, res) => {
+  app.post("/api/upload/image", upload.single('image'), async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
       return res.status(403).json({ message: "Admin access required" });
     }
 
     try {
-      // For demo purposes, we'll use placeholder category cover images
-      const categoryImages = [
-        "https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=400&h=300&fit=crop",
-        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=300&fit=crop",
-        "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop",
-        "https://images.unsplash.com/photo-1559028006-448665bd7c7f?w=400&h=300&fit=crop",
-        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop",
-        "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=300&fit=crop"
-      ];
-      
-      const randomImage = categoryImages[Math.floor(Math.random() * categoryImages.length)];
-      res.json({ url: randomImage });
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const fileUrl = `/uploads/${req.file.filename}`;
+      console.log('Category image uploaded:', fileUrl);
+      res.json({ url: fileUrl });
     } catch (error) {
       console.error("Image upload error:", error);
       res.status(500).json({ message: "Failed to upload image" });
