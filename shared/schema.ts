@@ -1,20 +1,19 @@
-import { pgTable, text, serial, integer, boolean, timestamp } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
 
-// Core user table - simplified
 export const users = pgTable("users", {
   id: serial("id").primaryKey(),
-  fullName: text("full_name").notNull(),
+  username: text("username").notNull().unique(),
   email: text("email").notNull().unique(),
   password: text("password").notNull(),
+  fullName: text("full_name").notNull(),
   isAdmin: boolean("is_admin").default(false).notNull(),
   isVerified: boolean("is_verified").default(false).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// For email verification
 export const otpCodes = pgTable("otp_codes", {
   id: serial("id").primaryKey(),
   email: text("email").notNull(),
@@ -24,63 +23,71 @@ export const otpCodes = pgTable("otp_codes", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Categories for organizing courses
 export const categories = pgTable("categories", {
   id: serial("id").primaryKey(),
   name: text("name").notNull().unique(),
-  description: text("description"),
+  slug: text("slug").notNull().unique(),
+  mentorName: text("mentor_name"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
-// Courses under categories
-export const courses = pgTable("courses", {
-  id: serial("id").primaryKey(),
-  title: text("title").notNull(),
-  description: text("description"),
-  categoryId: integer("category_id").references(() => categories.id).notNull(),
-  createdAt: timestamp("created_at").defaultNow().notNull(),
-});
-
-// YouTube videos under courses
 export const videos = pgTable("videos", {
   id: serial("id").primaryKey(),
   title: text("title").notNull(),
   description: text("description"),
   youtubeId: text("youtube_id").notNull(),
-  courseId: integer("course_id").references(() => courses.id).notNull(),
-  orderIndex: integer("order_index").default(0).notNull(),
+  thumbnailUrl: text("thumbnail_url"),
+  duration: text("duration"),
+  categoryId: integer("category_id").references(() => categories.id),
+  tags: jsonb("tags").$type<string[]>().default([]),
+  views: integer("views").default(0).notNull(),
+  isPublic: boolean("is_public").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const videoViews = pgTable("video_views", {
+  id: serial("id").primaryKey(),
+  videoId: integer("video_id").references(() => videos.id).notNull(),
+  userId: integer("user_id").references(() => users.id),
+  ipAddress: text("ip_address"),
+  viewedAt: timestamp("viewed_at").defaultNow().notNull(),
 });
 
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
-  // No additional relations for now
+  videoViews: many(videoViews),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
-  courses: many(courses),
-}));
-
-export const coursesRelations = relations(courses, ({ one, many }) => ({
-  category: one(categories, {
-    fields: [courses.categoryId],
-    references: [categories.id],
-  }),
   videos: many(videos),
 }));
 
-export const videosRelations = relations(videos, ({ one }) => ({
-  course: one(courses, {
-    fields: [videos.courseId],
-    references: [courses.id],
+export const videosRelations = relations(videos, ({ one, many }) => ({
+  category: one(categories, {
+    fields: [videos.categoryId],
+    references: [categories.id],
+  }),
+  views: many(videoViews),
+}));
+
+export const videoViewsRelations = relations(videoViews, ({ one }) => ({
+  video: one(videos, {
+    fields: [videoViews.videoId],
+    references: [videos.id],
+  }),
+  user: one(users, {
+    fields: [videoViews.userId],
+    references: [users.id],
   }),
 }));
 
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
-  fullName: true,
+  username: true,
   email: true,
   password: true,
+  fullName: true,
 });
 
 export const insertOtpSchema = createInsertSchema(otpCodes).pick({
@@ -91,21 +98,25 @@ export const insertOtpSchema = createInsertSchema(otpCodes).pick({
 
 export const insertCategorySchema = createInsertSchema(categories).pick({
   name: true,
-  description: true,
-});
-
-export const insertCourseSchema = createInsertSchema(courses).pick({
-  title: true,
-  description: true,
-  categoryId: true,
+  slug: true,
+  mentorName: true,
 });
 
 export const insertVideoSchema = createInsertSchema(videos).pick({
   title: true,
   description: true,
   youtubeId: true,
-  courseId: true,
-  orderIndex: true,
+  thumbnailUrl: true,
+  duration: true,
+  categoryId: true,
+  tags: true,
+  isPublic: true,
+});
+
+export const insertVideoViewSchema = createInsertSchema(videoViews).pick({
+  videoId: true,
+  userId: true,
+  ipAddress: true,
 });
 
 // Types
@@ -115,23 +126,20 @@ export type OtpCode = typeof otpCodes.$inferSelect;
 export type InsertOtp = z.infer<typeof insertOtpSchema>;
 export type Category = typeof categories.$inferSelect;
 export type InsertCategory = z.infer<typeof insertCategorySchema>;
-export type Course = typeof courses.$inferSelect;
-export type InsertCourse = z.infer<typeof insertCourseSchema>;
 export type Video = typeof videos.$inferSelect;
 export type InsertVideo = z.infer<typeof insertVideoSchema>;
+export type VideoView = typeof videoViews.$inferSelect;
+export type InsertVideoView = z.infer<typeof insertVideoViewSchema>;
 
 // Extended types for API responses
-export type CategoryWithCourses = Category & {
-  courses: Course[];
+export type VideoWithCategory = Video & {
+  category: Category | null;
+  viewCount: number;
 };
 
-export type CourseWithVideos = Course & {
-  videos: Video[];
-  category: Category;
-};
-
-export type VideoWithCourse = Video & {
-  course: Course & {
-    category: Category;
-  };
+export type AdminStats = {
+  totalVideos: number;
+  totalUsers: number;
+  totalViews: number;
+  totalWatchTime: string;
 };

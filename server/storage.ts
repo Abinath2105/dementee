@@ -1,6 +1,6 @@
-import { users, videos, categories, courses, otpCodes, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type Course, type InsertCourse, type OtpCode, type InsertOtp, type CategoryWithCourses, type CourseWithVideos } from "@shared/schema";
+import { users, videos, categories, otpCodes, videoViews, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, sql, and, or, ilike, count, sum, asc, avg, isNull } from "drizzle-orm";
+import { eq, desc, sql, and, or, ilike } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -10,10 +10,13 @@ const PostgresSessionStore = connectPg(session);
 export interface IStorage {
   // User management
   getUser(id: number): Promise<User | undefined>;
+  getUserByUsername(username: string): Promise<User | undefined>;
   getUserByEmail(email: string): Promise<User | undefined>;
   createUser(user: InsertUser): Promise<User>;
   verifyUser(email: string): Promise<void>;
   getAllUsers(): Promise<User[]>;
+  updateUserAdminStatus(userId: number, isAdmin: boolean): Promise<User>;
+  deleteUser(userId: number): Promise<void>;
 
   // OTP management
   createOtp(otp: InsertOtp): Promise<OtpCode>;
@@ -21,19 +24,21 @@ export interface IStorage {
   markOtpAsUsed(id: number): Promise<void>;
 
   // Category management
-  getCategories(): Promise<CategoryWithCourses[]>;
+  getCategories(): Promise<Category[]>;
   createCategory(category: InsertCategory): Promise<Category>;
+  getCategoryBySlug(slug: string): Promise<Category | undefined>;
   deleteCategory(id: number): Promise<void>;
 
-  // Course management
-  getCoursesByCategory(categoryId: number): Promise<CourseWithVideos[]>;
-  createCourse(course: InsertCourse): Promise<Course>;
-  deleteCourse(id: number): Promise<void>;
-
   // Video management
-  getVideosByCourse(courseId: number): Promise<Video[]>;
+  getVideos(search?: string, categoryId?: number): Promise<VideoWithCategory[]>;
+  getVideo(id: number): Promise<VideoWithCategory | undefined>;
   createVideo(video: InsertVideo): Promise<Video>;
+  updateVideo(id: number, video: Partial<InsertVideo>): Promise<Video>;
   deleteVideo(id: number): Promise<void>;
+  incrementVideoViews(videoId: number, userId?: number, ipAddress?: string): Promise<void>;
+
+  // Admin stats
+  getAdminStats(): Promise<AdminStats>;
 
   sessionStore: any;
 }
@@ -50,6 +55,11 @@ export class DatabaseStorage implements IStorage {
 
   async getUser(id: number): Promise<User | undefined> {
     const [user] = await db.select().from(users).where(eq(users.id, id));
+    return user || undefined;
+  }
+
+  async getUserByUsername(username: string): Promise<User | undefined> {
+    const [user] = await db.select().from(users).where(eq(users.username, username));
     return user || undefined;
   }
 
@@ -75,6 +85,19 @@ export class DatabaseStorage implements IStorage {
 
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(users.email);
+  }
+
+  async updateUserAdminStatus(userId: number, isAdmin: boolean): Promise<User> {
+    const [user] = await db
+      .update(users)
+      .set({ isAdmin })
+      .where(eq(users.id, userId))
+      .returning();
+    return user;
+  }
+
+  async deleteUser(userId: number): Promise<void> {
+    await db.delete(users).where(eq(users.id, userId));
   }
 
   async createOtp(insertOtp: InsertOtp): Promise<OtpCode> {
@@ -107,36 +130,8 @@ export class DatabaseStorage implements IStorage {
       .where(eq(otpCodes.id, id));
   }
 
-  async getCategories(): Promise<CategoryWithCourses[]> {
-    const results = await db
-      .select({
-        id: categories.id,
-        name: categories.name,
-        description: categories.description,
-        createdAt: categories.createdAt,
-        courses: sql<Course[]>`JSON_AGG(
-          CASE 
-            WHEN ${courses.id} IS NOT NULL 
-            THEN JSON_BUILD_OBJECT(
-              'id', ${courses.id},
-              'title', ${courses.title},
-              'description', ${courses.description},
-              'categoryId', ${courses.categoryId},
-              'createdAt', ${courses.createdAt}
-            )
-            ELSE NULL
-          END
-        )`.as('courses')
-      })
-      .from(categories)
-      .leftJoin(courses, eq(categories.id, courses.categoryId))
-      .groupBy(categories.id)
-      .orderBy(categories.name);
-
-    return results.map(row => ({
-      ...row,
-      courses: row.courses?.filter(course => course !== null) || []
-    }));
+  async getCategories(): Promise<Category[]> {
+    return await db.select().from(categories).orderBy(categories.name);
   }
 
   async createCategory(insertCategory: InsertCategory): Promise<Category> {
@@ -147,79 +142,160 @@ export class DatabaseStorage implements IStorage {
     return category;
   }
 
-  async deleteCategory(id: number): Promise<void> {
-    await db.delete(categories).where(eq(categories.id, id));
+  async getCategoryBySlug(slug: string): Promise<Category | undefined> {
+    const [category] = await db.select().from(categories).where(eq(categories.slug, slug));
+    return category || undefined;
   }
 
-  async getCoursesByCategory(categoryId: number): Promise<CourseWithVideos[]> {
-    const results = await db
+  async getVideos(search?: string, categoryId?: number): Promise<VideoWithCategory[]> {
+    let query = db
       .select({
-        id: courses.id,
-        title: courses.title,
-        description: courses.description,
-        categoryId: courses.categoryId,
-        createdAt: courses.createdAt,
+        id: videos.id,
+        title: videos.title,
+        description: videos.description,
+        youtubeId: videos.youtubeId,
+        thumbnailUrl: videos.thumbnailUrl,
+        duration: videos.duration,
+        categoryId: videos.categoryId,
+        tags: videos.tags,
+        views: videos.views,
+        createdAt: videos.createdAt,
+        updatedAt: videos.updatedAt,
         category: categories,
-        videos: sql<Video[]>`JSON_AGG(
-          CASE 
-            WHEN ${videos.id} IS NOT NULL 
-            THEN JSON_BUILD_OBJECT(
-              'id', ${videos.id},
-              'title', ${videos.title},
-              'description', ${videos.description},
-              'youtubeId', ${videos.youtubeId},
-              'courseId', ${videos.courseId},
-              'orderIndex', ${videos.orderIndex},
-              'createdAt', ${videos.createdAt}
-            )
-            ELSE NULL
-          END
-          ORDER BY ${videos.orderIndex}
-        )`.as('videos')
+        viewCount: sql<number>`COUNT(${videoViews.id})::int`.as('viewCount'),
       })
-      .from(courses)
-      .leftJoin(categories, eq(courses.categoryId, categories.id))
-      .leftJoin(videos, eq(courses.id, videos.courseId))
-      .where(eq(courses.categoryId, categoryId))
-      .groupBy(courses.id, categories.id)
-      .orderBy(courses.title);
+      .from(videos)
+      .leftJoin(categories, eq(videos.categoryId, categories.id))
+      .leftJoin(videoViews, eq(videos.id, videoViews.videoId))
+      .groupBy(videos.id, categories.id);
 
-    return results.map(row => ({
+    const conditions = [];
+    
+    if (search) {
+      conditions.push(
+        or(
+          ilike(videos.title, `%${search}%`),
+          ilike(videos.description, `%${search}%`),
+          sql`${videos.tags}::text ILIKE ${'%' + search + '%'}`
+        )
+      );
+    }
+
+    if (categoryId) {
+      conditions.push(eq(videos.categoryId, categoryId));
+    }
+
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions)) as any;
+    }
+
+    const result = await query.orderBy(desc(videos.createdAt));
+    
+    return result.map(row => ({
       ...row,
-      videos: row.videos?.filter(video => video !== null) || []
+      viewCount: row.viewCount || 0,
     }));
   }
 
-  async createCourse(insertCourse: InsertCourse): Promise<Course> {
-    const [course] = await db
-      .insert(courses)
-      .values(insertCourse)
-      .returning();
-    return course;
-  }
-
-  async deleteCourse(id: number): Promise<void> {
-    await db.delete(courses).where(eq(courses.id, id));
-  }
-
-  async getVideosByCourse(courseId: number): Promise<Video[]> {
-    return await db
-      .select()
+  async getVideo(id: number): Promise<VideoWithCategory | undefined> {
+    const [result] = await db
+      .select({
+        id: videos.id,
+        title: videos.title,
+        description: videos.description,
+        youtubeId: videos.youtubeId,
+        thumbnailUrl: videos.thumbnailUrl,
+        duration: videos.duration,
+        categoryId: videos.categoryId,
+        tags: videos.tags,
+        views: videos.views,
+        createdAt: videos.createdAt,
+        updatedAt: videos.updatedAt,
+        category: categories,
+        viewCount: sql<number>`COUNT(${videoViews.id})::int`.as('viewCount'),
+      })
       .from(videos)
-      .where(eq(videos.courseId, courseId))
-      .orderBy(videos.orderIndex);
+      .leftJoin(categories, eq(videos.categoryId, categories.id))
+      .leftJoin(videoViews, eq(videos.id, videoViews.videoId))
+      .where(eq(videos.id, id))
+      .groupBy(videos.id, categories.id);
+
+    if (!result) return undefined;
+
+    return {
+      ...result,
+      viewCount: result.viewCount || 0,
+    };
   }
 
   async createVideo(insertVideo: InsertVideo): Promise<Video> {
     const [video] = await db
       .insert(videos)
-      .values(insertVideo)
+      .values(insertVideo as any)
+      .returning();
+    return video;
+  }
+
+  async updateVideo(id: number, updateData: Partial<InsertVideo>): Promise<Video> {
+    const [video] = await db
+      .update(videos)
+      .set({ ...updateData, updatedAt: sql`NOW()` } as any)
+      .where(eq(videos.id, id))
       .returning();
     return video;
   }
 
   async deleteVideo(id: number): Promise<void> {
     await db.delete(videos).where(eq(videos.id, id));
+  }
+
+  async deleteCategory(id: number): Promise<void> {
+    await db.delete(categories).where(eq(categories.id, id));
+  }
+
+  async incrementVideoViews(videoId: number, userId?: number, ipAddress?: string): Promise<void> {
+    // Insert view record
+    await db.insert(videoViews).values({
+      videoId,
+      userId,
+      ipAddress,
+    });
+
+    // Update video views counter
+    await db
+      .update(videos)
+      .set({
+        views: sql`${videos.views} + 1`,
+      })
+      .where(eq(videos.id, videoId));
+  }
+
+  async getAdminStats(): Promise<AdminStats> {
+    const [videoStats] = await db
+      .select({
+        totalVideos: sql<number>`COUNT(*)::int`,
+      })
+      .from(videos);
+
+    const [userStats] = await db
+      .select({
+        totalUsers: sql<number>`COUNT(*)::int`,
+      })
+      .from(users)
+      .where(eq(users.isVerified, true));
+
+    const [viewStats] = await db
+      .select({
+        totalViews: sql<number>`COUNT(*)::int`,
+      })
+      .from(videoViews);
+
+    return {
+      totalVideos: videoStats?.totalVideos || 0,
+      totalUsers: userStats?.totalUsers || 0,
+      totalViews: viewStats?.totalViews || 0,
+      totalWatchTime: "0h", // This would require duration calculation
+    };
   }
 }
 

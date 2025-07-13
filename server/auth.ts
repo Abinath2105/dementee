@@ -11,14 +11,7 @@ import { sendOtpEmail } from "./services/email";
 
 declare global {
   namespace Express {
-    interface User extends SelectUser {
-      isMentor?: boolean;
-      mentorProfile?: {
-        profession: string;
-        bio: string | null;
-        photo: string | null;
-      };
-    }
+    interface User extends SelectUser {}
   }
 }
 
@@ -94,8 +87,6 @@ async function createTestUser() {
   }
 }
 
-
-
 async function createDefaultCategories() {
   try {
     const defaultCategories = [
@@ -108,16 +99,10 @@ async function createDefaultCategories() {
     ];
 
     for (const category of defaultCategories) {
-      // For simplified app, just try to create the category
-      try {
-        await storage.createCategory({
-          name: category.name,
-          description: `Learn ${category.name} skills and techniques`
-        });
+      const existing = await storage.getCategoryBySlug(category.slug);
+      if (!existing) {
+        await storage.createCategory(category);
         console.log(`Created category: ${category.name}`);
-      } catch (error) {
-        // Category might already exist, ignore error
-        console.log(`Category ${category.name} already exists or error occurred`);
       }
     }
   } catch (error) {
@@ -149,47 +134,26 @@ export function setupAuth(app: Express) {
       { usernameField: 'email' },
       async (email, password, done) => {
         try {
-          console.log(`=== LOGIN ATTEMPT ===`);
-          console.log(`Email: ${email}`);
-          console.log(`Password length: ${password.length}`);
-          
-          // Find user by email
           const user = await storage.getUserByEmail(email);
-          console.log(`User found: ${!!user}`);
-          
-          if (user && await comparePasswords(password, user.password)) {
-            console.log(`User password valid`);
-            if (!user.isVerified) {
-              console.log(`User not verified`);
-              return done(null, false, { message: 'Email not verified' });
-            }
-            console.log(`User login successful`);
-            return done(null, user);
+          if (!user || !(await comparePasswords(password, user.password))) {
+            return done(null, false);
           }
-
-          // No valid user found
-          console.log(`Login failed - no valid credentials found`);
-          console.log(`=== END LOGIN ATTEMPT ===`);
-          return done(null, false);
+          if (!user.isVerified) {
+            return done(null, false, { message: 'Email not verified' });
+          }
+          return done(null, user);
         } catch (error) {
-          console.error(`Login error:`, error);
           return done(error);
         }
       }
     )
   );
 
-  passport.serializeUser((user, done) => {
-    done(null, user.id);
-  });
-  
+  passport.serializeUser((user, done) => done(null, user.id));
   passport.deserializeUser(async (id: number, done) => {
     try {
       const user = await storage.getUser(id);
-      if (user) {
-        return done(null, user);
-      }
-      done(null, false);
+      done(null, user);
     } catch (error) {
       done(error);
     }
@@ -205,8 +169,10 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Email already exists" });
       }
 
-      // Note: In simplified app, we don't check username uniqueness
-      // since our storage interface doesn't have getUserByUsername
+      const existingUsername = await storage.getUserByUsername(username);
+      if (existingUsername) {
+        return res.status(400).json({ message: "Username already exists" });
+      }
 
       // Create user (unverified)
       const hashedPassword = await hashPassword(password);

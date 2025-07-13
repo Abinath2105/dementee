@@ -1,8 +1,8 @@
-# De mentee Academy - Video Learning Management Platform
+# VideoLearn Pro - Video Learning Management Platform
 
 ## Overview
 
-De mentee Academy is a comprehensive Learning Management System (LMS) designed for video-based education and skill development. The platform provides a complete learning ecosystem with advanced features including user authentication with email verification, categorized content organization, admin management capabilities, YouTube video integration, assignments and quizzes, learning paths, achievements system, progress analytics, mentor profiles, and student learning tracking.
+VideoLearn Pro is a modern web application designed for video-based learning management. The platform allows users to browse, watch, and manage educational videos with features including user authentication with email verification, categorized content organization, admin management capabilities, and YouTube video integration.
 
 ## System Architecture
 
@@ -41,50 +41,13 @@ De mentee Academy is a comprehensive Learning Management System (LMS) designed f
 - Search functionality across titles and descriptions
 - View tracking and analytics
 - Admin-only video management (add/edit/delete)
-- Video progress tracking with completion status and watch time
-- Video bookmarks with timestamps and optional notes
-- User watchlist for saving videos to watch later
-
-### Learning Management System (LMS)
-- Comprehensive assignments and quiz system with multiple question types
-- Learning paths with structured course progression
-- Achievement and badge system for motivation
-- Advanced analytics dashboard with learning insights
-- Study session tracking and time management
-- Progress monitoring and completion statistics
-- Forum system for discussions and community engagement
-- Notification system for updates and announcements
-- Mentor and student profile management
-- Skills tracking and learning goal setting
-
-### Student Admission Management System
-- Complete 5-stage admission workflow from application to orientation
-- Comprehensive application forms with personal information, course preferences, and contact details
-- Document upload system for passport photos and government ID verification
-- Fee payment management with multiple plans (one-time, installment, scholarship)
-- EMI balance tracking with due date management and payment method options
-- Student ID generation and LMS login credential creation
-- Student batch management with mentor assignment and capacity limits
-- Orientation session scheduling with online/offline modes and registration tracking
-- Admin workflow controls for application status management and student onboarding
-- Welcome email system with credentials and orientation invitations
 
 ### User Interface Components
 - Responsive design with mobile-first approach
-- Enhanced modal-based video player with YouTube embeds
+- Modal-based video player with YouTube embeds
 - Real-time search and filtering
 - Admin dashboard with statistics and management tools
-- User dashboard with progress tracking and learning analytics
-- Advanced dashboard with comprehensive learning analytics
-- Professional mentor and student profile pages
-- Assignment management interface with submission tracking
-- Learning path visualization and progress indicators
-- Achievement gallery and badge display
-- Video bookmark creation and management interface
-- Watchlist functionality with add/remove capabilities
-- Progress bars and completion status indicators
 - Toast notifications for user feedback
-- Modern card-based layouts with LinkedIn-style design
 
 ### Content Organization
 - Categories for video classification
@@ -141,67 +104,14 @@ De mentee Academy is a comprehensive Learning Management System (LMS) designed f
 - Session store automatically creates required tables
 
 ## Recent Changes
-- July 09, 2025: YouTube Data API v3 integration completed successfully
-- July 09, 2025: SMTP email verification system successfully configured with Gmail App Password
-- July 09, 2025: YouTube video fallback system implemented for admin video management
-- July 09, 2025: Test user accounts created for immediate testing access
-- July 09, 2025: Default video categories created (Programming, Web Development, Data Science, etc.)
-- July 09, 2025: Full video learning platform deployment ready
-- July 09, 2025: Video progress tracking and bookmarks feature implemented with complete database schema
-- July 09, 2025: Enhanced video player modal with progress tracking, bookmark creation, and watchlist functionality
-- July 09, 2025: User dashboard created with progress statistics, bookmark management, and watchlist view
-- July 09, 2025: Mentor profile page implemented with avatar display, personal details, and logout functionality
-- July 09, 2025: Test mentor account created and integrated with authentication system
-- July 09, 2025: Redesigned mentor profile page with LinkedIn-style professional layout and sections
-- July 09, 2025: Added photo upload functionality for mentor profile photos and background images with multer integration
-- July 09, 2025: Enhanced mentor profile banner layout with proper text spacing and prominent name display next to profile picture
-- July 09, 2025: Redesigned mentor profile banner with card-based layout, improved spacing, and professional LinkedIn-style appearance
-- July 09, 2025: Completed LinkedIn-style mentor profile layout with overlapping profile picture, action buttons, and professional information hierarchy
-- July 09, 2025: Implemented functional action buttons with comprehensive modal interfaces for "Open to", "Add profile section", "Enhance profile", and "Resources"
-- July 09, 2025: Built comprehensive student profile system for all normal users with skills, interests, learning goals, and progress tracking
-- July 09, 2025: Implemented complete LMS features including advanced dashboard, assignments system, learning paths, achievements, and analytics
-- July 09, 2025: Created extensive database schema for LMS with assignments, learning paths, achievements, study sessions, forums, and notifications
-- July 09, 2025: Developed advanced dashboard with learning analytics, progress tracking, weekly statistics, and performance insights
-- July 09, 2025: Built comprehensive assignments page with filtering, search, assignment management, and submission tracking
-- July 09, 2025: Added complete API endpoints for LMS features with authentication and error handling
-- July 09, 2025: Implemented comprehensive video comments and rating system with threading, likes, and user interactions
-- July 09, 2025: Built 5-star video rating system with statistics and user rating management
-- July 09, 2025: Integrated comments and ratings into enhanced video player modal with tabbed interface
-- July 09, 2025: Created consolidated navigation system with user avatar dropdown and role-based menu items
-- July 09, 2025: Redesigned login page with separate sections for different user types (students as main focus)
-- July 09, 2025: Implemented smart navigation that adapts based on user role (Student/Admin/Mentor)
-- July 09, 2025: Added notifications badge and comprehensive user dropdown with profile access and role indicators
-- July 09, 2025: Updated platform name from "VideoLearn Pro" to "De mentee Academy" across all components
-- July 09, 2025: Implemented admin-configurable platform settings with logo upload functionality
-- July 09, 2025: Added platform settings database table with configurable name, logo, colors, and description
-- July 09, 2025: Created platform settings API endpoints for admins to customize branding
-- July 13, 2025: Implemented comprehensive Student Admission Flow system with complete 5-stage process
-- July 13, 2025: Added student application database schema with personal info, course preferences, and document storage
-- July 13, 2025: Created fee payment management system with installment tracking and EMI balance support
-- July 13, 2025: Built student batch management with mentor assignment and capacity tracking
-- July 13, 2025: Added orientation session system with registration and attendance tracking
-- July 13, 2025: Developed admin Student Admissions page with application form, status management, and workflow controls
-- July 13, 2025: Integrated student ID generation and login credential creation system
-- July 13, 2025: Added comprehensive API endpoints for all student admission management features
-- July 13, 2025: Restructured admin navigation by consolidating Student Dashboard, Fee Dashboard, and Platform Settings inside Admin dashboard
-- July 13, 2025: Updated Admin dashboard with expanded tab structure including Courses and Management sections
-- July 13, 2025: Added proper navigation breadcrumbs system to Student Admissions pages with clean header and back navigation
-- July 13, 2025: Fixed fee payment table actions with proper click handlers for download receipts and edit payment functionality
-- July 13, 2025: Implemented comprehensive Batches Management feature with course/mentor mapping, start dates, capacity tracking, and student progress visualization
-- July 13, 2025: Enhanced student admission workflow with proper navigation structure and consolidated admin-focused design
-- July 13, 2025: Implemented fully functional fee payment actions with working edit, remove, and download receipt capabilities
-- July 13, 2025: Built comprehensive Students table in main admin dashboard with A-Z clickable options and real-time functionality
-- July 13, 2025: Added working delete payment mutation with proper error handling and cache invalidation
-- July 13, 2025: Enhanced orientation session tracking with completion status and user assignment monitoring
-- July 13, 2025: Created fully dynamic and editable admission settings system with all privileges for admission-related configurations
-- July 13, 2025: Implemented student-course mapping in batches management with functional assignment and removal actions
-- July 13, 2025: Added comprehensive API endpoints for fee payment deletion and student management operations
-- July 13, 2025: Built complete Student Management system with student list display, course assignment capabilities, bulk actions, progress tracking, and individual student management functionality
-- July 13, 2025: Integrated comprehensive student table with search, filtering, editing, and detailed student profiles including payment status, progress monitoring, and activity tracking
-- July 13, 2025: Cleaned up navigation bar by removing Student Admissions, Fee Dashboard, and Platform Settings from top nav and keeping them accessible within the Management tab
-- July 13, 2025: Made Create Course functionality fully functional with comprehensive course creation form including name, duration, description, price, level, category, mentor assignment, and course outline
+- January 13, 2025: Simplified learning app architecture implemented successfully
+- January 13, 2025: Removed 32+ complex LMS database tables for lightweight structure
+- January 13, 2025: Rebuilt storage layer with basic category → course → video hierarchy
+- January 13, 2025: Fixed navigation and authentication to work with simplified user schema
+- January 13, 2025: Created clean homepage displaying categories and courses
+- January 13, 2025: App running successfully with core admin/student functionality only
+- January 13, 2025: Version marked as stable and live (commit: 6718dbd3d6284526d7d2112ca821afd7108c49a6)
 
 ## User Preferences
 
 Preferred communication style: Simple, everyday language.
-UI/UX Design: Prefers clean, simplified layouts with minimal clutter. Single-focus auth page with student portal as main content and admin/mentor access hidden behind settings icon in top right corner.
