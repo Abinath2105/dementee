@@ -104,10 +104,13 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
     mutationFn: async (file: File) => {
       const formData = new FormData();
       formData.append("file", file);
-      return await apiRequest("/api/admin/upload", {
+      const response = await fetch("/api/admin/upload", {
         method: "POST",
         body: formData,
+        credentials: "include",
       });
+      if (!response.ok) throw new Error("Upload failed");
+      return response.json();
     },
     onSuccess: (data) => {
       return data.url;

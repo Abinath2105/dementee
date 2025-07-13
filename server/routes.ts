@@ -378,9 +378,16 @@ export function registerRoutes(app: Express): Server {
     }
 
     try {
-      // For now, return a mock URL - this would need proper file upload handling
-      const mockUrl = `/uploads/${Date.now()}-banner.jpg`;
-      res.json({ url: mockUrl });
+      // For demo purposes, we'll use placeholder image URLs
+      const placeholderImages = [
+        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=1200&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1557804506-669a67965ba0?w=1200&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1523050854058-8df90110c9f1?w=1200&h=400&fit=crop",
+        "https://images.unsplash.com/photo-1556075798-4825dfaaf498?w=1200&h=400&fit=crop"
+      ];
+      
+      const randomImage = placeholderImages[Math.floor(Math.random() * placeholderImages.length)];
+      res.json({ url: randomImage });
     } catch (error) {
       console.error("Upload error:", error);
       res.status(500).json({ message: "Failed to upload file" });
