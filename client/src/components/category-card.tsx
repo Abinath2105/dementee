@@ -11,26 +11,8 @@ interface CategoryCardProps {
 }
 
 export function CategoryCard({ category, videoCount = 0, onClick }: CategoryCardProps) {
-  const CardWrapper = ({ children }: { children: React.ReactNode }) => {
-    if (onClick) {
-      return (
-        <div onClick={onClick} className="block">
-          {children}
-        </div>
-      );
-    }
-    return (
-      <Link href={`/category/${category.slug}`} className="block">
-        {children}
-      </Link>
-    );
-  };
-
-  return (
-    <CardWrapper>
-      <Card 
-        className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 group"
-      >
+  const cardContent = (
+    <Card className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 group">
       <div className="relative overflow-hidden rounded-t-lg">
         {category.coverImage ? (
           <img
@@ -74,6 +56,15 @@ export function CategoryCard({ category, videoCount = 0, onClick }: CategoryCard
         </div>
       </CardContent>
     </Card>
-    </CardWrapper>
+  );
+
+  if (onClick) {
+    return <div onClick={onClick}>{cardContent}</div>;
+  }
+
+  return (
+    <Link href={`/category/${category.slug}`}>
+      {cardContent}
+    </Link>
   );
 }
