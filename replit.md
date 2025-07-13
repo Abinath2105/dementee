@@ -123,6 +123,10 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 13, 2025: Added user-category assignment functionality in admin panel
 - January 13, 2025: Created userCategoryAccess junction table for permissions management
 - January 13, 2025: Updated category fetching to respect user access permissions
+- January 13, 2025: Created individual category pages with YouTube-style playlist layout
+- January 13, 2025: Added `/category/:slug` routing for dedicated category pages
+- January 13, 2025: Implemented category-specific video filtering and search functionality
+- January 13, 2025: Fixed CategoryCard component to properly navigate to category pages
 
 ## User Preferences
 

@@ -117,7 +117,6 @@ export default function HomePage() {
                     key={category.id}
                     category={category}
                     videoCount={categoryVideoCount}
-                    onClick={() => setSelectedCategory(category.id.toString())}
                   />
                 );
               })}
