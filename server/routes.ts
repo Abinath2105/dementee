@@ -59,6 +59,33 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Get single category by slug
+  app.get("/api/categories/:slug", async (req, res) => {
+    try {
+      const { slug } = req.params;
+      const userId = req.user?.id;
+      
+      const category = await storage.getCategoryBySlug(slug);
+      if (!category) {
+        return res.status(404).json({ message: "Category not found" });
+      }
+
+      // Check if user has access to this category (if not admin)
+      if (userId && !req.user?.isAdmin) {
+        const userAccess = await storage.getUserCategoryAccess(userId);
+        const hasAccess = userAccess.some(access => access.categoryId === category.id);
+        if (!hasAccess) {
+          return res.status(403).json({ message: "You don't have access to this category" });
+        }
+      }
+
+      res.json(category);
+    } catch (error) {
+      console.error("Error fetching category:", error);
+      res.status(500).json({ message: "Failed to fetch category" });
+    }
+  });
+
   app.post("/api/categories", async (req, res) => {
     try {
       if (!req.isAuthenticated() || !req.user?.isAdmin) {

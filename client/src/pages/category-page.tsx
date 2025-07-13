@@ -1,0 +1,251 @@
+import { useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import { useParams, Link } from "wouter";
+import { ArrowLeft, Play, Clock, Search } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Badge } from "@/components/ui/badge";
+import { VideoPlayerModal } from "@/components/video-player-modal";
+import { type VideoWithCategory } from "@shared/schema";
+
+export function CategoryPage() {
+  const { slug } = useParams<{ slug: string }>();
+  const [selectedVideo, setSelectedVideo] = useState<VideoWithCategory | null>(null);
+  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
+  const [searchQuery, setSearchQuery] = useState("");
+
+  // Fetch category details
+  const { data: category, isLoading: categoryLoading } = useQuery({
+    queryKey: ["/api/categories", slug],
+    queryFn: async () => {
+      if (!slug) return null;
+      const response = await fetch(`/api/categories/${slug}`, {
+        credentials: "include",
+      });
+      if (!response.ok) {
+        if (response.status === 404) return null;
+        throw new Error("Failed to fetch category");
+      }
+      return response.json();
+    },
+    enabled: !!slug,
+  });
+
+  // Fetch videos for this category
+  const { data: videos = [], isLoading: videosLoading } = useQuery({
+    queryKey: ["/api/videos", { categoryId: category?.id }],
+    queryFn: async () => {
+      if (!category?.id) return [];
+      const response = await fetch(`/api/videos?categoryId=${category.id}`, {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch videos");
+      return response.json();
+    },
+    enabled: !!category?.id,
+  });
+
+  const filteredVideos = videos.filter((video: VideoWithCategory) => {
+    if (!searchQuery) return true;
+    return (
+      video.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      video.description?.toLowerCase().includes(searchQuery.toLowerCase())
+    );
+  });
+
+  const handleVideoClick = (video: VideoWithCategory) => {
+    setSelectedVideo(video);
+    setShowVideoPlayer(true);
+  };
+
+  const handleCloseVideoPlayer = () => {
+    setSelectedVideo(null);
+    setShowVideoPlayer(false);
+  };
+
+  if (categoryLoading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-32 w-32 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-4 text-gray-600">Loading category...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!category) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h1 className="text-2xl font-bold text-gray-900 mb-4">Category Not Found</h1>
+          <p className="text-gray-600 mb-6">The category you're looking for doesn't exist or you don't have access to it.</p>
+          <Link href="/">
+            <Button>
+              <ArrowLeft className="h-4 w-4 mr-2" />
+              Back to Home
+            </Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="min-h-screen bg-gray-50">
+      {/* Header */}
+      <div className="bg-white border-b">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+          <div className="flex items-center justify-between">
+            <Link href="/">
+              <Button variant="ghost" size="sm">
+                <ArrowLeft className="h-4 w-4 mr-2" />
+                Back to Categories
+              </Button>
+            </Link>
+          </div>
+        </div>
+      </div>
+
+      {/* Category Hero Section */}
+      <div className="bg-gradient-to-r from-blue-600 to-purple-600 text-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+          <div className="flex items-start space-x-6">
+            {category.coverImage && (
+              <div className="flex-shrink-0 w-32 h-32 rounded-lg overflow-hidden bg-white/20">
+                <img
+                  src={category.coverImage}
+                  alt={category.name}
+                  className="w-full h-full object-cover"
+                />
+              </div>
+            )}
+            <div className="flex-1">
+              <h1 className="text-3xl font-bold mb-2">{category.name}</h1>
+              {category.description && (
+                <p className="text-lg text-white/90 mb-4">{category.description}</p>
+              )}
+              {category.mentorName && (
+                <p className="text-white/80 mb-4">by {category.mentorName}</p>
+              )}
+              <div className="flex items-center space-x-4 text-sm text-white/80">
+                <span>{filteredVideos.length} videos</span>
+                <span>•</span>
+                <span>Learning Playlist</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* Content */}
+      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        {/* Search */}
+        <div className="mb-6">
+          <div className="relative max-w-md">
+            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+            <Input
+              placeholder="Search videos in this category..."
+              value={searchQuery}
+              onChange={(e) => setSearchQuery(e.target.value)}
+              className="pl-10"
+            />
+          </div>
+        </div>
+
+        {/* Videos Grid */}
+        {videosLoading ? (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {[...Array(8)].map((_, i) => (
+              <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
+                <div className="w-full h-48 bg-gray-200 animate-pulse"></div>
+                <div className="p-4">
+                  <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
+                  <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : filteredVideos.length === 0 ? (
+          <div className="text-center py-16">
+            <div className="text-gray-400 text-6xl mb-4">🎥</div>
+            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+              {searchQuery ? "No videos found" : "No videos in this category yet"}
+            </h3>
+            <p className="text-gray-600 mb-6">
+              {searchQuery
+                ? "Try adjusting your search terms"
+                : "Videos will appear here once they're added to this category"}
+            </p>
+            {searchQuery && (
+              <Button variant="outline" onClick={() => setSearchQuery("")}>
+                Clear Search
+              </Button>
+            )}
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            {filteredVideos.map((video: VideoWithCategory, index: number) => (
+              <div
+                key={video.id}
+                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                onClick={() => handleVideoClick(video)}
+              >
+                <div className="relative">
+                  <img
+                    src={video.thumbnailUrl || '/api/placeholder/400/225'}
+                    alt={video.title}
+                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
+                  />
+                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
+                    <div className="bg-white rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                      <Play className="h-6 w-6 text-blue-600" />
+                    </div>
+                  </div>
+                  <div className="absolute top-2 left-2">
+                    <Badge variant="secondary" className="text-xs">
+                      #{index + 1}
+                    </Badge>
+                  </div>
+                  {video.duration && (
+                    <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded flex items-center space-x-1">
+                      <Clock className="h-3 w-3" />
+                      <span>{video.duration}</span>
+                    </div>
+                  )}
+                </div>
+                <div className="p-4">
+                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                    {video.title}
+                  </h3>
+                  {video.description && (
+                    <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                      {video.description}
+                    </p>
+                  )}
+                  <div className="flex items-center justify-between text-xs text-gray-500">
+                    <span>{video.viewCount || 0} views</span>
+                    {video.isPublic && (
+                      <Badge variant="outline" className="text-xs">
+                        Public
+                      </Badge>
+                    )}
+                  </div>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* Video Player Modal */}
+      {selectedVideo && (
+        <VideoPlayerModal
+          video={selectedVideo}
+          isOpen={showVideoPlayer}
+          onClose={handleCloseVideoPlayer}
+        />
+      )}
+    </div>
+  );
+}

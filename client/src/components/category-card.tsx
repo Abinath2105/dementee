@@ -1,3 +1,4 @@
+import { Link } from "wouter";
 import { Category } from "@/../../shared/schema";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
@@ -6,15 +7,30 @@ import { User } from "lucide-react";
 interface CategoryCardProps {
   category: Category;
   videoCount?: number;
-  onClick: () => void;
+  onClick?: () => void;
 }
 
 export function CategoryCard({ category, videoCount = 0, onClick }: CategoryCardProps) {
+  const CardWrapper = ({ children }: { children: React.ReactNode }) => {
+    if (onClick) {
+      return (
+        <div onClick={onClick} className="block">
+          {children}
+        </div>
+      );
+    }
+    return (
+      <Link href={`/category/${category.slug}`} className="block">
+        {children}
+      </Link>
+    );
+  };
+
   return (
-    <Card 
-      className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 group"
-      onClick={onClick}
-    >
+    <CardWrapper>
+      <Card 
+        className="cursor-pointer hover:shadow-lg transition-all duration-200 hover:scale-105 group"
+      >
       <div className="relative overflow-hidden rounded-t-lg">
         {category.coverImage ? (
           <img
@@ -58,5 +74,6 @@ export function CategoryCard({ category, videoCount = 0, onClick }: CategoryCard
         </div>
       </CardContent>
     </Card>
+    </CardWrapper>
   );
 }
