@@ -113,12 +113,32 @@ app.use((req, res, next) => {
     }
 
     // Use PORT environment variable (Cloud Run requirement) or fallback to 5000
-    const port = parseInt(process.env.PORT || '5000', 10);
+    const defaultPort = parseInt(process.env.PORT || '5000', 10);
+    
+    // Helper function to find an available port
+    const findAvailablePort = (startPort: number): Promise<number> => {
+      return new Promise((resolve, reject) => {
+        const testServer = server.listen(startPort, '0.0.0.0', () => {
+          const actualPort = (testServer.address() as any)?.port;
+          testServer.close(() => resolve(actualPort));
+        });
+        
+        testServer.on('error', (err: any) => {
+          if (err.code === 'EADDRINUSE') {
+            findAvailablePort(startPort + 1).then(resolve).catch(reject);
+          } else {
+            reject(err);
+          }
+        });
+      });
+    };
+
+    // Find and use an available port
+    const port = await findAvailablePort(defaultPort);
     
     server.listen({
       port,
       host: "0.0.0.0",
-      reusePort: true,
     }, () => {
       log(`serving on port ${port} in ${process.env.NODE_ENV} mode`);
     });
