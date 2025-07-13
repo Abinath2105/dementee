@@ -775,7 +775,15 @@ export default function AdminPage() {
                               {new Date(invitation.createdAt).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
-                              <Badge variant="secondary">Pending</Badge>
+                              <Badge variant={
+                                invitation.acceptedAt ? "default" : 
+                                new Date(invitation.expiresAt) < new Date() ? "destructive" : 
+                                "secondary"
+                              }>
+                                {invitation.acceptedAt ? "Accepted" : 
+                                 new Date(invitation.expiresAt) < new Date() ? "Expired" : 
+                                 "Pending"}
+                              </Badge>
                             </TableCell>
                             <TableCell>
                               <Button

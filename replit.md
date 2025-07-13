@@ -127,6 +127,8 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 13, 2025: Added `/category/:slug` routing for dedicated category pages
 - January 13, 2025: Implemented category-specific video filtering and search functionality
 - January 13, 2025: Fixed CategoryCard component to properly navigate to category pages
+- January 13, 2025: Implemented comprehensive LMS features: category carousel, repositioned search, and video completion tracking
+- January 13, 2025: Fixed invitation status bug - accepted invitations now properly filtered out from pending list in admin panel
 
 ## User Preferences
 

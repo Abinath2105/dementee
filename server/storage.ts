@@ -456,7 +456,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getAllInvitations(): Promise<UserInvitation[]> {
-    return await db.select().from(userInvitations).orderBy(desc(userInvitations.createdAt));
+    // Only return pending invitations (not accepted and not expired)
+    return await db
+      .select()
+      .from(userInvitations)
+      .where(and(
+        sql`${userInvitations.acceptedAt} IS NULL`,
+        sql`${userInvitations.expiresAt} > NOW()`
+      ))
+      .orderBy(desc(userInvitations.createdAt));
+  }
+
+  async getAllInvitationsHistory(): Promise<UserInvitation[]> {
+    // Return all invitations for admin history view
+    return await db
+      .select()
+      .from(userInvitations)
+      .orderBy(desc(userInvitations.createdAt));
   }
 
   async deleteInvitation(id: number): Promise<void> {
