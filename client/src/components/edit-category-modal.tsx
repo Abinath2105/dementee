@@ -3,7 +3,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -46,6 +46,7 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
   // Reset form when category changes
   useEffect(() => {
     if (category) {
+      console.log('Resetting form with category:', category);
       form.reset({
         name: category.name,
         description: category.description || "",
@@ -95,13 +96,30 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
         .replace(/[^a-z0-9]+/g, "-")
         .replace(/(^-|-$)/g, "");
       
-      return await apiRequest("PUT", `/api/categories/${category.id}`, {
-        ...data,
-        slug,
-        coverImage: uploadedImageUrl,
+      console.log('Updating category with data:', { ...data, slug, coverImage: uploadedImageUrl });
+      
+      const response = await fetch(`/api/categories/${category.id}`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "include",
+        body: JSON.stringify({
+          ...data,
+          slug,
+          coverImage: uploadedImageUrl,
+        }),
       });
+      
+      if (!response.ok) {
+        const errorData = await response.json().catch(() => ({ message: "Unknown error" }));
+        throw new Error(errorData.message || "Failed to update category");
+      }
+      
+      return await response.json();
     },
-    onSuccess: () => {
+    onSuccess: (updatedCategory) => {
+      console.log('Category updated successfully:', updatedCategory);
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
       toast({
         title: "Success",
@@ -110,6 +128,7 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
       onClose();
     },
     onError: (error: Error) => {
+      console.error('Update category error:', error);
       toast({
         variant: "destructive",
         title: "Error",
@@ -126,6 +145,8 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
   };
 
   const onSubmit = (data: CategoryData) => {
+    console.log('Form submitted with data:', data);
+    console.log('Form errors:', form.formState.errors);
     updateCategoryMutation.mutate(data);
   };
 
@@ -140,6 +161,9 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
       <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>Edit Category</DialogTitle>
+          <DialogDescription>
+            Update the category details and cover image below.
+          </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
