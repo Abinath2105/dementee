@@ -71,7 +71,11 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
 
 export async function sendInvitationEmail(email: string, token: string, role: string): Promise<void> {
   try {
-    const inviteUrl = `${process.env.FRONTEND_URL || 'http://localhost:5000'}/invite/${token}`;
+    // Use the proper Replit domain or fallback to localhost for development
+    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
+      ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+      : process.env.FRONTEND_URL || 'http://localhost:5000';
+    const inviteUrl = `${baseUrl}/invite/${token}`;
     
     const mailOptions = {
       from: process.env.SMTP_USER,
