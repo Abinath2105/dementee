@@ -63,9 +63,8 @@ const feePaymentSchema = z.object({
   paidAmount: z.string().min(1, "Paid amount is required"),
   paymentMethod: z.string().min(1, "Payment method is required"),
   paymentDate: z.string().min(1, "Payment date is required"),
-  emiBalance: z.string().optional(),
-  nextDueDate: z.string().optional(),
-  receiptUrl: z.string().optional(),
+  emiDates: z.array(z.string()).optional(),
+  receiptFile: z.any().optional(),
 });
 
 type FeePaymentFormData = z.infer<typeof feePaymentSchema>;
@@ -77,6 +76,9 @@ export default function StudentAdmissionsPage() {
   const [showNewApplication, setShowNewApplication] = useState(false);
   const [showPaymentModal, setShowPaymentModal] = useState(false);
   const [showDocumentModal, setShowDocumentModal] = useState(false);
+  const [emiDates, setEmiDates] = useState<string[]>([]);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [pendingAmount, setPendingAmount] = useState(0);
 
   // Queries
   const { data: applications = [], isLoading } = useQuery({
@@ -150,17 +152,35 @@ export default function StudentAdmissionsPage() {
   });
 
   const createPaymentMutation = useMutation({
-    mutationFn: async (data: any) => {
-      const response = await apiRequest("POST", "/api/admin/fee-payments", data);
+    mutationFn: async (formData: FormData) => {
+      const response = await fetch("/api/admin/fee-payments", {
+        method: "POST",
+        credentials: "include",
+        body: formData,
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to create payment");
+      }
       return response.json();
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/admin/student-applications"] });
       setShowPaymentModal(false);
       paymentForm.reset();
+      setUploadedFile(null);
+      setEmiDates([]);
+      setPendingAmount(0);
       toast({
         title: "Payment recorded",
         description: "Fee payment has been recorded successfully.",
+      });
+    },
+    onError: (error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
       });
     },
   });
@@ -209,6 +229,32 @@ export default function StudentAdmissionsPage() {
     createApplicationMutation.mutate(data);
   };
 
+  const downloadReceipt = (applicationId: number) => {
+    fetch(`/api/admin/fee-payments/${applicationId}/receipt`, {
+      method: "GET",
+      credentials: "include",
+    })
+    .then(response => response.blob())
+    .then(blob => {
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.style.display = 'none';
+      a.href = url;
+      a.download = `receipt_${applicationId}_${Date.now()}.pdf`;
+      document.body.appendChild(a);
+      a.click();
+      window.URL.revokeObjectURL(url);
+      document.body.removeChild(a);
+    })
+    .catch(error => {
+      toast({
+        title: "Error",
+        description: "Failed to download receipt",
+        variant: "destructive",
+      });
+    });
+  };
+
   const onSubmitPayment = (data: FeePaymentFormData) => {
     if (!selectedApplication) return;
     
@@ -216,14 +262,26 @@ export default function StudentAdmissionsPage() {
     const paidAmount = parseFloat(data.paidAmount);
     const pendingAmount = totalAmount - paidAmount;
     
-    createPaymentMutation.mutate({
-      ...data,
-      applicationId: selectedApplication.id,
-      totalAmount: totalAmount.toString(),
-      paidAmount: paidAmount.toString(),
-      pendingAmount: pendingAmount.toString(),
-      paymentStatus: paidAmount >= totalAmount ? "paid" : "partial",
-    });
+    // Create FormData for file upload
+    const formData = new FormData();
+    formData.append('applicationId', selectedApplication.id.toString());
+    formData.append('feePlan', data.feePlan);
+    formData.append('totalAmount', totalAmount.toString());
+    formData.append('paidAmount', paidAmount.toString());
+    formData.append('pendingAmount', pendingAmount.toString());
+    formData.append('paymentMethod', data.paymentMethod);
+    formData.append('paymentDate', data.paymentDate);
+    formData.append('paymentStatus', paidAmount >= totalAmount ? "paid" : "partial");
+    
+    if (uploadedFile) {
+      formData.append('receipt', uploadedFile);
+    }
+    
+    if (emiDates.length > 0) {
+      formData.append('emiDates', JSON.stringify(emiDates));
+    }
+    
+    createPaymentMutation.mutate(formData);
   };
 
   const handleStatusChange = (applicationId: number, newStatus: string) => {
@@ -783,12 +841,30 @@ export default function StudentAdmissionsPage() {
                         <FormItem>
                           <FormLabel>Paid Amount (₹)</FormLabel>
                           <FormControl>
-                            <Input type="number" placeholder="Enter paid amount" {...field} />
+                            <Input 
+                              type="number" 
+                              placeholder="Enter paid amount" 
+                              {...field}
+                              onChange={(e) => {
+                                field.onChange(e);
+                                const total = parseFloat(paymentForm.getValues("totalAmount")) || 0;
+                                const paid = parseFloat(e.target.value) || 0;
+                                setPendingAmount(total - paid);
+                              }}
+                            />
                           </FormControl>
                           <FormMessage />
                         </FormItem>
                       )}
                     />
+                  </div>
+
+                  {/* Dynamic Pending Amount Display */}
+                  <div className="p-4 bg-gray-50 rounded-lg">
+                    <div className="flex justify-between items-center">
+                      <span className="text-sm font-medium text-gray-600">Pending Amount:</span>
+                      <span className="text-lg font-bold text-red-600">₹{pendingAmount.toFixed(2)}</span>
+                    </div>
                   </div>
 
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -823,35 +899,6 @@ export default function StudentAdmissionsPage() {
                         <FormItem>
                           <FormLabel>Payment Date</FormLabel>
                           <FormControl>
-                            <Input type="datetime-local" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                  </div>
-
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <FormField
-                      control={paymentForm.control}
-                      name="emiBalance"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>EMI Balance (₹)</FormLabel>
-                          <FormControl>
-                            <Input type="number" placeholder="Remaining EMI balance" {...field} />
-                          </FormControl>
-                          <FormMessage />
-                        </FormItem>
-                      )}
-                    />
-                    <FormField
-                      control={paymentForm.control}
-                      name="nextDueDate"
-                      render={({ field }) => (
-                        <FormItem>
-                          <FormLabel>Next Due Date</FormLabel>
-                          <FormControl>
                             <Input type="date" {...field} />
                           </FormControl>
                           <FormMessage />
@@ -860,15 +907,79 @@ export default function StudentAdmissionsPage() {
                     />
                   </div>
 
+                  {/* EMI Dates Section */}
+                  {pendingAmount > 0 && (
+                    <div className="space-y-4">
+                      <div className="flex items-center justify-between">
+                        <h4 className="text-sm font-medium text-gray-700">EMI Payment Schedule</h4>
+                        <Button
+                          type="button"
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setEmiDates([...emiDates, ''])}
+                        >
+                          <Plus className="h-4 w-4 mr-2" />
+                          Add EMI Date
+                        </Button>
+                      </div>
+                      {emiDates.map((date, index) => (
+                        <div key={index} className="flex items-center gap-2">
+                          <Input
+                            type="date"
+                            value={date}
+                            onChange={(e) => {
+                              const newDates = [...emiDates];
+                              newDates[index] = e.target.value;
+                              setEmiDates(newDates);
+                            }}
+                            placeholder="Select EMI due date"
+                            className="flex-1"
+                          />
+                          <Button
+                            type="button"
+                            variant="outline"
+                            size="sm"
+                            onClick={() => {
+                              const newDates = emiDates.filter((_, i) => i !== index);
+                              setEmiDates(newDates);
+                            }}
+                          >
+                            <Trash2 className="h-4 w-4" />
+                          </Button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* File Upload Section */}
                   <div className="space-y-4">
                     <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
                       <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
                       <p className="text-sm text-gray-600">
                         Upload Receipt (if offline payment)
                       </p>
-                      <Button type="button" variant="outline" size="sm" className="mt-2">
-                        Choose File
-                      </Button>
+                      <input
+                        type="file"
+                        accept="image/*,.pdf"
+                        onChange={(e) => {
+                          const file = e.target.files?.[0];
+                          if (file) {
+                            setUploadedFile(file);
+                          }
+                        }}
+                        className="hidden"
+                        id="receipt-upload"
+                      />
+                      <label htmlFor="receipt-upload">
+                        <Button type="button" variant="outline" size="sm" className="mt-2" asChild>
+                          <span>Choose File</span>
+                        </Button>
+                      </label>
+                      {uploadedFile && (
+                        <p className="text-sm text-green-600 mt-2">
+                          File selected: {uploadedFile.name}
+                        </p>
+                      )}
                     </div>
                   </div>
 
@@ -883,9 +994,17 @@ export default function StudentAdmissionsPage() {
                     <Button type="submit" disabled={createPaymentMutation.isPending}>
                       {createPaymentMutation.isPending ? "Recording..." : "Record Payment"}
                     </Button>
-                    <Button type="button" variant="secondary">
+                    <Button 
+                      type="button" 
+                      variant="secondary"
+                      onClick={() => {
+                        if (selectedApplication) {
+                          downloadReceipt(selectedApplication.id);
+                        }
+                      }}
+                    >
                       <Download className="h-4 w-4 mr-2" />
-                      Generate Invoice
+                      Download Receipt
                     </Button>
                   </div>
                 </form>

@@ -609,13 +609,89 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  app.post("/api/admin/fee-payments", async (req, res) => {
+  // Receipt download endpoint
+  app.get("/api/admin/fee-payments/:applicationId/receipt", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
       return res.status(403).json({ error: "Admin access required" });
     }
 
     try {
-      const payment = await storage.createFeePayment(req.body);
+      const applicationId = parseInt(req.params.applicationId);
+      
+      // Generate a simple receipt (in a real app, you'd use a PDF library)
+      const application = await storage.getStudentApplications();
+      const app = application.find(a => a.id === applicationId);
+      
+      if (!app) {
+        return res.status(404).json({ error: "Application not found" });
+      }
+
+      const receiptContent = `
+PAYMENT RECEIPT
+===============
+
+Application ID: ${app.id}
+Student Name: ${app.firstName} ${app.lastName}
+Email: ${app.email}
+Date: ${new Date().toDateString()}
+
+Payment Details:
+- Course: ${app.preferredCourse}
+- Amount: ₹${app.feeStructure?.totalAmount || 'N/A'}
+
+Thank you for your payment!
+
+De mentee Academy
+      `;
+
+      res.setHeader('Content-Type', 'text/plain');
+      res.setHeader('Content-Disposition', `attachment; filename="receipt_${applicationId}.txt"`);
+      res.send(receiptContent);
+    } catch (error) {
+      console.error("Error generating receipt:", error);
+      res.status(500).json({ error: "Failed to generate receipt" });
+    }
+  });
+
+  // Configure multer for receipt uploads
+  const receiptUpload = multer({
+    storage: storage_multer,
+    limits: {
+      fileSize: 10 * 1024 * 1024, // 10MB limit for receipts
+    },
+    fileFilter: (req, file, cb) => {
+      const allowedTypes = /jpeg|jpg|png|gif|webp|pdf/;
+      const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
+      const mimetype = allowedTypes.test(file.mimetype) || file.mimetype === 'application/pdf';
+
+      if (mimetype && extname) {
+        return cb(null, true);
+      } else {
+        cb(new Error('Only image files and PDFs are allowed'));
+      }
+    },
+  });
+
+  app.post("/api/admin/fee-payments", receiptUpload.single('receipt'), async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const paymentData = {
+        applicationId: parseInt(req.body.applicationId),
+        feePlan: req.body.feePlan,
+        totalAmount: parseFloat(req.body.totalAmount),
+        paidAmount: parseFloat(req.body.paidAmount),
+        pendingAmount: parseFloat(req.body.pendingAmount),
+        paymentMethod: req.body.paymentMethod,
+        paymentDate: new Date(req.body.paymentDate + 'T00:00:00.000Z'), // Convert date string to Date object
+        paymentStatus: req.body.paymentStatus,
+        receiptUrl: req.file ? `/uploads/${req.file.filename}` : null,
+        emiDates: req.body.emiDates ? JSON.parse(req.body.emiDates) : null,
+      };
+
+      const payment = await storage.createFeePayment(paymentData);
       res.status(201).json(payment);
     } catch (error) {
       console.error("Error creating fee payment:", error);
