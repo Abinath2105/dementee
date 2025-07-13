@@ -125,6 +125,8 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
         title: "Success",
         description: "Category updated successfully",
       });
+      form.reset();
+      setUploadedImageUrl("");
       onClose();
     },
     onError: (error: Error) => {

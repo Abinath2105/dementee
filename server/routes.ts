@@ -426,6 +426,31 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Image upload route for category covers (admin only)
+  app.post("/api/upload/image", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      // For demo purposes, we'll use placeholder category cover images
+      const categoryImages = [
+        "https://images.unsplash.com/photo-1516321497487-e288fb19713f?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1498050108023-c5249f4df085?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1559028006-448665bd7c7f?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1522202176988-66273c2fd55f?w=400&h=300&fit=crop",
+        "https://images.unsplash.com/photo-1434030216411-0b793f4b4173?w=400&h=300&fit=crop"
+      ];
+      
+      const randomImage = categoryImages[Math.floor(Math.random() * categoryImages.length)];
+      res.json({ url: randomImage });
+    } catch (error) {
+      console.error("Image upload error:", error);
+      res.status(500).json({ message: "Failed to upload image" });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }
