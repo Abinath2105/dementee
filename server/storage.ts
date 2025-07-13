@@ -122,6 +122,7 @@ export interface IStorage {
   getFeeStructures(): Promise<FeeStructure[]>;
   createFeeStructure(feeStructure: InsertFeeStructure): Promise<FeeStructure>;
   createFeePayment(payment: InsertFeePayment): Promise<FeePayment>;
+  deleteFeePayment(paymentId: number): Promise<void>;
   getStudentBatches(): Promise<StudentBatchWithMentor[]>;
   createStudentBatch(batch: InsertStudentBatch): Promise<StudentBatch>;
   assignStudentToBatch(applicationId: number, batchId: number): Promise<StudentBatchAssignment>;
@@ -987,6 +988,10 @@ export class DatabaseStorage implements IStorage {
     }
     
     return settings;
+  }
+
+  async deleteFeePayment(paymentId: number): Promise<void> {
+    await db.delete(feePayments).where(eq(feePayments.id, paymentId));
   }
 
   async updatePlatformSettings(settings: Partial<InsertPlatformSettings>): Promise<PlatformSettings> {

@@ -538,6 +538,22 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Delete fee payment endpoint
+  app.delete("/api/admin/fee-payments/:paymentId", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(401).json({ error: "Unauthorized" });
+    }
+
+    try {
+      const paymentId = parseInt(req.params.paymentId);
+      await storage.deleteFeePayment(paymentId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error deleting fee payment:", error);
+      res.status(500).json({ error: "Failed to delete fee payment" });
+    }
+  });
+
   app.post("/api/admin/student-applications/:id/send-welcome-email", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
       return res.status(403).json({ error: "Admin access required" });

@@ -216,6 +216,28 @@ export default function StudentAdmissionsPage() {
     },
   });
 
+  // Delete payment mutation
+  const deletePaymentMutation = useMutation({
+    mutationFn: async (paymentId: number) => {
+      const response = await apiRequest("DELETE", `/api/admin/fee-payments/${paymentId}`);
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/student-applications"] });
+      toast({
+        title: "Payment Deleted",
+        description: "Payment record has been deleted successfully.",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Delete Failed",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const getStatusBadge = (status: string) => {
     const statusConfig = {
       pending: { color: "bg-yellow-100 text-yellow-800", label: "Pending" },
@@ -865,6 +887,33 @@ export default function StudentAdmissionsPage() {
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    if (confirm('Are you sure you want to delete this payment record?')) {
+                                      deletePaymentMutation.mutate(payment.id);
+                                    }
+                                  }}
+                                  title="Remove Payment"
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline"
+                                  onClick={() => {
+                                    if (confirm('Are you sure you want to delete this payment record?')) {
+                                      // Add delete payment mutation call here
+                                      deletePaymentMutation.mutate(payment.id);
+                                    }
+                                  }}
+                                  title="Remove Payment"
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>
@@ -1392,34 +1441,389 @@ export default function StudentAdmissionsPage() {
         <TabsContent value="orientation">
           <Card>
             <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <CalendarDays className="h-5 w-5" />
-                Orientation Sessions
-              </CardTitle>
+              <div className="flex justify-between items-center">
+                <CardTitle className="flex items-center gap-2">
+                  <CalendarDays className="h-5 w-5" />
+                  Orientation Sessions
+                </CardTitle>
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <Button>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Schedule Session
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="max-w-md">
+                    <DialogHeader>
+                      <DialogTitle>Schedule Orientation Session</DialogTitle>
+                    </DialogHeader>
+                    <div className="space-y-4">
+                      <div>
+                        <label className="text-sm font-medium">Session Title</label>
+                        <Input placeholder="e.g., Welcome to De mentee Academy" className="mt-1" />
+                      </div>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div>
+                          <label className="text-sm font-medium">Date</label>
+                          <Input type="date" className="mt-1" />
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Time</label>
+                          <Input type="time" className="mt-1" />
+                        </div>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Mode</label>
+                        <Select>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select mode" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="online">Online (Zoom/Meet)</SelectItem>
+                            <SelectItem value="offline">Offline (Campus)</SelectItem>
+                            <SelectItem value="hybrid">Hybrid</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Meeting Link/Location</label>
+                        <Input placeholder="Zoom link or physical location" className="mt-1" />
+                      </div>
+                      <div>
+                        <label className="text-sm font-medium">Target Batch</label>
+                        <Select>
+                          <SelectTrigger className="mt-1">
+                            <SelectValue placeholder="Select batch" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="dm-weekend-01">DM-Weekend-01</SelectItem>
+                            <SelectItem value="dm-weekday-03">DM-Weekday-03</SelectItem>
+                            <SelectItem value="dm-evening-02">DM-Evening-02</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                      <div className="flex justify-end gap-3 pt-4">
+                        <Button variant="outline">Cancel</Button>
+                        <Button>Schedule Session</Button>
+                      </div>
+                    </div>
+                  </DialogContent>
+                </Dialog>
+              </div>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 dark:text-gray-400">
-                Orientation session management will be displayed here.
-              </p>
+              <div className="space-y-6">
+                {/* Session Statistics */}
+                <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-2xl font-bold text-blue-600">12</div>
+                      <p className="text-sm text-gray-600">Total Sessions</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-2xl font-bold text-green-600">8</div>
+                      <p className="text-sm text-gray-600">Completed</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-2xl font-bold text-orange-600">3</div>
+                      <p className="text-sm text-gray-600">Upcoming</p>
+                    </CardContent>
+                  </Card>
+                  <Card>
+                    <CardContent className="p-4">
+                      <div className="text-2xl font-bold text-purple-600">95%</div>
+                      <p className="text-sm text-gray-600">Attendance Rate</p>
+                    </CardContent>
+                  </Card>
+                </div>
+
+                {/* Sessions Table */}
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Session Details</TableHead>
+                        <TableHead>Date & Time</TableHead>
+                        <TableHead>Mode</TableHead>
+                        <TableHead>Batch</TableHead>
+                        <TableHead>Attendees</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">Welcome to De mentee Academy</div>
+                            <div className="text-sm text-gray-600">Introduction & Course Overview</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div>Jan 15, 2025</div>
+                            <div className="text-gray-600">10:00 AM - 12:00 PM</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">Online</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">DM-Weekend-01</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div className="font-medium">24/25</div>
+                            <div className="text-green-600">96% attended</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="default" className="bg-green-100 text-green-800">Completed</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline" title="View Attendees">
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" title="Edit Session">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      
+                      <TableRow>
+                        <TableCell>
+                          <div>
+                            <div className="font-medium">Course Structure & Tools</div>
+                            <div className="text-sm text-gray-600">Tools introduction & setup</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div>Jan 22, 2025</div>
+                            <div className="text-gray-600">10:00 AM - 11:30 AM</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">Online</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="outline">DM-Evening-02</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="text-sm">
+                            <div className="font-medium">0/12</div>
+                            <div className="text-gray-600">Not started</div>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge variant="secondary">Upcoming</Badge>
+                        </TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline" title="Start Session">
+                              <Send className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" title="Edit Session">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
             </CardContent>
           </Card>
         </TabsContent>
 
         {/* Settings Tab */}
         <TabsContent value="settings">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <GraduationCap className="h-5 w-5" />
-                Admission Settings
-              </CardTitle>
-            </CardHeader>
-            <CardContent>
-              <p className="text-gray-600 dark:text-gray-400">
-                Fee structures and admission settings will be displayed here.
-              </p>
-            </CardContent>
-          </Card>
+          <div className="space-y-6">
+            {/* Fee Structures */}
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center gap-2">
+                    <CreditCard className="h-5 w-5" />
+                    Fee Structures
+                  </CardTitle>
+                  <Dialog>
+                    <DialogTrigger asChild>
+                      <Button>
+                        <Plus className="h-4 w-4 mr-2" />
+                        Add Fee Structure
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="max-w-lg">
+                      <DialogHeader>
+                        <DialogTitle>Add Fee Structure</DialogTitle>
+                      </DialogHeader>
+                      <div className="space-y-4">
+                        <div>
+                          <label className="text-sm font-medium">Course Name</label>
+                          <Input placeholder="e.g., Advanced UI/UX Design" className="mt-1" />
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm font-medium">One-time Fee (₹)</label>
+                            <Input type="number" placeholder="50000" className="mt-1" />
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium">Installment Fee (₹)</label>
+                            <Input type="number" placeholder="55000" className="mt-1" />
+                          </div>
+                        </div>
+                        <div className="grid grid-cols-2 gap-4">
+                          <div>
+                            <label className="text-sm font-medium">Scholarship Fee (₹)</label>
+                            <Input type="number" placeholder="30000" className="mt-1" />
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium">Max Installments</label>
+                            <Input type="number" placeholder="6" className="mt-1" />
+                          </div>
+                        </div>
+                        <div>
+                          <label className="text-sm font-medium">Description</label>
+                          <Textarea placeholder="Course fee details..." className="mt-1" />
+                        </div>
+                        <div className="flex justify-end gap-3 pt-4">
+                          <Button variant="outline">Cancel</Button>
+                          <Button>Add Fee Structure</Button>
+                        </div>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="rounded-md border">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Course</TableHead>
+                        <TableHead>One-time</TableHead>
+                        <TableHead>Installment</TableHead>
+                        <TableHead>Scholarship</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Actions</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      <TableRow>
+                        <TableCell className="font-medium">Advanced UI/UX Design</TableCell>
+                        <TableCell>₹50,000</TableCell>
+                        <TableCell>₹55,000</TableCell>
+                        <TableCell>₹30,000</TableCell>
+                        <TableCell><Badge variant="default">Active</Badge></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-red-600">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                      <TableRow>
+                        <TableCell className="font-medium">Full Stack Web Development</TableCell>
+                        <TableCell>₹75,000</TableCell>
+                        <TableCell>₹80,000</TableCell>
+                        <TableCell>₹45,000</TableCell>
+                        <TableCell><Badge variant="default">Active</Badge></TableCell>
+                        <TableCell>
+                          <div className="flex items-center gap-2">
+                            <Button size="sm" variant="outline">
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button size="sm" variant="outline" className="text-red-600">
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            {/* Admission Criteria */}
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <GraduationCap className="h-5 w-5" />
+                  Admission Criteria
+                </CardTitle>
+              </CardHeader>
+              <CardContent className="space-y-6">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  <div>
+                    <label className="text-sm font-medium">Minimum Age</label>
+                    <Input type="number" defaultValue="18" className="mt-1" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Maximum Age</label>
+                    <Input type="number" defaultValue="35" className="mt-1" />
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Required Education</label>
+                    <Select>
+                      <SelectTrigger className="mt-1">
+                        <SelectValue placeholder="Select minimum education" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="12th">12th Grade</SelectItem>
+                        <SelectItem value="diploma">Diploma</SelectItem>
+                        <SelectItem value="graduate">Graduate</SelectItem>
+                        <SelectItem value="postgraduate">Post Graduate</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+                  <div>
+                    <label className="text-sm font-medium">Application Fee (₹)</label>
+                    <Input type="number" defaultValue="500" className="mt-1" />
+                  </div>
+                </div>
+                
+                <div>
+                  <label className="text-sm font-medium">Required Documents</label>
+                  <div className="mt-2 space-y-2">
+                    {[
+                      { id: 'photo', label: 'Passport Size Photo', checked: true },
+                      { id: 'id', label: 'Government ID Proof', checked: true },
+                      { id: 'education', label: 'Educational Certificates', checked: true },
+                      { id: 'experience', label: 'Work Experience Letter', checked: false },
+                      { id: 'portfolio', label: 'Portfolio/Previous Work', checked: false },
+                    ].map((doc) => (
+                      <div key={doc.id} className="flex items-center space-x-2">
+                        <input
+                          type="checkbox"
+                          id={doc.id}
+                          defaultChecked={doc.checked}
+                          className="rounded border-gray-300"
+                        />
+                        <label htmlFor={doc.id} className="text-sm">{doc.label}</label>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                <div className="flex justify-end">
+                  <Button>Save Settings</Button>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
       </div>

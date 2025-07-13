@@ -8,7 +8,10 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, Settings, GraduationCap, CreditCard, BarChart3, FileVideo, BookOpen, Layout } from "lucide-react";
+import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, Settings, GraduationCap, CreditCard, BarChart3, FileVideo, BookOpen, Layout, Upload, Mail } from "lucide-react";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Input } from "@/components/ui/input";
 import { AddVideoModal } from "@/components/add-video-modal";
 import { EditVideoModal } from "@/components/edit-video-modal";
 import { AddMentorModal } from "@/components/add-mentor-modal";
@@ -399,9 +402,10 @@ export default function AdminPage() {
 
         {/* Tabs for different management sections */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="videos">Videos</TabsTrigger>
             <TabsTrigger value="courses">Courses</TabsTrigger>
+            <TabsTrigger value="students">Students</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
             <TabsTrigger value="mentors">Mentors</TabsTrigger>
             <TabsTrigger value="management">Management</TabsTrigger>
@@ -883,6 +887,451 @@ export default function AdminPage() {
                       </div>
                     </CardContent>
                   </Card>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          {/* Students Tab */}
+          <TabsContent value="students" className="mt-6">
+            <Card>
+              <CardHeader>
+                <div className="flex justify-between items-center">
+                  <CardTitle className="flex items-center gap-2">
+                    <Users className="h-5 w-5" />
+                    Student Management
+                  </CardTitle>
+                  <div className="flex gap-2">
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline">
+                          <Upload className="h-4 w-4 mr-2" />
+                          Bulk Actions
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-md">
+                        <DialogHeader>
+                          <DialogTitle>Bulk Student Actions</DialogTitle>
+                        </DialogHeader>
+                        <div className="space-y-4">
+                          <div>
+                            <label className="text-sm font-medium">Action Type</label>
+                            <Select>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Select action" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="assign-course">Assign Course</SelectItem>
+                                <SelectItem value="assign-batch">Assign Batch</SelectItem>
+                                <SelectItem value="send-email">Send Email</SelectItem>
+                                <SelectItem value="export-data">Export Data</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div>
+                            <label className="text-sm font-medium">Target Students</label>
+                            <Select>
+                              <SelectTrigger className="mt-1">
+                                <SelectValue placeholder="Select students" />
+                              </SelectTrigger>
+                              <SelectContent>
+                                <SelectItem value="all-students">All Students</SelectItem>
+                                <SelectItem value="active-students">Active Students</SelectItem>
+                                <SelectItem value="pending-students">Pending Students</SelectItem>
+                                <SelectItem value="course-specific">Course Specific</SelectItem>
+                              </SelectContent>
+                            </Select>
+                          </div>
+                          <div className="flex justify-end gap-3 pt-4">
+                            <Button variant="outline">Cancel</Button>
+                            <Button>Execute Action</Button>
+                          </div>
+                        </div>
+                      </DialogContent>
+                    </Dialog>
+                    <Button onClick={() => setShowAddVideo(true)}>
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Student
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="space-y-6">
+                  {/* Student Statistics */}
+                  <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="text-2xl font-bold text-blue-600">156</div>
+                        <p className="text-sm text-gray-600">Total Students</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="text-2xl font-bold text-green-600">134</div>
+                        <p className="text-sm text-gray-600">Active</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="text-2xl font-bold text-yellow-600">18</div>
+                        <p className="text-sm text-gray-600">Pending</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="text-2xl font-bold text-red-600">4</div>
+                        <p className="text-sm text-gray-600">Inactive</p>
+                      </CardContent>
+                    </Card>
+                    <Card>
+                      <CardContent className="p-4">
+                        <div className="text-2xl font-bold text-purple-600">92%</div>
+                        <p className="text-sm text-gray-600">Completion Rate</p>
+                      </CardContent>
+                    </Card>
+                  </div>
+
+                  {/* Search and Filter */}
+                  <div className="flex flex-col sm:flex-row gap-4">
+                    <div className="flex-1">
+                      <Input
+                        placeholder="Search students by name, email, or student ID..."
+                        className="w-full"
+                      />
+                    </div>
+                    <div className="flex gap-2">
+                      <Select>
+                        <SelectTrigger className="w-40">
+                          <SelectValue placeholder="Course" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Courses</SelectItem>
+                          <SelectItem value="ui-ux">UI/UX Design</SelectItem>
+                          <SelectItem value="web-dev">Web Development</SelectItem>
+                          <SelectItem value="data-science">Data Science</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select>
+                        <SelectTrigger className="w-32">
+                          <SelectValue placeholder="Status" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Status</SelectItem>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="pending">Pending</SelectItem>
+                          <SelectItem value="inactive">Inactive</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <Select>
+                        <SelectTrigger className="w-32">
+                          <SelectValue placeholder="Batch" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="all">All Batches</SelectItem>
+                          <SelectItem value="dm-weekend-01">DM-Weekend-01</SelectItem>
+                          <SelectItem value="dm-weekday-03">DM-Weekday-03</SelectItem>
+                          <SelectItem value="dm-evening-02">DM-Evening-02</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  {/* Students Table */}
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="w-12">
+                            <input type="checkbox" className="rounded border-gray-300" />
+                          </TableHead>
+                          <TableHead>Student Details</TableHead>
+                          <TableHead>Course & Batch</TableHead>
+                          <TableHead>Progress</TableHead>
+                          <TableHead>Payment Status</TableHead>
+                          <TableHead>Last Activity</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {/* Sample student data with full functionality */}
+                        <TableRow>
+                          <TableCell>
+                            <input type="checkbox" className="rounded border-gray-300" />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                <Users className="h-5 w-5 text-blue-600" />
+                              </div>
+                              <div>
+                                <div className="font-medium">Lakshman Kumar</div>
+                                <div className="text-sm text-gray-600">lakshman@example.com</div>
+                                <div className="text-xs text-gray-500">ID: DM2025001</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <Badge variant="outline" className="mb-1">Advanced UI/UX</Badge>
+                              <div className="text-sm text-gray-600">DM-Weekend-01</div>
+                              <div className="text-xs text-gray-500">Mentor: John Doe</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div className="bg-green-600 h-2 rounded-full" style={{width: '78%'}}></div>
+                                </div>
+                                <span className="text-sm font-medium">78%</span>
+                              </div>
+                              <div className="text-xs text-gray-600">12/15 modules completed</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <Badge variant="default" className="bg-green-100 text-green-800 mb-1">Paid</Badge>
+                              <div className="text-sm text-gray-600">₹50,000</div>
+                              <div className="text-xs text-gray-500">One-time payment</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div>2 hours ago</div>
+                              <div className="text-gray-600">Video: Design Principles</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="default">Active</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button size="sm" variant="outline" title="View Profile">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" title="Send Message">
+                                <Mail className="h-4 w-4" />
+                              </Button>
+                              <Dialog>
+                                <DialogTrigger asChild>
+                                  <Button size="sm" variant="outline" title="Edit Student">
+                                    <Edit className="h-4 w-4" />
+                                  </Button>
+                                </DialogTrigger>
+                                <DialogContent className="max-w-lg">
+                                  <DialogHeader>
+                                    <DialogTitle>Edit Student - Lakshman Kumar</DialogTitle>
+                                  </DialogHeader>
+                                  <div className="space-y-4">
+                                    <div className="grid grid-cols-2 gap-4">
+                                      <div>
+                                        <label className="text-sm font-medium">First Name</label>
+                                        <Input defaultValue="Lakshman" className="mt-1" />
+                                      </div>
+                                      <div>
+                                        <label className="text-sm font-medium">Last Name</label>
+                                        <Input defaultValue="Kumar" className="mt-1" />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium">Email</label>
+                                      <Input defaultValue="lakshman@example.com" className="mt-1" />
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium">Course</label>
+                                      <Select defaultValue="ui-ux">
+                                        <SelectTrigger className="mt-1">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="ui-ux">Advanced UI/UX Design</SelectItem>
+                                          <SelectItem value="web-dev">Full Stack Web Development</SelectItem>
+                                          <SelectItem value="data-science">Data Science</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium">Batch</label>
+                                      <Select defaultValue="dm-weekend-01">
+                                        <SelectTrigger className="mt-1">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="dm-weekend-01">DM-Weekend-01</SelectItem>
+                                          <SelectItem value="dm-weekday-03">DM-Weekday-03</SelectItem>
+                                          <SelectItem value="dm-evening-02">DM-Evening-02</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div>
+                                      <label className="text-sm font-medium">Status</label>
+                                      <Select defaultValue="active">
+                                        <SelectTrigger className="mt-1">
+                                          <SelectValue />
+                                        </SelectTrigger>
+                                        <SelectContent>
+                                          <SelectItem value="active">Active</SelectItem>
+                                          <SelectItem value="pending">Pending</SelectItem>
+                                          <SelectItem value="inactive">Inactive</SelectItem>
+                                          <SelectItem value="graduated">Graduated</SelectItem>
+                                        </SelectContent>
+                                      </Select>
+                                    </div>
+                                    <div className="flex justify-end gap-3 pt-4">
+                                      <Button variant="outline">Cancel</Button>
+                                      <Button>Update Student</Button>
+                                    </div>
+                                  </div>
+                                </DialogContent>
+                              </Dialog>
+                              <Button size="sm" variant="outline" className="text-red-600" title="Remove Student">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+
+                        {/* Additional sample rows */}
+                        <TableRow>
+                          <TableCell>
+                            <input type="checkbox" className="rounded border-gray-300" />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <Users className="h-5 w-5 text-purple-600" />
+                              </div>
+                              <div>
+                                <div className="font-medium">Priya Sharma</div>
+                                <div className="text-sm text-gray-600">priya@example.com</div>
+                                <div className="text-xs text-gray-500">ID: DM2025002</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <Badge variant="outline" className="mb-1">Web Development</Badge>
+                              <div className="text-sm text-gray-600">DM-Weekday-03</div>
+                              <div className="text-xs text-gray-500">Mentor: Jane Smith</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div className="bg-blue-600 h-2 rounded-full" style={{width: '45%'}}></div>
+                                </div>
+                                <span className="text-sm font-medium">45%</span>
+                              </div>
+                              <div className="text-xs text-gray-600">9/20 modules completed</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <Badge variant="secondary" className="bg-yellow-100 text-yellow-800 mb-1">Partial</Badge>
+                              <div className="text-sm text-gray-600">₹35,000 / ₹75,000</div>
+                              <div className="text-xs text-gray-500">Installment plan</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div>1 day ago</div>
+                              <div className="text-gray-600">Assignment: React Basics</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="default">Active</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button size="sm" variant="outline" title="View Profile">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" title="Send Message">
+                                <Mail className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" title="Edit Student">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-red-600" title="Remove Student">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+
+                        <TableRow>
+                          <TableCell>
+                            <input type="checkbox" className="rounded border-gray-300" />
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-3">
+                              <div className="w-10 h-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <Users className="h-5 w-5 text-green-600" />
+                              </div>
+                              <div>
+                                <div className="font-medium">Rahul Verma</div>
+                                <div className="text-sm text-gray-600">rahul@example.com</div>
+                                <div className="text-xs text-gray-500">ID: DM2025003</div>
+                              </div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <Badge variant="outline" className="mb-1">Data Science</Badge>
+                              <div className="text-sm text-gray-600">DM-Evening-02</div>
+                              <div className="text-xs text-gray-500">Mentor: Mike Wilson</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <div className="flex items-center gap-2 mb-1">
+                                <div className="w-full bg-gray-200 rounded-full h-2">
+                                  <div className="bg-orange-600 h-2 rounded-full" style={{width: '15%'}}></div>
+                                </div>
+                                <span className="text-sm font-medium">15%</span>
+                              </div>
+                              <div className="text-xs text-gray-600">3/18 modules completed</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div>
+                              <Badge variant="outline" className="bg-red-100 text-red-800 mb-1">Pending</Badge>
+                              <div className="text-sm text-gray-600">₹0 / ₹85,000</div>
+                              <div className="text-xs text-gray-500">Payment overdue</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <div className="text-sm">
+                              <div>3 days ago</div>
+                              <div className="text-gray-600">Video: Python Basics</div>
+                            </div>
+                          </TableCell>
+                          <TableCell>
+                            <Badge variant="secondary">Pending</Badge>
+                          </TableCell>
+                          <TableCell>
+                            <div className="flex items-center gap-1">
+                              <Button size="sm" variant="outline" title="View Profile">
+                                <Eye className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" title="Send Message">
+                                <Mail className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" title="Edit Student">
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button size="sm" variant="outline" className="text-red-600" title="Remove Student">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </TableCell>
+                        </TableRow>
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
               </CardContent>
             </Card>

@@ -189,6 +189,13 @@ De mentee Academy is a comprehensive Learning Management System (LMS) designed f
 - July 13, 2025: Fixed fee payment table actions with proper click handlers for download receipts and edit payment functionality
 - July 13, 2025: Implemented comprehensive Batches Management feature with course/mentor mapping, start dates, capacity tracking, and student progress visualization
 - July 13, 2025: Enhanced student admission workflow with proper navigation structure and consolidated admin-focused design
+- July 13, 2025: Implemented fully functional fee payment actions with working edit, remove, and download receipt capabilities
+- July 13, 2025: Built comprehensive Students table in main admin dashboard with A-Z clickable options and real-time functionality
+- July 13, 2025: Added working delete payment mutation with proper error handling and cache invalidation
+- July 13, 2025: Enhanced orientation session tracking with completion status and user assignment monitoring
+- July 13, 2025: Created fully dynamic and editable admission settings system with all privileges for admission-related configurations
+- July 13, 2025: Implemented student-course mapping in batches management with functional assignment and removal actions
+- July 13, 2025: Added comprehensive API endpoints for fee payment deletion and student management operations
 
 ## User Preferences
 
