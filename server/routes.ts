@@ -111,32 +111,61 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Courses
+  app.get("/api/courses", async (req, res) => {
+    try {
+      const { categoryId } = req.query;
+      if (!categoryId) {
+        return res.status(400).json({ message: "Category ID is required" });
+      }
+      const courses = await storage.getCoursesByCategory(parseInt(categoryId as string));
+      res.json(courses);
+    } catch (error) {
+      console.error('Get courses error:', error);
+      res.status(500).json({ message: "Failed to fetch courses" });
+    }
+  });
+
+  app.post("/api/courses", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const parsed = insertCourseSchema.parse(req.body);
+      const course = await storage.createCourse(parsed);
+      res.status(201).json(course);
+    } catch (error) {
+      console.error('Create course error:', error);
+      res.status(500).json({ message: "Failed to create course" });
+    }
+  });
+
+  app.delete("/api/courses/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+      const courseId = parseInt(req.params.id);
+      await storage.deleteCourse(courseId);
+      res.status(200).json({ message: "Course deleted successfully" });
+    } catch (error) {
+      console.error('Delete course error:', error);
+      res.status(500).json({ message: "Failed to delete course" });
+    }
+  });
+
   // Videos
   app.get("/api/videos", async (req, res) => {
     try {
-      const { search, categoryId } = req.query;
-      const videos = await storage.getVideos(
-        search as string,
-        categoryId ? parseInt(categoryId as string) : undefined
-      );
+      const { courseId } = req.query;
+      if (!courseId) {
+        return res.status(400).json({ message: "Course ID is required" });
+      }
+      const videos = await storage.getVideosByCourse(parseInt(courseId as string));
       res.json(videos);
     } catch (error) {
       console.error('Get videos error:', error);
       res.status(500).json({ message: "Failed to fetch videos" });
-    }
-  });
-
-  app.get("/api/videos/:id", async (req, res) => {
-    try {
-      const id = parseInt(req.params.id);
-      const video = await storage.getVideo(id);
-      if (!video) {
-        return res.status(404).json({ message: "Video not found" });
-      }
-      res.json(video);
-    } catch (error) {
-      console.error('Get video error:', error);
-      res.status(500).json({ message: "Failed to fetch video" });
     }
   });
 
@@ -145,46 +174,12 @@ export function registerRoutes(app: Express): Server {
       if (!req.isAuthenticated() || !req.user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
-
-      const { youtubeUrl, categoryId, description, tags, title, isPublic } = req.body;
-
-      // Fetch YouTube video info
-      const youtubeInfo = await fetchYouTubeVideoInfo(youtubeUrl);
-
-      const videoData = {
-        title: title || youtubeInfo.title,
-        description: description || youtubeInfo.description,
-        youtubeId: youtubeInfo.id,
-        thumbnailUrl: youtubeInfo.thumbnailUrl,
-        duration: youtubeInfo.duration,
-        categoryId: categoryId || null,
-        tags: tags || [],
-        isPublic: isPublic !== undefined ? isPublic : true,
-      };
-
-      const parsed = insertVideoSchema.parse(videoData);
+      const parsed = insertVideoSchema.parse(req.body);
       const video = await storage.createVideo(parsed);
       res.status(201).json(video);
     } catch (error) {
       console.error('Create video error:', error);
-      res.status(500).json({ message: error instanceof Error ? error.message : "Failed to create video" });
-    }
-  });
-
-  app.put("/api/videos/:id", async (req, res) => {
-    try {
-      if (!req.isAuthenticated() || !req.user?.isAdmin) {
-        return res.status(403).json({ message: "Admin access required" });
-      }
-
-      const id = parseInt(req.params.id);
-      const updateData = req.body;
-
-      const video = await storage.updateVideo(id, updateData);
-      res.json(video);
-    } catch (error) {
-      console.error('Update video error:', error);
-      res.status(500).json({ message: "Failed to update video" });
+      res.status(500).json({ message: "Failed to create video" });
     }
   });
 
@@ -193,27 +188,12 @@ export function registerRoutes(app: Express): Server {
       if (!req.isAuthenticated() || !req.user?.isAdmin) {
         return res.status(403).json({ message: "Admin access required" });
       }
-
       const id = parseInt(req.params.id);
       await storage.deleteVideo(id);
-      res.sendStatus(204);
+      res.status(200).json({ message: "Video deleted successfully" });
     } catch (error) {
       console.error('Delete video error:', error);
       res.status(500).json({ message: "Failed to delete video" });
-    }
-  });
-
-  app.post("/api/videos/:id/view", async (req, res) => {
-    try {
-      const videoId = parseInt(req.params.id);
-      const userId = req.user?.id;
-      const ipAddress = req.ip || req.connection.remoteAddress;
-
-      await storage.incrementVideoViews(videoId, userId, ipAddress);
-      res.sendStatus(200);
-    } catch (error) {
-      console.error('Record view error:', error);
-      res.status(500).json({ message: "Failed to record view" });
     }
   });
 

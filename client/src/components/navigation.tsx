@@ -124,13 +124,13 @@ export function Navigation() {
                 <Button variant="ghost" className="relative h-10 w-auto px-2">
                   <div className="flex items-center space-x-2">
                     <Avatar className="h-8 w-8">
-                      <AvatarImage src={user.avatar} alt={user.username} />
+                      <AvatarImage src={user.avatar} alt={user.fullName} />
                       <AvatarFallback className="text-sm">
-                        {user.username.charAt(0).toUpperCase()}
+                        {(user.fullName || user.email || 'U').charAt(0).toUpperCase()}
                       </AvatarFallback>
                     </Avatar>
                     <div className="hidden sm:flex flex-col items-start">
-                      <span className="text-sm font-medium">{user.fullName || user.username}</span>
+                      <span className="text-sm font-medium">{user.fullName}</span>
                       <div className="flex items-center space-x-1">
                         {isAdmin && <Badge variant="destructive" className="text-xs">Admin</Badge>}
                         {isMentor && <Badge variant="secondary" className="text-xs">Mentor</Badge>}
