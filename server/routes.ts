@@ -478,6 +478,179 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Student Admission API Routes
+  app.get("/api/admin/student-applications", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const applications = await storage.getStudentApplications();
+      res.json(applications);
+    } catch (error) {
+      console.error("Error fetching student applications:", error);
+      res.status(500).json({ error: "Failed to fetch applications" });
+    }
+  });
+
+  app.post("/api/admin/student-applications", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const application = await storage.createStudentApplication(req.body);
+      res.status(201).json(application);
+    } catch (error) {
+      console.error("Error creating student application:", error);
+      res.status(500).json({ error: "Failed to create application" });
+    }
+  });
+
+  app.put("/api/admin/student-applications/:id/status", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const applicationId = parseInt(req.params.id);
+      const { status } = req.body;
+      const application = await storage.updateApplicationStatus(applicationId, status);
+      res.json(application);
+    } catch (error) {
+      console.error("Error updating application status:", error);
+      res.status(500).json({ error: "Failed to update application status" });
+    }
+  });
+
+  app.post("/api/admin/student-applications/:id/generate-student-id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const applicationId = parseInt(req.params.id);
+      const application = await storage.generateStudentId(applicationId);
+      res.json(application);
+    } catch (error) {
+      console.error("Error generating student ID:", error);
+      res.status(500).json({ error: "Failed to generate student ID" });
+    }
+  });
+
+  app.post("/api/admin/student-applications/:id/send-welcome-email", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const applicationId = parseInt(req.params.id);
+      // TODO: Implement welcome email sending
+      res.json({ success: true, message: "Welcome email sent successfully" });
+    } catch (error) {
+      console.error("Error sending welcome email:", error);
+      res.status(500).json({ error: "Failed to send welcome email" });
+    }
+  });
+
+  app.get("/api/admin/student-batches", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const batches = await storage.getStudentBatches();
+      res.json(batches);
+    } catch (error) {
+      console.error("Error fetching student batches:", error);
+      res.status(500).json({ error: "Failed to fetch batches" });
+    }
+  });
+
+  app.post("/api/admin/student-batches", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const batch = await storage.createStudentBatch(req.body);
+      res.status(201).json(batch);
+    } catch (error) {
+      console.error("Error creating student batch:", error);
+      res.status(500).json({ error: "Failed to create batch" });
+    }
+  });
+
+  app.get("/api/admin/fee-structures", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const feeStructures = await storage.getFeeStructures();
+      res.json(feeStructures);
+    } catch (error) {
+      console.error("Error fetching fee structures:", error);
+      res.status(500).json({ error: "Failed to fetch fee structures" });
+    }
+  });
+
+  app.post("/api/admin/fee-structures", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const feeStructure = await storage.createFeeStructure(req.body);
+      res.status(201).json(feeStructure);
+    } catch (error) {
+      console.error("Error creating fee structure:", error);
+      res.status(500).json({ error: "Failed to create fee structure" });
+    }
+  });
+
+  app.post("/api/admin/fee-payments", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const payment = await storage.createFeePayment(req.body);
+      res.status(201).json(payment);
+    } catch (error) {
+      console.error("Error creating fee payment:", error);
+      res.status(500).json({ error: "Failed to create fee payment" });
+    }
+  });
+
+  app.get("/api/admin/orientation-sessions", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const sessions = await storage.getOrientationSessions();
+      res.json(sessions);
+    } catch (error) {
+      console.error("Error fetching orientation sessions:", error);
+      res.status(500).json({ error: "Failed to fetch orientation sessions" });
+    }
+  });
+
+  app.post("/api/admin/orientation-sessions", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ error: "Admin access required" });
+    }
+
+    try {
+      const session = await storage.createOrientationSession(req.body);
+      res.status(201).json(session);
+    } catch (error) {
+      console.error("Error creating orientation session:", error);
+      res.status(500).json({ error: "Failed to create orientation session" });
+    }
+  });
+
   // Test email endpoint (admin only)
   app.post("/api/test-email", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {

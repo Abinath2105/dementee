@@ -14,6 +14,7 @@ import StudentProfilePage from "@/pages/student-profile-page";
 import AdvancedDashboardPage from "@/pages/advanced-dashboard-page";
 import AssignmentsPage from "@/pages/assignments-page";
 import PlatformSettingsPage from "@/pages/platform-settings-page";
+import StudentAdmissionsPage from "@/pages/student-admissions-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -27,6 +28,7 @@ function Router() {
       <ProtectedRoute path="/advanced-dashboard" component={AdvancedDashboardPage} />
       <ProtectedRoute path="/assignments" component={AssignmentsPage} />
       <ProtectedRoute path="/admin/platform-settings" component={PlatformSettingsPage} />
+      <ProtectedRoute path="/admin/student-admissions" component={StudentAdmissionsPage} />
       <Route path="/auth" component={AuthPage} />
       <Route path="/mentor/setup" component={MentorSetupPage} />
       <Route component={NotFound} />

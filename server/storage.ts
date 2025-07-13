@@ -1,4 +1,4 @@
-import { users, videos, categories, otpCodes, videoViews, mentors, mentorCredentials, mentorInvitations, videoProgress, videoBookmarks, userWatchlist, mentorSections, mentorResources, videoComments, videoRatings, commentLikes, platformSettings, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type Mentor, type InsertMentor, type MentorWithStats, type MentorCredentials, type InsertMentorCredentials, type MentorInvitation, type InsertMentorInvitation, type VideoProgress, type InsertVideoProgress, type VideoBookmark, type InsertVideoBookmark, type UserWatchlist, type InsertUserWatchlist, type MentorSection, type InsertMentorSection, type MentorResource, type InsertMentorResource, type VideoComment, type InsertVideoComment, type VideoRating, type InsertVideoRating, type CommentLike, type InsertCommentLike, type VideoCommentWithUser, type PlatformSettings, type InsertPlatformSettings } from "@shared/schema";
+import { users, videos, categories, otpCodes, videoViews, mentors, mentorCredentials, mentorInvitations, videoProgress, videoBookmarks, userWatchlist, mentorSections, mentorResources, videoComments, videoRatings, commentLikes, platformSettings, studentApplications, applicationDocuments, feeStructures, feePayments, studentBatches, studentBatchAssignments, orientationSessions, orientationRegistrations, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type Mentor, type InsertMentor, type MentorWithStats, type MentorCredentials, type InsertMentorCredentials, type MentorInvitation, type InsertMentorInvitation, type VideoProgress, type InsertVideoProgress, type VideoBookmark, type InsertVideoBookmark, type UserWatchlist, type InsertUserWatchlist, type MentorSection, type InsertMentorSection, type MentorResource, type InsertMentorResource, type VideoComment, type InsertVideoComment, type VideoRating, type InsertVideoRating, type CommentLike, type InsertCommentLike, type VideoCommentWithUser, type PlatformSettings, type InsertPlatformSettings, type StudentApplication, type InsertStudentApplication, type StudentApplicationWithDocuments, type ApplicationDocument, type InsertApplicationDocument, type FeeStructure, type InsertFeeStructure, type FeePayment, type InsertFeePayment, type StudentBatch, type InsertStudentBatch, type StudentBatchAssignment, type StudentBatchWithMentor, type OrientationSession, type InsertOrientationSession, type OrientationRegistration } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or, ilike, count, sum, asc, avg, isNull } from "drizzle-orm";
 import session from "express-session";
@@ -112,6 +112,22 @@ export interface IStorage {
   // Platform settings
   getPlatformSettings(): Promise<PlatformSettings>;
   updatePlatformSettings(settings: Partial<InsertPlatformSettings>): Promise<PlatformSettings>;
+
+  // Student Admission methods
+  getStudentApplications(): Promise<StudentApplicationWithDocuments[]>;
+  createStudentApplication(application: InsertStudentApplication): Promise<StudentApplication>;
+  updateApplicationStatus(id: number, status: string): Promise<StudentApplication>;
+  generateStudentId(applicationId: number): Promise<StudentApplication>;
+  createApplicationDocument(document: InsertApplicationDocument): Promise<ApplicationDocument>;
+  getFeeStructures(): Promise<FeeStructure[]>;
+  createFeeStructure(feeStructure: InsertFeeStructure): Promise<FeeStructure>;
+  createFeePayment(payment: InsertFeePayment): Promise<FeePayment>;
+  getStudentBatches(): Promise<StudentBatchWithMentor[]>;
+  createStudentBatch(batch: InsertStudentBatch): Promise<StudentBatch>;
+  assignStudentToBatch(applicationId: number, batchId: number): Promise<StudentBatchAssignment>;
+  getOrientationSessions(): Promise<OrientationSession[]>;
+  createOrientationSession(session: InsertOrientationSession): Promise<OrientationSession>;
+  registerStudentForOrientation(orientationId: number, applicationId: number): Promise<OrientationRegistration>;
 
   // LMS Methods
   getAssignments(userId: number): Promise<any[]>;
@@ -980,6 +996,232 @@ export class DatabaseStorage implements IStorage {
       .returning();
     
     return updatedSettings;
+  }
+
+  // Student Admission Methods
+  async getStudentApplications(): Promise<StudentApplicationWithDocuments[]> {
+    const applications = await db
+      .select()
+      .from(studentApplications)
+      .orderBy(desc(studentApplications.createdAt));
+
+    const applicationsWithDetails = await Promise.all(
+      applications.map(async (application) => {
+        const documents = await db
+          .select()
+          .from(applicationDocuments)
+          .where(eq(applicationDocuments.applicationId, application.id));
+
+        const feePayments = await db
+          .select()
+          .from(feePayments)
+          .where(eq(feePayments.applicationId, application.id));
+
+        const batchAssignment = await db
+          .select({
+            id: studentBatchAssignments.id,
+            applicationId: studentBatchAssignments.applicationId,
+            batchId: studentBatchAssignments.batchId,
+            assignedAt: studentBatchAssignments.assignedAt,
+            status: studentBatchAssignments.status,
+            batch: {
+              id: studentBatches.id,
+              batchName: studentBatches.batchName,
+              course: studentBatches.course,
+              timing: studentBatches.timing,
+              mode: studentBatches.mode,
+            }
+          })
+          .from(studentBatchAssignments)
+          .innerJoin(studentBatches, eq(studentBatchAssignments.batchId, studentBatches.id))
+          .where(eq(studentBatchAssignments.applicationId, application.id))
+          .limit(1);
+
+        return {
+          ...application,
+          documents,
+          feePayments,
+          batchAssignment: batchAssignment[0] || undefined,
+        };
+      })
+    );
+
+    return applicationsWithDetails;
+  }
+
+  async createStudentApplication(application: InsertStudentApplication): Promise<StudentApplication> {
+    const [newApplication] = await db
+      .insert(studentApplications)
+      .values(application)
+      .returning();
+    return newApplication;
+  }
+
+  async updateApplicationStatus(id: number, status: string): Promise<StudentApplication> {
+    const [updatedApplication] = await db
+      .update(studentApplications)
+      .set({ 
+        applicationStatus: status,
+        updatedAt: new Date()
+      })
+      .where(eq(studentApplications.id, id))
+      .returning();
+    return updatedApplication;
+  }
+
+  async generateStudentId(applicationId: number): Promise<StudentApplication> {
+    // Generate unique student ID
+    const studentId = `STU${Date.now().toString().slice(-6)}`;
+    
+    const [updatedApplication] = await db
+      .update(studentApplications)
+      .set({ 
+        studentId,
+        applicationStatus: "approved",
+        updatedAt: new Date()
+      })
+      .where(eq(studentApplications.id, applicationId))
+      .returning();
+
+    return updatedApplication;
+  }
+
+  async createApplicationDocument(document: InsertApplicationDocument): Promise<ApplicationDocument> {
+    const [newDocument] = await db
+      .insert(applicationDocuments)
+      .values(document)
+      .returning();
+    return newDocument;
+  }
+
+  async getFeeStructures(): Promise<FeeStructure[]> {
+    return await db
+      .select()
+      .from(feeStructures)
+      .where(eq(feeStructures.isActive, true))
+      .orderBy(feeStructures.courseName);
+  }
+
+  async createFeeStructure(feeStructure: InsertFeeStructure): Promise<FeeStructure> {
+    const [newFeeStructure] = await db
+      .insert(feeStructures)
+      .values(feeStructure)
+      .returning();
+    return newFeeStructure;
+  }
+
+  async createFeePayment(payment: InsertFeePayment): Promise<FeePayment> {
+    const [newPayment] = await db
+      .insert(feePayments)
+      .values(payment)
+      .returning();
+    return newPayment;
+  }
+
+  async getStudentBatches(): Promise<StudentBatchWithMentor[]> {
+    const batches = await db
+      .select({
+        id: studentBatches.id,
+        batchName: studentBatches.batchName,
+        course: studentBatches.course,
+        timing: studentBatches.timing,
+        mode: studentBatches.mode,
+        mentorId: studentBatches.mentorId,
+        maxStudents: studentBatches.maxStudents,
+        currentStudents: studentBatches.currentStudents,
+        startDate: studentBatches.startDate,
+        endDate: studentBatches.endDate,
+        isActive: studentBatches.isActive,
+        createdAt: studentBatches.createdAt,
+        updatedAt: studentBatches.updatedAt,
+        mentor: mentors
+      })
+      .from(studentBatches)
+      .leftJoin(mentors, eq(studentBatches.mentorId, mentors.id))
+      .where(eq(studentBatches.isActive, true))
+      .orderBy(studentBatches.batchName);
+
+    const batchesWithAssignments = await Promise.all(
+      batches.map(async (batch) => {
+        const assignments = await db
+          .select()
+          .from(studentBatchAssignments)
+          .where(eq(studentBatchAssignments.batchId, batch.id));
+
+        return {
+          ...batch,
+          assignments,
+        };
+      })
+    );
+
+    return batchesWithAssignments;
+  }
+
+  async createStudentBatch(batch: InsertStudentBatch): Promise<StudentBatch> {
+    const [newBatch] = await db
+      .insert(studentBatches)
+      .values(batch)
+      .returning();
+    return newBatch;
+  }
+
+  async assignStudentToBatch(applicationId: number, batchId: number): Promise<StudentBatchAssignment> {
+    const [assignment] = await db
+      .insert(studentBatchAssignments)
+      .values({
+        applicationId,
+        batchId,
+      })
+      .returning();
+
+    // Update batch current students count
+    await db
+      .update(studentBatches)
+      .set({
+        currentStudents: sql`${studentBatches.currentStudents} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(studentBatches.id, batchId));
+
+    return assignment;
+  }
+
+  async getOrientationSessions(): Promise<OrientationSession[]> {
+    return await db
+      .select()
+      .from(orientationSessions)
+      .where(eq(orientationSessions.isActive, true))
+      .orderBy(orientationSessions.sessionDate);
+  }
+
+  async createOrientationSession(session: InsertOrientationSession): Promise<OrientationSession> {
+    const [newSession] = await db
+      .insert(orientationSessions)
+      .values(session)
+      .returning();
+    return newSession;
+  }
+
+  async registerStudentForOrientation(orientationId: number, applicationId: number): Promise<OrientationRegistration> {
+    const [registration] = await db
+      .insert(orientationRegistrations)
+      .values({
+        orientationId,
+        applicationId,
+      })
+      .returning();
+
+    // Update session current participants count
+    await db
+      .update(orientationSessions)
+      .set({
+        currentParticipants: sql`${orientationSessions.currentParticipants} + 1`,
+        updatedAt: new Date(),
+      })
+      .where(eq(orientationSessions.id, orientationId));
+
+    return registration;
   }
 }
 

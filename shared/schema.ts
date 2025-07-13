@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb, unique } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, unique, varchar, date, decimal } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -780,4 +780,183 @@ export type UserProgress = {
   achievements: UserAchievement[];
   currentStreak: number;
   level: number;
+};
+
+// Student Admission System Tables
+export const studentApplications = pgTable("student_applications", {
+  id: serial("id").primaryKey(),
+  firstName: varchar("first_name", { length: 100 }).notNull(),
+  middleName: varchar("middle_name", { length: 100 }),
+  lastName: varchar("last_name", { length: 100 }).notNull(),
+  email: varchar("email", { length: 255 }).notNull().unique(),
+  mobile: varchar("mobile", { length: 20 }).notNull(),
+  countryCode: varchar("country_code", { length: 5 }).notNull().default("+91"),
+  dateOfBirth: date("date_of_birth").notNull(),
+  gender: varchar("gender", { length: 10 }).notNull(),
+  nationality: varchar("nationality", { length: 100 }).notNull(),
+  permanentAddress: text("permanent_address").notNull(),
+  communicationAddress: text("communication_address"),
+  preferredCourse: varchar("preferred_course", { length: 255 }).notNull(),
+  preferredBatch: varchar("preferred_batch", { length: 50 }).notNull(), // Morning/Evening/Weekend
+  preferredTime: varchar("preferred_time", { length: 100 }),
+  learningMode: varchar("learning_mode", { length: 20 }).notNull(), // Online/Offline/Hybrid
+  educationQualification: text("education_qualification").notNull(),
+  hearAboutUs: varchar("hear_about_us", { length: 100 }).notNull(),
+  applicationStatus: varchar("application_status", { length: 20 }).notNull().default("pending"), // pending/approved/rejected/documents_pending/payment_pending
+  studentId: varchar("student_id", { length: 20 }),
+  userId: integer("user_id").references(() => users.id),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const applicationDocuments = pgTable("application_documents", {
+  id: serial("id").primaryKey(),
+  applicationId: integer("application_id").references(() => studentApplications.id, { onDelete: "cascade" }).notNull(),
+  documentType: varchar("document_type", { length: 50 }).notNull(), // photo/id_proof/other
+  documentName: varchar("document_name", { length: 255 }).notNull(),
+  documentUrl: text("document_url").notNull(),
+  uploadedAt: timestamp("uploaded_at").defaultNow().notNull(),
+});
+
+export const feeStructures = pgTable("fee_structures", {
+  id: serial("id").primaryKey(),
+  courseName: varchar("course_name", { length: 255 }).notNull(),
+  totalFee: decimal("total_fee", { precision: 10, scale: 2 }).notNull(),
+  description: text("description"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const feePayments = pgTable("fee_payments", {
+  id: serial("id").primaryKey(),
+  applicationId: integer("application_id").references(() => studentApplications.id, { onDelete: "cascade" }).notNull(),
+  feeStructureId: integer("fee_structure_id").references(() => feeStructures.id),
+  feePlan: varchar("fee_plan", { length: 20 }).notNull(), // one-time/installment/scholarship
+  totalAmount: decimal("total_amount", { precision: 10, scale: 2 }).notNull(),
+  paidAmount: decimal("paid_amount", { precision: 10, scale: 2 }).default("0"),
+  pendingAmount: decimal("pending_amount", { precision: 10, scale: 2 }),
+  paymentMethod: varchar("payment_method", { length: 50 }), // UPI/Card/Bank Transfer
+  paymentDate: timestamp("payment_date"),
+  receiptUrl: text("receipt_url"),
+  invoiceUrl: text("invoice_url"),
+  paymentStatus: varchar("payment_status", { length: 20 }).notNull().default("pending"), // pending/paid/partial/overdue
+  nextDueDate: date("next_due_date"),
+  emiBalance: decimal("emi_balance", { precision: 10, scale: 2 }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const studentBatches = pgTable("student_batches", {
+  id: serial("id").primaryKey(),
+  batchName: varchar("batch_name", { length: 255 }).notNull(),
+  course: varchar("course", { length: 255 }).notNull(),
+  timing: varchar("timing", { length: 100 }).notNull(),
+  mode: varchar("mode", { length: 20 }).notNull(), // Online/Offline/Hybrid
+  mentorId: integer("mentor_id").references(() => mentors.id),
+  maxStudents: integer("max_students").default(30),
+  currentStudents: integer("current_students").default(0),
+  startDate: date("start_date"),
+  endDate: date("end_date"),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const studentBatchAssignments = pgTable("student_batch_assignments", {
+  id: serial("id").primaryKey(),
+  applicationId: integer("application_id").references(() => studentApplications.id, { onDelete: "cascade" }).notNull(),
+  batchId: integer("batch_id").references(() => studentBatches.id, { onDelete: "cascade" }).notNull(),
+  assignedAt: timestamp("assigned_at").defaultNow().notNull(),
+  status: varchar("status", { length: 20 }).default("active"), // active/completed/dropped
+});
+
+export const orientationSessions = pgTable("orientation_sessions", {
+  id: serial("id").primaryKey(),
+  title: varchar("title", { length: 255 }).notNull(),
+  description: text("description"),
+  sessionDate: timestamp("session_date").notNull(),
+  duration: integer("duration_minutes").default(60),
+  mode: varchar("mode", { length: 20 }).notNull(), // Online/Offline
+  meetingLink: text("meeting_link"),
+  venue: text("venue"),
+  conductorName: varchar("conductor_name", { length: 255 }),
+  maxParticipants: integer("max_participants"),
+  currentParticipants: integer("current_participants").default(0),
+  isActive: boolean("is_active").default(true),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+export const orientationRegistrations = pgTable("orientation_registrations", {
+  id: serial("id").primaryKey(),
+  orientationId: integer("orientation_id").references(() => orientationSessions.id, { onDelete: "cascade" }).notNull(),
+  applicationId: integer("application_id").references(() => studentApplications.id, { onDelete: "cascade" }).notNull(),
+  registeredAt: timestamp("registered_at").defaultNow().notNull(),
+  attended: boolean("attended").default(false),
+  feedback: text("feedback"),
+});
+
+// Zod schemas for Student Admission
+export const insertStudentApplicationSchema = createInsertSchema(studentApplications).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertApplicationDocumentSchema = createInsertSchema(applicationDocuments).omit({
+  id: true,
+  uploadedAt: true,
+});
+
+export const insertFeeStructureSchema = createInsertSchema(feeStructures).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertFeePaymentSchema = createInsertSchema(feePayments).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertStudentBatchSchema = createInsertSchema(studentBatches).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+export const insertOrientationSessionSchema = createInsertSchema(orientationSessions).omit({
+  id: true,
+  createdAt: true,
+  updatedAt: true,
+});
+
+// Types for Student Admission
+export type StudentApplication = typeof studentApplications.$inferSelect;
+export type InsertStudentApplication = z.infer<typeof insertStudentApplicationSchema>;
+export type ApplicationDocument = typeof applicationDocuments.$inferSelect;
+export type InsertApplicationDocument = z.infer<typeof insertApplicationDocumentSchema>;
+export type FeeStructure = typeof feeStructures.$inferSelect;
+export type InsertFeeStructure = z.infer<typeof insertFeeStructureSchema>;
+export type FeePayment = typeof feePayments.$inferSelect;
+export type InsertFeePayment = z.infer<typeof insertFeePaymentSchema>;
+export type StudentBatch = typeof studentBatches.$inferSelect;
+export type InsertStudentBatch = z.infer<typeof insertStudentBatchSchema>;
+export type StudentBatchAssignment = typeof studentBatchAssignments.$inferSelect;
+export type OrientationSession = typeof orientationSessions.$inferSelect;
+export type InsertOrientationSession = z.infer<typeof insertOrientationSessionSchema>;
+export type OrientationRegistration = typeof orientationRegistrations.$inferSelect;
+
+// Extended types for Student Admission
+export type StudentApplicationWithDocuments = StudentApplication & {
+  documents: ApplicationDocument[];
+  feePayments: FeePayment[];
+  batchAssignment?: StudentBatchAssignment & { batch: StudentBatch };
+};
+
+export type StudentBatchWithMentor = StudentBatch & {
+  mentor?: Mentor;
+  assignments: StudentBatchAssignment[];
 };

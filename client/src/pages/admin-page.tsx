@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, Settings } from "lucide-react";
+import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, Settings, GraduationCap } from "lucide-react";
 import { AddVideoModal } from "@/components/add-video-modal";
 import { EditVideoModal } from "@/components/edit-video-modal";
 import { AddMentorModal } from "@/components/add-mentor-modal";
@@ -286,6 +286,12 @@ export default function AdminPage() {
               <span className="text-xl font-bold text-gray-900">De mentee Academy</span>
             </div>
             <div className="flex items-center space-x-4">
+              <Link href="/admin/student-admissions">
+                <Button variant="outline" size="sm">
+                  <GraduationCap className="h-4 w-4 mr-2" />
+                  Student Admissions
+                </Button>
+              </Link>
               <Link href="/admin/platform-settings">
                 <Button variant="outline" size="sm">
                   <Settings className="h-4 w-4 mr-2" />
