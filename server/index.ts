@@ -22,6 +22,25 @@ function validateEnvironment() {
 }
 
 const app = express();
+
+// Health check endpoints - registered first for deployment requirements
+app.get("/api/health", (req, res) => {
+  res.status(200).json({ 
+    status: "healthy", 
+    timestamp: new Date().toISOString(),
+    service: "VideoLearn Pro"
+  });
+});
+
+// Root health check for deployment platforms
+app.get("/health", (req, res) => {
+  res.status(200).json({ 
+    status: "healthy", 
+    timestamp: new Date().toISOString(),
+    service: "VideoLearn Pro"
+  });
+});
+
 app.use(express.json());
 app.use(express.urlencoded({ extended: false }));
 
@@ -81,6 +100,15 @@ app.use((req, res, next) => {
     if (process.env.NODE_ENV === "development") {
       await setupVite(app, server);
     } else {
+      // Add root health check for production deployment
+      app.get("/", (req, res) => {
+        res.status(200).json({ 
+          status: "healthy", 
+          timestamp: new Date().toISOString(),
+          service: "VideoLearn Pro"
+        });
+      });
+      
       serveStatic(app);
     }
 

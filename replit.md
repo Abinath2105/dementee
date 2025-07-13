@@ -133,6 +133,9 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 13, 2025: Enhanced production readiness with proper NODE_ENV handling and missing environment variable warnings
 - January 13, 2025: Added SMTP configuration validation with graceful degradation for email services
 - January 13, 2025: Improved error handling for YouTube API with informative fallback behavior
+- January 13, 2025: Fixed deployment health check endpoints - added lightweight `/health` and `/api/health` routes
+- January 13, 2025: Implemented production-ready health check at root `/` route for Cloud Run deployment
+- January 13, 2025: Health check endpoints return JSON with 200 status, registered early before middleware
 
 ## User Preferences
 
