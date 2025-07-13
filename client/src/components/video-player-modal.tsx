@@ -1,18 +1,25 @@
-import { useEffect } from "react";
-import { useMutation } from "@tanstack/react-query";
+import { useEffect, useState } from "react";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { Bookmark, Eye } from "lucide-react";
+import { CheckCircle, Eye, ArrowRight } from "lucide-react";
+import { VideoCompletionBadge } from "@/components/video-completion-badge";
+import { useToast } from "@/hooks/use-toast";
 import type { VideoWithCategory } from "@shared/schema";
 
 interface VideoPlayerModalProps {
   video: VideoWithCategory;
   isOpen: boolean;
   onClose: () => void;
+  onNext?: () => void;
 }
 
-export function VideoPlayerModal({ video, isOpen, onClose }: VideoPlayerModalProps) {
+export function VideoPlayerModal({ video, isOpen, onClose, onNext }: VideoPlayerModalProps) {
+  const [isCompleted, setIsCompleted] = useState(video.isCompleted || false);
+  const queryClient = useQueryClient();
+  const { toast } = useToast();
+
   const recordViewMutation = useMutation({
     mutationFn: async (videoId: number) => {
       const response = await fetch(`/api/videos/${videoId}/view`, {
@@ -23,11 +30,51 @@ export function VideoPlayerModal({ video, isOpen, onClose }: VideoPlayerModalPro
     },
   });
 
+  const toggleCompletionMutation = useMutation({
+    mutationFn: async ({ videoId, isCompleting }: { videoId: number; isCompleting: boolean }) => {
+      const response = await fetch(`/api/videos/${videoId}/complete`, {
+        method: isCompleting ? "POST" : "DELETE",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: isCompleting ? JSON.stringify({ watchTime: 0 }) : undefined,
+      });
+      if (!response.ok) throw new Error("Failed to update completion status");
+    },
+    onSuccess: (_, { isCompleting }) => {
+      setIsCompleted(isCompleting);
+      queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+      toast({
+        title: isCompleting ? "Video completed!" : "Completion removed",
+        description: isCompleting ? "Great job on finishing this video." : "Video marked as incomplete.",
+      });
+    },
+    onError: () => {
+      toast({
+        title: "Error",
+        description: "Failed to update completion status. Please try again.",
+        variant: "destructive",
+      });
+    },
+  });
+
   useEffect(() => {
     if (isOpen) {
       recordViewMutation.mutate(video.id);
+      setIsCompleted(video.isCompleted || false);
     }
-  }, [isOpen, video.id]);
+  }, [isOpen, video.id, video.isCompleted]);
+
+  const handleMarkComplete = () => {
+    toggleCompletionMutation.mutate({ videoId: video.id, isCompleting: !isCompleted });
+  };
+
+  const handleGoToNext = () => {
+    if (onNext) {
+      onNext();
+    }
+  };
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
@@ -60,10 +107,29 @@ export function VideoPlayerModal({ video, isOpen, onClose }: VideoPlayerModalPro
                 <span>{video.viewCount} views</span>
               </div>
             </div>
-            <Button variant="outline" size="sm">
-              <Bookmark className="h-4 w-4 mr-2" />
-              Save
-            </Button>
+            <div className="flex items-center space-x-2">
+              <VideoCompletionBadge isCompleted={isCompleted} />
+              <Button 
+                variant={isCompleted ? "outline" : "default"}
+                size="sm"
+                onClick={handleMarkComplete}
+                disabled={toggleCompletionMutation.isPending}
+              >
+                <CheckCircle className="h-4 w-4 mr-2" />
+                {isCompleted ? "Mark Incomplete" : "Mark Complete"}
+              </Button>
+              {isCompleted && onNext && (
+                <Button 
+                  variant="default"
+                  size="sm"
+                  onClick={handleGoToNext}
+                  className="bg-green-600 hover:bg-green-700"
+                >
+                  <ArrowRight className="h-4 w-4 mr-2" />
+                  Next Video
+                </Button>
+              )}
+            </div>
           </div>
           
           {video.description && (

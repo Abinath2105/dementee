@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { VideoPlayerModal } from "@/components/video-player-modal";
+import { ProgressRing } from "@/components/progress-ring";
 import { type VideoWithCategory, type AppSettings } from "@shared/schema";
 
 export function CategoryPage() {
@@ -50,6 +51,20 @@ export function CategoryPage() {
     enabled: !!category?.id,
   });
 
+  // Fetch category progress
+  const { data: progress } = useQuery({
+    queryKey: ["/api/categories", category?.id, "progress"],
+    queryFn: async () => {
+      if (!category?.id) return null;
+      const response = await fetch(`/api/categories/${category.id}/progress`, {
+        credentials: "include",
+      });
+      if (!response.ok) return null;
+      return response.json();
+    },
+    enabled: !!category?.id,
+  });
+
   const filteredVideos = videos.filter((video: VideoWithCategory) => {
     if (!searchQuery) return true;
     return (
@@ -66,6 +81,19 @@ export function CategoryPage() {
   const handleCloseVideoPlayer = () => {
     setSelectedVideo(null);
     setShowVideoPlayer(false);
+  };
+
+  const handleNextVideo = () => {
+    if (!selectedVideo) return;
+    
+    const currentIndex = filteredVideos.findIndex(v => v.id === selectedVideo.id);
+    if (currentIndex >= 0 && currentIndex < filteredVideos.length - 1) {
+      const nextVideo = filteredVideos[currentIndex + 1];
+      setSelectedVideo(nextVideo);
+    } else {
+      // No more videos, close player
+      handleCloseVideoPlayer();
+    }
   };
 
   if (categoryLoading) {
@@ -156,6 +184,17 @@ export function CategoryPage() {
                   <Play className="h-4 w-4" />
                   <span>{filteredVideos.length} videos</span>
                 </div>
+                {progress && (
+                  <div className="flex items-center space-x-2">
+                    <ProgressRing 
+                      completed={progress.completed} 
+                      total={progress.total} 
+                      size={20} 
+                      strokeWidth={2} 
+                    />
+                    <span>{progress.completed} of {progress.total} completed</span>
+                  </div>
+                )}
                 <div className="flex items-center space-x-2">
                   <Clock className="h-4 w-4" />
                   <span>Learning Playlist</span>
@@ -274,6 +313,7 @@ export function CategoryPage() {
           video={selectedVideo}
           isOpen={showVideoPlayer}
           onClose={handleCloseVideoPlayer}
+          onNext={handleNextVideo}
         />
       )}
     </div>

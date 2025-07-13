@@ -10,7 +10,8 @@ import { Play, Search, Settings, LogOut } from "lucide-react";
 import { VideoCard } from "@/components/video-card";
 import { VideoPlayerModal } from "@/components/video-player-modal";
 import { BannerCarousel } from "@/components/banner-carousel";
-import { CategoryCard } from "@/components/category-card";
+import { CategoryCarousel } from "@/components/category-carousel";
+import { VideoCompletionBadge } from "@/components/video-completion-badge";
 import type { VideoWithCategory, Category, AppSettings } from "@shared/schema";
 
 export default function HomePage() {
@@ -101,38 +102,14 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Categories Section */}
-      {categories.length > 0 && (
-        <div className="bg-gray-50 py-12">
-          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-            <div className="text-center mb-8">
-              <h2 className="text-3xl font-bold text-gray-900 mb-2">Browse Categories</h2>
-              <p className="text-gray-600">Explore our organized learning content</p>
-            </div>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {categories.map((category) => {
-                const categoryVideoCount = videos.filter(v => v.categoryId === category.id).length;
-                return (
-                  <CategoryCard
-                    key={category.id}
-                    category={category}
-                    videoCount={categoryVideoCount}
-                  />
-                );
-              })}
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Search Section */}
+      {/* Search Section - Moved to top below hero */}
       <div className="bg-white border-b border-gray-200 py-8">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <h1 className="text-3xl md:text-4xl font-bold mb-4 text-gray-900">Video Library</h1>
           <p className="text-lg mb-8 text-gray-600">Find and watch educational videos</p>
           
           {/* Search Bar */}
-          <div className="max-w-2xl mx-auto relative">
+          <div className="max-w-2xl mx-auto relative mb-6">
             <Input
               type="text"
               placeholder="Search videos by title, category, or tags..."
@@ -172,6 +149,21 @@ export default function HomePage() {
           </div>
         </div>
       </div>
+
+      {/* Categories Carousel Section */}
+      {categories.length > 0 && (
+        <div className="bg-gray-50 py-12">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <CategoryCarousel
+              categories={categories}
+              videoCounts={categories.reduce((acc, category) => {
+                acc[category.id] = videos.filter(v => v.categoryId === category.id).length;
+                return acc;
+              }, {} as { [key: number]: number })}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Video Library */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">

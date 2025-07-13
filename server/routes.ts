@@ -152,9 +152,11 @@ export function registerRoutes(app: Express): Server {
   app.get("/api/videos", async (req, res) => {
     try {
       const { search, categoryId } = req.query;
+      const userId = req.user?.id;
       const videos = await storage.getVideos(
         search as string,
-        categoryId ? parseInt(categoryId as string) : undefined
+        categoryId ? parseInt(categoryId as string) : undefined,
+        userId
       );
       res.json(videos);
     } catch (error) {
@@ -251,6 +253,59 @@ export function registerRoutes(app: Express): Server {
     } catch (error) {
       console.error('Record view error:', error);
       res.status(500).json({ message: "Failed to record view" });
+    }
+  });
+
+  // Video completion tracking endpoints
+  app.post("/api/videos/:id/complete", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const videoId = parseInt(req.params.id);
+      const userId = req.user!.id;
+      const { watchTime } = req.body;
+
+      const completion = await storage.markVideoComplete(userId, videoId, watchTime || 0);
+      res.json(completion);
+    } catch (error) {
+      console.error('Mark video complete error:', error);
+      res.status(500).json({ message: "Failed to mark video as complete" });
+    }
+  });
+
+  app.delete("/api/videos/:id/complete", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const videoId = parseInt(req.params.id);
+      const userId = req.user!.id;
+
+      await storage.markVideoIncomplete(userId, videoId);
+      res.sendStatus(200);
+    } catch (error) {
+      console.error('Mark video incomplete error:', error);
+      res.status(500).json({ message: "Failed to mark video as incomplete" });
+    }
+  });
+
+  app.get("/api/categories/:categoryId/progress", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const categoryId = parseInt(req.params.categoryId);
+      const userId = req.user!.id;
+
+      const progress = await storage.getCategoryProgress(userId, categoryId);
+      res.json(progress);
+    } catch (error) {
+      console.error('Get category progress error:', error);
+      res.status(500).json({ message: "Failed to fetch category progress" });
     }
   });
 

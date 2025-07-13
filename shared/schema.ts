@@ -1,4 +1,4 @@
-import { pgTable, text, serial, integer, boolean, timestamp, jsonb } from "drizzle-orm/pg-core";
+import { pgTable, text, serial, integer, boolean, timestamp, jsonb, unique } from "drizzle-orm/pg-core";
 import { relations } from "drizzle-orm";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod";
@@ -94,9 +94,21 @@ export const userCategoryAccess = pgTable("user_category_access", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Video completion tracking for LMS functionality
+export const videoCompletions = pgTable("video_completions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  videoId: integer("video_id").references(() => videos.id).notNull(),
+  completedAt: timestamp("completed_at").defaultNow().notNull(),
+  watchTime: integer("watch_time").notNull().default(0), // in seconds
+}, (table) => ({
+  uniqueUserVideo: unique().on(table.userId, table.videoId),
+}));
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   videoViews: many(videoViews),
+  videoCompletions: many(videoCompletions),
   invitedUsers: many(userInvitations, { foreignKey: userInvitations.invitedBy }),
   categoryAccess: many(userCategoryAccess, { foreignKey: userCategoryAccess.userId }),
   invitedBy: one(users, {
@@ -131,6 +143,7 @@ export const videosRelations = relations(videos, ({ one, many }) => ({
     references: [categories.id],
   }),
   views: many(videoViews),
+  completions: many(videoCompletions),
 }));
 
 export const videoViewsRelations = relations(videoViews, ({ one }) => ({
@@ -140,6 +153,17 @@ export const videoViewsRelations = relations(videoViews, ({ one }) => ({
   }),
   user: one(users, {
     fields: [videoViews.userId],
+    references: [users.id],
+  }),
+}));
+
+export const videoCompletionsRelations = relations(videoCompletions, ({ one }) => ({
+  video: one(videos, {
+    fields: [videoCompletions.videoId],
+    references: [videos.id],
+  }),
+  user: one(users, {
+    fields: [videoCompletions.userId],
     references: [users.id],
   }),
 }));
@@ -210,6 +234,12 @@ export const insertUserCategoryAccessSchema = createInsertSchema(userCategoryAcc
   categoryId: true,
 });
 
+export const insertVideoCompletionSchema = createInsertSchema(videoCompletions).pick({
+  userId: true,
+  videoId: true,
+  watchTime: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -228,11 +258,14 @@ export type UserInvitation = typeof userInvitations.$inferSelect;
 export type InsertUserInvitation = z.infer<typeof insertUserInvitationSchema>;
 export type UserCategoryAccess = typeof userCategoryAccess.$inferSelect;
 export type InsertUserCategoryAccess = z.infer<typeof insertUserCategoryAccessSchema>;
+export type VideoCompletion = typeof videoCompletions.$inferSelect;
+export type InsertVideoCompletion = z.infer<typeof insertVideoCompletionSchema>;
 
 // Extended types for API responses
 export type VideoWithCategory = Video & {
   category: Category | null;
   viewCount: number;
+  isCompleted?: boolean;
 };
 
 export type AdminStats = {

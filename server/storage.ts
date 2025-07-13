@@ -1,4 +1,4 @@
-import { users, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess } from "@shared/schema";
+import { users, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, videoCompletions, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess, type VideoCompletion, type InsertVideoCompletion } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or, ilike } from "drizzle-orm";
 import session from "express-session";
@@ -46,12 +46,18 @@ export interface IStorage {
   getCategoryUsers(categoryId: number): Promise<User[]>;
 
   // Video management
-  getVideos(search?: string, categoryId?: number): Promise<VideoWithCategory[]>;
+  getVideos(search?: string, categoryId?: number, userId?: number): Promise<VideoWithCategory[]>;
   getVideo(id: number): Promise<VideoWithCategory | undefined>;
   createVideo(video: InsertVideo): Promise<Video>;
   updateVideo(id: number, video: Partial<InsertVideo>): Promise<Video>;
   deleteVideo(id: number): Promise<void>;
   incrementVideoViews(videoId: number, userId?: number, ipAddress?: string): Promise<void>;
+
+  // Video completion tracking
+  markVideoComplete(userId: number, videoId: number, watchTime: number): Promise<VideoCompletion>;
+  markVideoIncomplete(userId: number, videoId: number): Promise<void>;
+  getUserVideoCompletions(userId: number): Promise<VideoCompletion[]>;
+  getCategoryProgress(userId: number, categoryId: number): Promise<{ completed: number; total: number }>;
 
   // App settings management
   getAppSettings(): Promise<AppSettings>;
@@ -195,7 +201,7 @@ export class DatabaseStorage implements IStorage {
     return category;
   }
 
-  async getVideos(search?: string, categoryId?: number): Promise<VideoWithCategory[]> {
+  async getVideos(search?: string, categoryId?: number, userId?: number): Promise<VideoWithCategory[]> {
     let query = db
       .select({
         id: videos.id,
@@ -207,15 +213,18 @@ export class DatabaseStorage implements IStorage {
         categoryId: videos.categoryId,
         tags: videos.tags,
         views: videos.views,
+        isPublic: videos.isPublic,
         createdAt: videos.createdAt,
         updatedAt: videos.updatedAt,
         category: categories,
-        viewCount: sql<number>`COUNT(${videoViews.id})::int`.as('viewCount'),
+        viewCount: sql<number>`COUNT(DISTINCT ${videoViews.id})::int`.as('viewCount'),
+        isCompleted: userId ? sql<boolean>`CASE WHEN ${videoCompletions.id} IS NOT NULL THEN true ELSE false END`.as('isCompleted') : sql<boolean>`false`.as('isCompleted'),
       })
       .from(videos)
       .leftJoin(categories, eq(videos.categoryId, categories.id))
       .leftJoin(videoViews, eq(videos.id, videoViews.videoId))
-      .groupBy(videos.id, categories.id);
+      .leftJoin(videoCompletions, userId ? and(eq(videos.id, videoCompletions.videoId), eq(videoCompletions.userId, userId)) : undefined)
+      .groupBy(videos.id, categories.id, videoCompletions.id);
 
     const conditions = [];
     
@@ -505,6 +514,53 @@ export class DatabaseStorage implements IStorage {
       totalUsers: userStats?.totalUsers || 0,
       totalViews: viewStats?.totalViews || 0,
       totalWatchTime: "0h", // This would require duration calculation
+    };
+  }
+
+  // Video completion tracking methods
+  async markVideoComplete(userId: number, videoId: number, watchTime: number): Promise<VideoCompletion> {
+    const [completion] = await db
+      .insert(videoCompletions)
+      .values({ userId, videoId, watchTime })
+      .onConflictDoUpdate({
+        target: [videoCompletions.userId, videoCompletions.videoId],
+        set: {
+          completedAt: sql`NOW()`,
+          watchTime: watchTime,
+        },
+      })
+      .returning();
+    return completion;
+  }
+
+  async markVideoIncomplete(userId: number, videoId: number): Promise<void> {
+    await db
+      .delete(videoCompletions)
+      .where(and(eq(videoCompletions.userId, userId), eq(videoCompletions.videoId, videoId)));
+  }
+
+  async getUserVideoCompletions(userId: number): Promise<VideoCompletion[]> {
+    return await db
+      .select()
+      .from(videoCompletions)
+      .where(eq(videoCompletions.userId, userId));
+  }
+
+  async getCategoryProgress(userId: number, categoryId: number): Promise<{ completed: number; total: number }> {
+    const totalVideos = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(videos)
+      .where(eq(videos.categoryId, categoryId));
+
+    const completedVideos = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(videos)
+      .innerJoin(videoCompletions, eq(videos.id, videoCompletions.videoId))
+      .where(and(eq(videos.categoryId, categoryId), eq(videoCompletions.userId, userId)));
+
+    return {
+      total: totalVideos[0]?.count || 0,
+      completed: completedVideos[0]?.count || 0,
     };
   }
 }
