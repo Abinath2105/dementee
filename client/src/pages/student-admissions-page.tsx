@@ -60,10 +60,12 @@ type ApplicationFormData = z.infer<typeof applicationSchema>;
 const feePaymentSchema = z.object({
   feePlan: z.string().min(1, "Fee plan is required"),
   totalAmount: z.string().min(1, "Total amount is required"),
-  paymentMethod: z.string().optional(),
-  paymentDate: z.string().optional(),
+  paidAmount: z.string().min(1, "Paid amount is required"),
+  paymentMethod: z.string().min(1, "Payment method is required"),
+  paymentDate: z.string().min(1, "Payment date is required"),
   emiBalance: z.string().optional(),
   nextDueDate: z.string().optional(),
+  receiptUrl: z.string().optional(),
 });
 
 type FeePaymentFormData = z.infer<typeof feePaymentSchema>;
@@ -210,9 +212,17 @@ export default function StudentAdmissionsPage() {
   const onSubmitPayment = (data: FeePaymentFormData) => {
     if (!selectedApplication) return;
     
+    const totalAmount = parseFloat(data.totalAmount);
+    const paidAmount = parseFloat(data.paidAmount);
+    const pendingAmount = totalAmount - paidAmount;
+    
     createPaymentMutation.mutate({
       ...data,
       applicationId: selectedApplication.id,
+      totalAmount: totalAmount.toString(),
+      paidAmount: paidAmount.toString(),
+      pendingAmount: pendingAmount.toString(),
+      paymentStatus: paidAmount >= totalAmount ? "paid" : "partial",
     });
   };
 
@@ -610,7 +620,10 @@ export default function StudentAdmissionsPage() {
                             <Button
                               size="sm"
                               variant="outline"
-                              onClick={() => setSelectedApplication(application)}
+                              onClick={() => {
+                                setSelectedApplication(application);
+                                setActiveTab("payments");
+                              }}
                             >
                               <Eye className="h-4 w-4" />
                             </Button>
@@ -649,13 +662,236 @@ export default function StudentAdmissionsPage() {
                 <CreditCard className="h-5 w-5" />
                 Fee Payments
               </CardTitle>
+              <Button
+                onClick={() => setShowPaymentModal(true)}
+                disabled={!selectedApplication}
+              >
+                <Plus className="h-4 w-4 mr-2" />
+                Record Payment
+              </Button>
             </CardHeader>
             <CardContent>
-              <p className="text-gray-600 dark:text-gray-400">
-                Payment management interface will be displayed here.
-              </p>
+              {selectedApplication ? (
+                <div className="space-y-6">
+                  <div className="bg-blue-50 dark:bg-blue-900/20 p-4 rounded-lg">
+                    <h3 className="font-semibold mb-2">
+                      {selectedApplication.firstName} {selectedApplication.lastName}
+                    </h3>
+                    <p className="text-sm text-gray-600 dark:text-gray-400">
+                      Course: {selectedApplication.preferredCourse}
+                    </p>
+                  </div>
+                  
+                  <div className="rounded-md border">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Fee Plan</TableHead>
+                          <TableHead>Total Amount</TableHead>
+                          <TableHead>Paid Amount</TableHead>
+                          <TableHead>Pending</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {selectedApplication.feePayments?.map((payment: any) => (
+                          <TableRow key={payment.id}>
+                            <TableCell className="font-medium">{payment.feePlan}</TableCell>
+                            <TableCell>₹{parseFloat(payment.totalAmount).toLocaleString()}</TableCell>
+                            <TableCell>₹{parseFloat(payment.paidAmount || 0).toLocaleString()}</TableCell>
+                            <TableCell>₹{parseFloat(payment.pendingAmount || 0).toLocaleString()}</TableCell>
+                            <TableCell>{getStatusBadge(payment.paymentStatus)}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center gap-2">
+                                <Button size="sm" variant="outline">
+                                  <Download className="h-4 w-4" />
+                                </Button>
+                                <Button size="sm" variant="outline">
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        )) || (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                              No payments recorded yet
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              ) : (
+                <div className="text-center py-8 text-gray-500">
+                  Select an application to view payment details
+                </div>
+              )}
             </CardContent>
           </Card>
+
+          {/* Payment Modal */}
+          <Dialog open={showPaymentModal} onOpenChange={setShowPaymentModal}>
+            <DialogContent className="max-w-2xl">
+              <DialogHeader>
+                <DialogTitle>Record Fee Payment</DialogTitle>
+              </DialogHeader>
+              <Form {...paymentForm}>
+                <form onSubmit={paymentForm.handleSubmit(onSubmitPayment)} className="space-y-6">
+                  <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <FormField
+                      control={paymentForm.control}
+                      name="feePlan"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Fee Plan</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select fee plan" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="one-time">One-time Payment</SelectItem>
+                              <SelectItem value="installment">Installment</SelectItem>
+                              <SelectItem value="scholarship">Scholarship</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={paymentForm.control}
+                      name="totalAmount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Total Amount (₹)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="Enter total amount" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={paymentForm.control}
+                      name="paidAmount"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Paid Amount (₹)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="Enter paid amount" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={paymentForm.control}
+                      name="paymentMethod"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Payment Method</FormLabel>
+                          <Select onValueChange={field.onChange} defaultValue={field.value}>
+                            <FormControl>
+                              <SelectTrigger>
+                                <SelectValue placeholder="Select payment method" />
+                              </SelectTrigger>
+                            </FormControl>
+                            <SelectContent>
+                              <SelectItem value="upi">UPI</SelectItem>
+                              <SelectItem value="card">Credit/Debit Card</SelectItem>
+                              <SelectItem value="bank_transfer">Bank Transfer</SelectItem>
+                              <SelectItem value="cash">Cash</SelectItem>
+                              <SelectItem value="cheque">Cheque</SelectItem>
+                            </SelectContent>
+                          </Select>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={paymentForm.control}
+                      name="paymentDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Payment Date</FormLabel>
+                          <FormControl>
+                            <Input type="datetime-local" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <FormField
+                      control={paymentForm.control}
+                      name="emiBalance"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>EMI Balance (₹)</FormLabel>
+                          <FormControl>
+                            <Input type="number" placeholder="Remaining EMI balance" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                    <FormField
+                      control={paymentForm.control}
+                      name="nextDueDate"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Next Due Date</FormLabel>
+                          <FormControl>
+                            <Input type="date" {...field} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-4">
+                    <div className="p-4 border-2 border-dashed border-gray-300 rounded-lg text-center">
+                      <Upload className="h-8 w-8 mx-auto text-gray-400 mb-2" />
+                      <p className="text-sm text-gray-600">
+                        Upload Receipt (if offline payment)
+                      </p>
+                      <Button type="button" variant="outline" size="sm" className="mt-2">
+                        Choose File
+                      </Button>
+                    </div>
+                  </div>
+
+                  <div className="flex justify-end gap-4">
+                    <Button
+                      type="button"
+                      variant="outline"
+                      onClick={() => setShowPaymentModal(false)}
+                    >
+                      Cancel
+                    </Button>
+                    <Button type="submit" disabled={createPaymentMutation.isPending}>
+                      {createPaymentMutation.isPending ? "Recording..." : "Record Payment"}
+                    </Button>
+                    <Button type="button" variant="secondary">
+                      <Download className="h-4 w-4 mr-2" />
+                      Generate Invoice
+                    </Button>
+                  </div>
+                </form>
+              </Form>
+            </DialogContent>
+          </Dialog>
         </TabsContent>
 
         {/* Batches Tab */}

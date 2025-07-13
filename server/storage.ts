@@ -1012,7 +1012,7 @@ export class DatabaseStorage implements IStorage {
           .from(applicationDocuments)
           .where(eq(applicationDocuments.applicationId, application.id));
 
-        const feePayments = await db
+        const applicationFeePayments = await db
           .select()
           .from(feePayments)
           .where(eq(feePayments.applicationId, application.id));
@@ -1040,7 +1040,7 @@ export class DatabaseStorage implements IStorage {
         return {
           ...application,
           documents,
-          feePayments,
+          feePayments: applicationFeePayments,
           batchAssignment: batchAssignment[0] || undefined,
         };
       })
