@@ -684,11 +684,41 @@ export class DatabaseStorage implements IStorage {
 
   async getUserWatchHistory(userId: number, limit: number = 50): Promise<WatchHistory[]> {
     return await db
-      .select()
+      .select({
+        id: watchHistory.id,
+        userId: watchHistory.userId,
+        videoId: watchHistory.videoId,
+        watchDuration: watchHistory.watchDuration,
+        progressPercentage: watchHistory.progressPercentage,
+        deviceInfo: watchHistory.deviceInfo,
+        ipAddress: watchHistory.ipAddress,
+        watchedAt: watchHistory.watchedAt,
+        video: {
+          id: videos.id,
+          title: videos.title,
+          description: videos.description,
+          thumbnailUrl: videos.thumbnailUrl,
+          youtubeId: videos.youtubeId,
+          duration: videos.duration,
+          categoryId: videos.categoryId,
+          isPublic: videos.isPublic,
+          createdAt: videos.createdAt,
+          category: {
+            id: categories.id,
+            name: categories.name,
+            slug: categories.slug,
+            description: categories.description,
+            coverImage: categories.coverImage,
+            createdAt: categories.createdAt,
+          },
+        },
+      })
       .from(watchHistory)
+      .innerJoin(videos, eq(watchHistory.videoId, videos.id))
+      .leftJoin(categories, eq(videos.categoryId, categories.id))
       .where(eq(watchHistory.userId, userId))
       .orderBy(desc(watchHistory.watchedAt))
-      .limit(limit);
+      .limit(limit) as any;
   }
 
   // User session management methods
