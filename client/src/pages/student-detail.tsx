@@ -324,13 +324,13 @@ export function StudentDetail() {
                     {completions.map((completion: any) => (
                       <div key={completion.id} className="flex items-center space-x-4 p-4 border rounded-lg">
                         <img 
-                          src={completion.video.thumbnailUrl || '/api/placeholder/100/60'} 
-                          alt={completion.video.title}
+                          src={completion.video?.thumbnailUrl || '/api/placeholder/100/60'} 
+                          alt={completion.video?.title || 'Video thumbnail'}
                           className="w-16 h-12 object-cover rounded"
                         />
                         <div className="flex-1">
-                          <h4 className="font-medium">{completion.video.title}</h4>
-                          <p className="text-sm text-gray-600">{completion.video.category?.name}</p>
+                          <h4 className="font-medium">{completion.video?.title || 'Unknown Video'}</h4>
+                          <p className="text-sm text-gray-600">{completion.video?.category?.name || 'No category'}</p>
                           <p className="text-xs text-gray-500">
                             Completed on {formatDate(completion.completedAt)} • 
                             Watch time: {formatDuration(completion.watchTime)}

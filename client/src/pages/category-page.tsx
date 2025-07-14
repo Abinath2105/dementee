@@ -6,6 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { ProgressRing } from "@/components/progress-ring";
+import { VideoCompletionBadge } from "@/components/video-completion-badge";
 import { type VideoWithCategory, type AppSettings } from "@shared/schema";
 
 export function CategoryPage() {
@@ -257,13 +258,13 @@ export function CategoryPage() {
                       #{index + 1}
                     </Badge>
                   </div>
-                  {video.isCompleted && (
-                    <div className="absolute top-2 right-2">
-                      <Badge variant="default" className="text-xs bg-green-600 text-white">
-                        ✓ Complete
-                      </Badge>
-                    </div>
-                  )}
+                  <div className="absolute top-2 right-2">
+                    <VideoCompletionBadge 
+                      isCompleted={video.isCompleted || false} 
+                      size="sm" 
+                      variant="minimal" 
+                    />
+                  </div>
                   {video.duration && (
                     <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded flex items-center space-x-1">
                       <Clock className="h-3 w-3" />
