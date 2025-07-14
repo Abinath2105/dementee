@@ -163,105 +163,102 @@ export function VideoPlayerModal({ video, isOpen, onClose, onNext }: VideoPlayer
           />
         </div>
         
-        {/* Two-column layout for larger screens */}
-        <div className="flex-1 overflow-hidden flex flex-col lg:flex-row lg:gap-6">
-          {/* Left column - Video Info */}
-          <div className="lg:w-1/2 overflow-y-auto space-y-3 sm:space-y-4 scrollbar-thin">
-            {/* Mobile-First Action Bar */}
-            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
-              {/* Video Meta */}
-              <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm">
-                {video.category && (
-                  <Badge variant="secondary" className="text-xs">{video.category.name}</Badge>
-                )}
-                <span className="text-gray-500">{video.duration || "N/A"}</span>
-                <div className="flex items-center text-gray-500">
-                  <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                  <span>{video.viewCount} views</span>
-                </div>
-              </div>
-              
-              {/* Action Buttons */}
-              <div className="flex items-center gap-2 flex-wrap">
-                <VideoCompletionBadge isCompleted={isCompleted} size="sm" />
-                
-                <Button 
-                  variant="outline"
-                  size="sm"
-                  onClick={handleToggleBookmark}
-                  disabled={toggleBookmarkMutation.isPending}
-                  className="flex-shrink-0"
-                >
-                  {isBookmarked ? (
-                    <BookmarkCheck className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                  ) : (
-                    <Bookmark className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                  )}
-                  <span className="hidden sm:inline">
-                    {isBookmarked ? "Bookmarked" : "Bookmark"}
-                  </span>
-                </Button>
-                
-                <Button 
-                  variant={isCompleted ? "outline" : "default"}
-                  size="sm"
-                  onClick={handleMarkComplete}
-                  disabled={toggleCompletionMutation.isPending}
-                  className="flex-shrink-0"
-                >
-                  <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                  <span className="hidden sm:inline">
-                    {isCompleted ? "Mark Incomplete" : "Mark Complete"}
-                  </span>
-                </Button>
-                
-                {isCompleted && onNext && (
-                  <Button 
-                    variant="default"
-                    size="sm"
-                    onClick={handleGoToNext}
-                    className="bg-green-600 hover:bg-green-700 flex-shrink-0"
-                  >
-                    <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
-                    <span className="hidden sm:inline">Next Video</span>
-                    <span className="sm:hidden">Next</span>
-                  </Button>
-                )}
+        {/* Video Info and Tabs - Single Column Layout */}
+        <div className="flex-1 overflow-y-auto space-y-4 scrollbar-thin">
+          {/* Action Bar */}
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 sm:gap-4">
+            {/* Video Meta */}
+            <div className="flex flex-wrap items-center gap-2 sm:gap-4 text-sm">
+              {video.category && (
+                <Badge variant="secondary" className="text-xs">{video.category.name}</Badge>
+              )}
+              <span className="text-gray-500">{video.duration || "N/A"}</span>
+              <div className="flex items-center text-gray-500">
+                <Eye className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                <span>{video.viewCount} views</span>
               </div>
             </div>
             
-            {/* Description */}
-            {video.description && (
-              <div className="space-y-2">
-                <h4 className="font-medium text-gray-900 text-sm sm:text-base">Description</h4>
-                <p className="text-gray-600 whitespace-pre-wrap text-sm leading-relaxed">
-                  {video.description}
-                </p>
-              </div>
-            )}
-            
-            {/* Tags */}
-            {video.tags && video.tags.length > 0 && (
-              <div className="space-y-2">
-                <h4 className="font-medium text-gray-900 text-sm sm:text-base">Tags</h4>
-                <div className="flex flex-wrap gap-1.5 sm:gap-2">
-                  {video.tags.map((tag, index) => (
-                    <Badge key={index} variant="outline" className="text-xs">
-                      {tag}
-                    </Badge>
-                  ))}
-                </div>
-              </div>
-            )}
+            {/* Action Buttons */}
+            <div className="flex items-center gap-2 flex-wrap">
+              <VideoCompletionBadge isCompleted={isCompleted} size="sm" />
+              
+              <Button 
+                variant="outline"
+                size="sm"
+                onClick={handleToggleBookmark}
+                disabled={toggleBookmarkMutation.isPending}
+                className="flex-shrink-0"
+              >
+                {isBookmarked ? (
+                  <BookmarkCheck className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                ) : (
+                  <Bookmark className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                )}
+                <span className="hidden sm:inline">
+                  {isBookmarked ? "Bookmarked" : "Bookmark"}
+                </span>
+              </Button>
+              
+              <Button 
+                variant={isCompleted ? "outline" : "default"}
+                size="sm"
+                onClick={handleMarkComplete}
+                disabled={toggleCompletionMutation.isPending}
+                className="flex-shrink-0"
+              >
+                <CheckCircle className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                <span className="hidden sm:inline">
+                  {isCompleted ? "Mark Incomplete" : "Mark Complete"}
+                </span>
+              </Button>
+              
+              {isCompleted && onNext && (
+                <Button 
+                  variant="default"
+                  size="sm"
+                  onClick={handleGoToNext}
+                  className="bg-green-600 hover:bg-green-700 flex-shrink-0"
+                >
+                  <ArrowRight className="h-3 w-3 sm:h-4 sm:w-4 mr-1" />
+                  <span className="hidden sm:inline">Next Video</span>
+                  <span className="sm:hidden">Next</span>
+                </Button>
+              )}
+            </div>
           </div>
           
-          {/* Right column - Ratings and Comments */}
-          <div className="lg:w-1/2 lg:border-l lg:pl-6 mt-4 lg:mt-0">
-            <div className="bg-gray-50 p-4 rounded-lg h-full">
-              <h3 className="text-lg font-semibold mb-4 text-center">Ratings & Comments</h3>
-              <Tabs defaultValue="rating" className="w-full h-full flex flex-col">
-                <TabsList className="grid w-full grid-cols-2 mb-4">
-                  <TabsTrigger value="rating" className="text-sm font-medium">
+          {/* Description */}
+          {video.description && (
+            <div className="space-y-2">
+              <h4 className="font-medium text-gray-900 text-sm sm:text-base">Description</h4>
+              <p className="text-gray-600 whitespace-pre-wrap text-sm leading-relaxed">
+                {video.description}
+              </p>
+            </div>
+          )}
+          
+          {/* Tags */}
+          {video.tags && video.tags.length > 0 && (
+            <div className="space-y-2">
+              <h4 className="font-medium text-gray-900 text-sm sm:text-base">Tags</h4>
+              <div className="flex flex-wrap gap-1.5 sm:gap-2">
+                {video.tags.map((tag, index) => (
+                  <Badge key={index} variant="outline" className="text-xs">
+                    {tag}
+                  </Badge>
+                ))}
+              </div>
+            </div>
+          )}
+          
+          {/* ALWAYS VISIBLE Ratings and Comments Tabs */}
+          <div className="border-t pt-4">
+            <div className="bg-blue-50 border-2 border-blue-200 p-4 rounded-lg">
+              <h3 className="text-lg font-semibold mb-4 text-center text-blue-900">⭐ Ratings & Comments</h3>
+              <Tabs defaultValue="rating" className="w-full">
+                <TabsList className="grid w-full grid-cols-2 mb-4 bg-blue-100">
+                  <TabsTrigger value="rating" className="text-sm font-medium text-blue-900 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                     <Star className="h-4 w-4 mr-1" />
                     Rating
                     {video.averageRating && (
@@ -270,7 +267,7 @@ export function VideoPlayerModal({ video, isOpen, onClose, onNext }: VideoPlayer
                       </Badge>
                     )}
                   </TabsTrigger>
-                  <TabsTrigger value="comments" className="text-sm font-medium">
+                  <TabsTrigger value="comments" className="text-sm font-medium text-blue-900 data-[state=active]:bg-blue-600 data-[state=active]:text-white">
                     <MessageCircle className="h-4 w-4 mr-1" />
                     Comments
                     {video.commentsCount && (
@@ -281,7 +278,7 @@ export function VideoPlayerModal({ video, isOpen, onClose, onNext }: VideoPlayer
                   </TabsTrigger>
                 </TabsList>
                 
-                <TabsContent value="rating" className="flex-1 overflow-y-auto">
+                <TabsContent value="rating" className="mt-4 min-h-[200px]">
                   <VideoRating
                     video={video}
                     userRating={video.userRating}
@@ -291,7 +288,7 @@ export function VideoPlayerModal({ video, isOpen, onClose, onNext }: VideoPlayer
                   />
                 </TabsContent>
                 
-                <TabsContent value="comments" className="flex-1 overflow-y-auto">
+                <TabsContent value="comments" className="mt-4 min-h-[200px]">
                   <VideoComments video={video} />
                 </TabsContent>
               </Tabs>
