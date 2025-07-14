@@ -607,9 +607,28 @@ export class DatabaseStorage implements IStorage {
 
   async getUserVideoCompletions(userId: number): Promise<VideoCompletion[]> {
     return await db
-      .select()
+      .select({
+        id: videoCompletions.id,
+        userId: videoCompletions.userId,
+        videoId: videoCompletions.videoId,
+        completedAt: videoCompletions.completedAt,
+        watchTime: videoCompletions.watchTime,
+        video: {
+          id: videos.id,
+          title: videos.title,
+          description: videos.description,
+          thumbnailUrl: videos.thumbnailUrl,
+          youtubeId: videos.youtubeId,
+          duration: videos.duration,
+          categoryId: videos.categoryId,
+          isPublic: videos.isPublic,
+          createdAt: videos.createdAt,
+        },
+      })
       .from(videoCompletions)
-      .where(eq(videoCompletions.userId, userId));
+      .innerJoin(videos, eq(videoCompletions.videoId, videos.id))
+      .where(eq(videoCompletions.userId, userId))
+      .orderBy(desc(videoCompletions.completedAt));
   }
 
   async getCategoryProgress(userId: number, categoryId: number): Promise<{ completed: number; total: number }> {
