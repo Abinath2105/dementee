@@ -1,23 +1,21 @@
 import { useState } from "react";
+import { useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { useParams, Link, useLocation } from "wouter";
-import { ArrowLeft, Play, Clock, Search } from "lucide-react";
+import { ArrowLeft, Search, Play, Clock, Users, BarChart3 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { ProgressRing } from "@/components/progress-ring";
+import { Progress } from "@/components/ui/progress";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Link, useLocation } from "wouter";
+import { VideoWithCategory } from "@shared/schema";
 import { VideoCompletionBadge } from "@/components/video-completion-badge";
-import { type VideoWithCategory, type AppSettings } from "@shared/schema";
 
 export function CategoryPage() {
-  const { slug } = useParams<{ slug: string }>();
+  const [, params] = useRoute("/category/:slug");
+  const slug = params?.slug;
   const [searchQuery, setSearchQuery] = useState("");
   const [, setLocation] = useLocation();
-
-  // Fetch app settings for branding
-  const { data: appSettings } = useQuery<AppSettings>({
-    queryKey: ["/api/settings"],
-  });
 
   // Fetch category details
   const { data: category, isLoading: categoryLoading } = useQuery({
@@ -72,16 +70,6 @@ export function CategoryPage() {
     );
   });
 
-  // Debug logging
-  console.log('Category page debug:', {
-    categoryId: category?.id,
-    videosLength: videos.length,
-    filteredVideosLength: filteredVideos.length,
-    searchQuery,
-    videosLoading,
-    videos: videos.slice(0, 2) // Show first 2 videos for debugging
-  });
-
   const handleVideoClick = (video: VideoWithCategory) => {
     setLocation(`/video/${video.id}`);
   };
@@ -123,85 +111,78 @@ export function CategoryPage() {
             <div className="flex items-center min-w-0">
               <Link href="/">
                 <Button variant="ghost" size="sm" className="mr-2 sm:mr-4">
-                  <ArrowLeft className="h-4 w-4 mr-1 sm:mr-2" />
-                  <span className="hidden sm:inline">Back to Home</span>
-                  <span className="sm:hidden">Back</span>
+                  <ArrowLeft className="h-4 w-4" />
                 </Button>
               </Link>
-              <div className="flex items-center min-w-0">
-                {appSettings?.appLogo ? (
-                  <img src={appSettings.appLogo} alt="Logo" className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 flex-shrink-0" />
-                ) : (
-                  <Play className="h-6 w-6 sm:h-8 sm:w-8 text-primary mr-2 sm:mr-3 flex-shrink-0" />
-                )}
-                <span className="text-xl font-bold text-gray-900">
-                  {appSettings?.appName || "VideoLearn Pro"}
-                </span>
-              </div>
+              <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
+                VideoLearn Pro
+              </h1>
+            </div>
+            <div className="flex items-center space-x-2 sm:space-x-4">
+              <Link href="/">
+                <Button variant="ghost" size="sm" className="text-xs sm:text-sm">
+                  Home
+                </Button>
+              </Link>
             </div>
           </div>
         </div>
       </div>
 
       {/* Category Hero Section - Mobile Responsive */}
-      <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 lg:py-12">
-          <div className="flex flex-col sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-6 lg:space-x-8">
-            {category.coverImage && (
-              <div className="flex-shrink-0 w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-lg sm:rounded-xl overflow-hidden shadow-lg bg-gray-100 mx-auto sm:mx-0">
-                <img
-                  src={category.coverImage}
-                  alt={category.name}
-                  className="w-full h-full object-cover"
-                />
-              </div>
-            )}
-            <div className="flex-1 text-center sm:text-left">
-              <div className="mb-3 sm:mb-4">
-                <Badge variant="secondary" className="mb-2 sm:mb-3">Category</Badge>
-                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">{category.name}</h1>
-                {category.description && (
-                  <p className="text-sm sm:text-base lg:text-lg text-gray-600 mb-3 sm:mb-4 leading-relaxed">{category.description}</p>
-                )}
-                {category.mentorName && (
-                  <p className="text-gray-600 mb-3 sm:mb-4 flex items-center justify-center sm:justify-start">
-                    <span className="font-medium text-gray-900">Instructor:</span>
-                    <span className="ml-2">{category.mentorName}</span>
-                  </p>
-                )}
-              </div>
-              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 lg:space-x-6 text-xs sm:text-sm text-gray-600">
-                <div className="flex items-center space-x-2 justify-center sm:justify-start">
-                  <Play className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span>{filteredVideos.length} videos</span>
-                </div>
+      <div className="bg-white border-b border-gray-200">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6">
+            <div className="mb-4 sm:mb-0">
+              <img
+                src={category.coverImage || '/api/placeholder/300/200'}
+                alt={category.name}
+                className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full object-cover border-4 border-blue-100"
+              />
+            </div>
+            <div className="flex-1 min-w-0">
+              <div className="flex items-center mb-2">
+                <Badge variant="secondary" className="mr-2 text-xs">
+                  Category
+                </Badge>
                 {progress && (
-                  <div className="flex items-center space-x-2 justify-center sm:justify-start">
-                    <ProgressRing 
-                      completed={progress.completed} 
-                      total={progress.total} 
-                      size={16} 
-                      strokeWidth={2} 
-                    />
-                    <span className="hidden sm:inline">{progress.completed} of {progress.total} completed</span>
-                    <span className="sm:hidden">{progress.completed}/{progress.total}</span>
+                  <div className="text-xs text-gray-600">
+                    {progress.completed} of {progress.total} completed
                   </div>
                 )}
-                <div className="flex items-center space-x-2 justify-center sm:justify-start">
-                  <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
-                  <span className="hidden sm:inline">Learning Playlist</span>
-                  <span className="sm:hidden">Playlist</span>
+              </div>
+              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+                {category.name}
+              </h1>
+              <p className="text-gray-600 text-sm sm:text-base mb-4">
+                {category.description}
+              </p>
+              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
+                <div className="flex items-center">
+                  <Users className="h-4 w-4 mr-1" />
+                  <span>Instructor: {category.mentorName}</span>
                 </div>
+                <div className="flex items-center">
+                  <BarChart3 className="h-4 w-4 mr-1" />
+                  <span>{videos.length} video{videos.length !== 1 ? 's' : ''}</span>
+                </div>
+                {progress && (
+                  <div className="flex items-center">
+                    <div className="w-20 mr-2">
+                      <Progress value={(progress.completed / progress.total) * 100} className="h-2" />
+                    </div>
+                    <span>{Math.round((progress.completed / progress.total) * 100)}% Complete</span>
+                  </div>
+                )}
               </div>
             </div>
           </div>
         </div>
       </div>
 
-      {/* Content - Mobile Responsive */}
-      <div className="bg-gray-50 min-h-screen">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {/* Search - Mobile Responsive */}
+      {/* Content Section - Mobile Responsive */}
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
+        {/* Search Bar - Mobile Responsive */}
         <div className="mb-4 sm:mb-6">
           <div className="relative max-w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
@@ -245,79 +226,76 @@ export function CategoryPage() {
             )}
           </div>
         ) : (
-          <>
-            <div className="mb-4 text-sm text-gray-600 px-4">
-              Showing {filteredVideos.length} video{filteredVideos.length !== 1 ? 's' : ''} (Debug: Total videos loaded: {videos.length})
+          <div className="space-y-4">
+            <div className="text-sm text-gray-600 px-4">
+              Showing {filteredVideos.length} video{filteredVideos.length !== 1 ? 's' : ''}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {filteredVideos.map((video: VideoWithCategory, index: number) => (
-              <div
-                key={video.id}
-                className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
-                onClick={() => handleVideoClick(video)}
-              >
-                <div className="relative">
-                  <img
-                    src={video.thumbnailUrl || '/api/placeholder/400/225'}
-                    alt={video.title}
-                    className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
-                  />
-                  <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
-                    <div className="bg-white rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
-                      <Play className="h-6 w-6 text-blue-600" />
-                    </div>
-                  </div>
-                  <div className="absolute top-2 left-2 flex flex-col gap-1">
-                    <Badge variant="secondary" className="text-xs">
-                      #{index + 1}
-                    </Badge>
-                    <VideoCompletionBadge 
-                      isCompleted={video.isCompleted || false} 
-                      size="sm" 
-                      variant="minimal" 
+                <div
+                  key={video.id}
+                  className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
+                  onClick={() => handleVideoClick(video)}
+                >
+                  <div className="relative">
+                    <img
+                      src={video.thumbnailUrl || '/api/placeholder/400/225'}
+                      alt={video.title}
+                      className="w-full h-48 object-cover group-hover:scale-105 transition-transform duration-200"
                     />
-                  </div>
-                  {video.duration && (
-                    <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded flex items-center space-x-1 z-10">
-                      <Clock className="h-3 w-3" />
-                      <span>{video.duration}</span>
+                    <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors duration-200 flex items-center justify-center">
+                      <div className="bg-white rounded-full p-3 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+                        <Play className="h-6 w-6 text-blue-600" />
+                      </div>
                     </div>
-                  )}
-                </div>
-                <div className="p-4">
-                  <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
-                    {video.title}
-                  </h3>
-                  {video.description && (
-                    <p className="text-sm text-gray-600 line-clamp-2 mb-2">
-                      {video.description}
-                    </p>
-                  )}
-                  <div className="flex items-center justify-between text-xs text-gray-500">
-                    <span>{video.viewCount || 0} views</span>
-                    <div className="flex items-center gap-2">
-                      {video.isPublic && (
-                        <Badge variant="outline" className="text-xs">
-                          Public
-                        </Badge>
-                      )}
-                      {video.averageRating && (
-                        <div className="flex items-center text-yellow-500">
-                          <span>★ {video.averageRating.toFixed(1)}</span>
-                        </div>
-                      )}
+                    <div className="absolute top-2 left-2 flex flex-col gap-1">
+                      <Badge variant="secondary" className="text-xs">
+                        #{index + 1}
+                      </Badge>
+                      <VideoCompletionBadge 
+                        isCompleted={video.isCompleted || false} 
+                        size="sm" 
+                        variant="minimal" 
+                      />
+                    </div>
+                    {video.duration && (
+                      <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded flex items-center space-x-1 z-10">
+                        <Clock className="h-3 w-3" />
+                        <span>{video.duration}</span>
+                      </div>
+                    )}
+                  </div>
+                  <div className="p-4">
+                    <h3 className="font-semibold text-gray-900 mb-2 line-clamp-2 group-hover:text-blue-600 transition-colors">
+                      {video.title}
+                    </h3>
+                    {video.description && (
+                      <p className="text-sm text-gray-600 line-clamp-2 mb-2">
+                        {video.description}
+                      </p>
+                    )}
+                    <div className="flex items-center justify-between text-xs text-gray-500">
+                      <span>{video.viewCount || 0} views</span>
+                      <div className="flex items-center gap-2">
+                        {video.isPublic && (
+                          <Badge variant="outline" className="text-xs">
+                            Public
+                          </Badge>
+                        )}
+                        {video.averageRating && (
+                          <div className="flex items-center text-yellow-500">
+                            <span>★ {video.averageRating.toFixed(1)}</span>
+                          </div>
+                        )}
+                      </div>
                     </div>
                   </div>
                 </div>
-              </div>
-            ))}
+              ))}
             </div>
-          </>
+          </div>
         )}
-        </div>
       </div>
-
-
     </div>
   );
 }
