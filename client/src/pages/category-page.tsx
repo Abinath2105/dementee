@@ -1,19 +1,17 @@
 import { useState } from "react";
 import { useQuery } from "@tanstack/react-query";
-import { useParams, Link } from "wouter";
+import { useParams, Link, useLocation } from "wouter";
 import { ArrowLeft, Play, Clock, Search } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
-import { VideoPlayerModal } from "@/components/video-player-modal";
 import { ProgressRing } from "@/components/progress-ring";
 import { type VideoWithCategory, type AppSettings } from "@shared/schema";
 
 export function CategoryPage() {
   const { slug } = useParams<{ slug: string }>();
-  const [selectedVideo, setSelectedVideo] = useState<VideoWithCategory | null>(null);
-  const [showVideoPlayer, setShowVideoPlayer] = useState(false);
   const [searchQuery, setSearchQuery] = useState("");
+  const [, setLocation] = useLocation();
 
   // Fetch app settings for branding
   const { data: appSettings } = useQuery<AppSettings>({
@@ -74,26 +72,7 @@ export function CategoryPage() {
   });
 
   const handleVideoClick = (video: VideoWithCategory) => {
-    setSelectedVideo(video);
-    setShowVideoPlayer(true);
-  };
-
-  const handleCloseVideoPlayer = () => {
-    setSelectedVideo(null);
-    setShowVideoPlayer(false);
-  };
-
-  const handleNextVideo = () => {
-    if (!selectedVideo) return;
-    
-    const currentIndex = filteredVideos.findIndex(v => v.id === selectedVideo.id);
-    if (currentIndex >= 0 && currentIndex < filteredVideos.length - 1) {
-      const nextVideo = filteredVideos[currentIndex + 1];
-      setSelectedVideo(nextVideo);
-    } else {
-      // No more videos, close player
-      handleCloseVideoPlayer();
-    }
+    setLocation(`/video/${video.id}`);
   };
 
   if (categoryLoading) {
@@ -310,15 +289,7 @@ export function CategoryPage() {
         </div>
       </div>
 
-      {/* Video Player Modal */}
-      {selectedVideo && (
-        <VideoPlayerModal
-          video={selectedVideo}
-          isOpen={showVideoPlayer}
-          onClose={handleCloseVideoPlayer}
-          onNext={handleNextVideo}
-        />
-      )}
+
     </div>
   );
 }

@@ -11,6 +11,7 @@ import AdminLogin from "@/pages/admin-login";
 import StudentLogin from "@/pages/student-login";
 import InvitationPage from "@/pages/invitation-page";
 import { CategoryPage } from "@/pages/category-page";
+import { VideoPage } from "@/pages/video-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/category/:slug" component={CategoryPage} />
+      <ProtectedRoute path="/video/:videoId" component={VideoPage} />
       <Route path="/auth" component={StudentLogin} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/invite/:token" component={InvitationPage} />

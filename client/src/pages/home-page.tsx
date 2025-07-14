@@ -1,14 +1,13 @@
 import { useState, useEffect } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { Link } from "wouter";
+import { Link, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Play, Search, Settings, LogOut } from "lucide-react";
 import { VideoCard } from "@/components/video-card";
-import { VideoPlayerModal } from "@/components/video-player-modal";
 import { BannerCarousel } from "@/components/banner-carousel";
 import { CategoryGrid } from "@/components/category-grid";
 import { VideoCompletionBadge } from "@/components/video-completion-badge";
@@ -18,7 +17,7 @@ export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
-  const [selectedVideo, setSelectedVideo] = useState<VideoWithCategory | null>(null);
+  const [, setLocation] = useLocation();
 
   const { data: appSettings } = useQuery<AppSettings>({
     queryKey: ["/api/settings"],
@@ -222,20 +221,14 @@ export default function HomePage() {
               <VideoCard
                 key={video.id}
                 video={video}
-                onClick={() => setSelectedVideo(video)}
+                onClick={() => setLocation(`/video/${video.id}`)}
               />
             ))}
           </div>
         )}
       </div>
 
-      {selectedVideo && (
-        <VideoPlayerModal
-          video={selectedVideo}
-          isOpen={!!selectedVideo}
-          onClose={() => setSelectedVideo(null)}
-        />
-      )}
+
 
       {/* Footer - Mobile Responsive */}
       {appSettings?.footerText && (
