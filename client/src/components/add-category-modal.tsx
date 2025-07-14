@@ -59,8 +59,8 @@ export function AddCategoryModal({ isOpen, onClose }: AddCategoryModalProps) {
   const uploadMutation = useMutation({
     mutationFn: async (file: File) => {
       const formData = new FormData();
-      formData.append("file", file);
-      const response = await fetch("/api/admin/upload", {
+      formData.append("image", file);
+      const response = await fetch("/api/upload/image", {
         method: "POST",
         body: formData,
         credentials: "include",
