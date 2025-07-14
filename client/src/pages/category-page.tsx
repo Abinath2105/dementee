@@ -253,12 +253,10 @@ export function CategoryPage() {
                       <Play className="h-6 w-6 text-blue-600" />
                     </div>
                   </div>
-                  <div className="absolute top-2 left-2">
+                  <div className="absolute top-2 left-2 flex flex-col gap-1">
                     <Badge variant="secondary" className="text-xs">
                       #{index + 1}
                     </Badge>
-                  </div>
-                  <div className="absolute top-2 right-2">
                     <VideoCompletionBadge 
                       isCompleted={video.isCompleted || false} 
                       size="sm" 
@@ -266,7 +264,7 @@ export function CategoryPage() {
                     />
                   </div>
                   {video.duration && (
-                    <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded flex items-center space-x-1">
+                    <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded flex items-center space-x-1 z-10">
                       <Clock className="h-3 w-3" />
                       <span>{video.duration}</span>
                     </div>
