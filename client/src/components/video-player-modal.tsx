@@ -253,42 +253,45 @@ export function VideoPlayerModal({ video, isOpen, onClose, onNext }: VideoPlayer
           )}
           
           {/* Ratings and Comments Tabs */}
-          <Tabs defaultValue="rating" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="rating" className="text-sm">
-                <Star className="h-4 w-4 mr-1" />
-                Rating
-                {video.averageRating && (
-                  <Badge variant="secondary" className="ml-1 text-xs">
-                    {video.averageRating.toFixed(1)}
-                  </Badge>
-                )}
-              </TabsTrigger>
-              <TabsTrigger value="comments" className="text-sm">
-                <MessageCircle className="h-4 w-4 mr-1" />
-                Comments
-                {video.commentsCount && (
-                  <Badge variant="secondary" className="ml-1 text-xs">
-                    {video.commentsCount}
-                  </Badge>
-                )}
-              </TabsTrigger>
-            </TabsList>
-            
-            <TabsContent value="rating" className="mt-4">
-              <VideoRating
-                video={video}
-                userRating={video.userRating}
-                onRatingSubmit={() => {
-                  queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
-                }}
-              />
-            </TabsContent>
-            
-            <TabsContent value="comments" className="mt-4">
-              <VideoComments video={video} />
-            </TabsContent>
-          </Tabs>
+          <div className="mt-4 border-t pt-4">
+            <h3 className="text-lg font-semibold mb-4">Ratings & Comments</h3>
+            <Tabs defaultValue="rating" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="rating" className="text-sm">
+                  <Star className="h-4 w-4 mr-1" />
+                  Rating
+                  {video.averageRating && (
+                    <Badge variant="secondary" className="ml-1 text-xs">
+                      {video.averageRating.toFixed(1)}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+                <TabsTrigger value="comments" className="text-sm">
+                  <MessageCircle className="h-4 w-4 mr-1" />
+                  Comments
+                  {video.commentsCount && (
+                    <Badge variant="secondary" className="ml-1 text-xs">
+                      {video.commentsCount}
+                    </Badge>
+                  )}
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="rating" className="mt-4">
+                <VideoRating
+                  video={video}
+                  userRating={video.userRating}
+                  onRatingSubmit={() => {
+                    queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+                  }}
+                />
+              </TabsContent>
+              
+              <TabsContent value="comments" className="mt-4">
+                <VideoComments video={video} />
+              </TabsContent>
+            </Tabs>
+          </div>
         </div>
       </DialogContent>
     </Dialog>
