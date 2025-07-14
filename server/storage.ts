@@ -1,6 +1,6 @@
-import { users, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, videoCompletions, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess, type VideoCompletion, type InsertVideoCompletion } from "@shared/schema";
+import { users, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, videoCompletions, videoBookmarks, watchHistory, userSessions, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess, type VideoCompletion, type InsertVideoCompletion, type VideoBookmark, type InsertVideoBookmark, type WatchHistory, type InsertWatchHistory, type UserSession, type InsertUserSession, type UserLearningStats } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, sql, and, or, ilike } from "drizzle-orm";
+import { eq, desc, sql, and, or, ilike, isNotNull } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -58,6 +58,23 @@ export interface IStorage {
   markVideoIncomplete(userId: number, videoId: number): Promise<void>;
   getUserVideoCompletions(userId: number): Promise<VideoCompletion[]>;
   getCategoryProgress(userId: number, categoryId: number): Promise<{ completed: number; total: number }>;
+
+  // Video bookmark management
+  bookmarkVideo(userId: number, videoId: number): Promise<VideoBookmark>;
+  removeBookmark(userId: number, videoId: number): Promise<void>;
+  getUserBookmarks(userId: number): Promise<VideoBookmark[]>;
+
+  // Watch history tracking
+  recordWatchHistory(watchData: InsertWatchHistory): Promise<WatchHistory>;
+  getUserWatchHistory(userId: number, limit?: number): Promise<WatchHistory[]>;
+  
+  // User session management
+  startUserSession(sessionData: InsertUserSession): Promise<UserSession>;
+  endUserSession(sessionId: number, totalWatchTime: number): Promise<void>;
+  getUserSessions(userId: number): Promise<UserSession[]>;
+
+  // User learning analytics
+  getUserLearningStats(userId: number): Promise<UserLearningStats>;
 
   // App settings management
   getAppSettings(): Promise<AppSettings>;
@@ -525,11 +542,33 @@ export class DatabaseStorage implements IStorage {
       })
       .from(videoViews);
 
+    // Get active user counts
+    const now = new Date();
+    const dayAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
+    const weekAgo = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000);
+    const monthAgo = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+
+    // Since watchHistory might be empty initially, provide default values
+    const dailyActiveUsers = [{ count: 0 }];
+    const weeklyActiveUsers = [{ count: 0 }];
+    const monthlyActiveUsers = [{ count: 0 }];
+    const popularDevices: Array<{ deviceInfo: string; count: number }> = [];
+    
+    const recentSignups = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(users)
+      .where(sql`${users.createdAt} >= ${monthAgo}`);
+
     return {
       totalVideos: videoStats?.totalVideos || 0,
       totalUsers: userStats?.totalUsers || 0,
       totalViews: viewStats?.totalViews || 0,
-      totalWatchTime: "0h", // This would require duration calculation
+      totalWatchTime: "0h", 
+      dailyActiveUsers: dailyActiveUsers[0]?.count || 0,
+      weeklyActiveUsers: weeklyActiveUsers[0]?.count || 0,
+      monthlyActiveUsers: monthlyActiveUsers[0]?.count || 0,
+      popularDevices: popularDevices,
+      recentSignups: recentSignups[0]?.count || 0,
     };
   }
 
@@ -577,6 +616,142 @@ export class DatabaseStorage implements IStorage {
     return {
       total: totalVideos[0]?.count || 0,
       completed: completedVideos[0]?.count || 0,
+    };
+  }
+
+  // Video bookmark management methods
+  async bookmarkVideo(userId: number, videoId: number): Promise<VideoBookmark> {
+    const [bookmark] = await db
+      .insert(videoBookmarks)
+      .values({ userId, videoId })
+      .onConflictDoNothing()
+      .returning();
+    return bookmark;
+  }
+
+  async removeBookmark(userId: number, videoId: number): Promise<void> {
+    await db
+      .delete(videoBookmarks)
+      .where(and(eq(videoBookmarks.userId, userId), eq(videoBookmarks.videoId, videoId)));
+  }
+
+  async getUserBookmarks(userId: number): Promise<VideoBookmark[]> {
+    return await db
+      .select()
+      .from(videoBookmarks)
+      .where(eq(videoBookmarks.userId, userId))
+      .orderBy(desc(videoBookmarks.bookmarkedAt));
+  }
+
+  // Watch history tracking methods
+  async recordWatchHistory(watchData: InsertWatchHistory): Promise<WatchHistory> {
+    const [history] = await db
+      .insert(watchHistory)
+      .values(watchData)
+      .returning();
+    return history;
+  }
+
+  async getUserWatchHistory(userId: number, limit: number = 50): Promise<WatchHistory[]> {
+    return await db
+      .select()
+      .from(watchHistory)
+      .where(eq(watchHistory.userId, userId))
+      .orderBy(desc(watchHistory.watchedAt))
+      .limit(limit);
+  }
+
+  // User session management methods
+  async startUserSession(sessionData: InsertUserSession): Promise<UserSession> {
+    const [session] = await db
+      .insert(userSessions)
+      .values(sessionData)
+      .returning();
+    return session;
+  }
+
+  async endUserSession(sessionId: number, totalWatchTime: number): Promise<void> {
+    await db
+      .update(userSessions)
+      .set({ 
+        sessionEnd: new Date(),
+        totalWatchTime 
+      })
+      .where(eq(userSessions.id, sessionId));
+  }
+
+  async getUserSessions(userId: number): Promise<UserSession[]> {
+    return await db
+      .select()
+      .from(userSessions)
+      .where(eq(userSessions.userId, userId))
+      .orderBy(desc(userSessions.sessionStart));
+  }
+
+  // User learning analytics method
+  async getUserLearningStats(userId: number): Promise<UserLearningStats> {
+    // Get total videos watched (unique videos from watch history)
+    const uniqueVideosWatched = await db
+      .select({ count: sql<number>`COUNT(DISTINCT ${watchHistory.videoId})::int` })
+      .from(watchHistory)
+      .where(eq(watchHistory.userId, userId));
+
+    // Get total watch time
+    const totalWatchTimeQuery = await db
+      .select({ total: sql<number>`COALESCE(SUM(${watchHistory.watchDuration}), 0)::int` })
+      .from(watchHistory)
+      .where(eq(watchHistory.userId, userId));
+
+    // Get completed videos count
+    const completedVideosCount = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(videoCompletions)
+      .where(eq(videoCompletions.userId, userId));
+
+    // Get bookmarked videos count
+    const bookmarkedVideosCount = await db
+      .select({ count: sql<number>`COUNT(*)::int` })
+      .from(videoBookmarks)
+      .where(eq(videoBookmarks.userId, userId));
+
+    // Get last active date
+    const lastActiveQuery = await db
+      .select({ lastActive: sql<Date>`MAX(${watchHistory.watchedAt})` })
+      .from(watchHistory)
+      .where(eq(watchHistory.userId, userId));
+
+    // Get category progress
+    const categoryProgressQuery = await db
+      .select({
+        categoryId: videos.categoryId,
+        categoryName: categories.name,
+        totalVideos: sql<number>`COUNT(DISTINCT ${videos.id})::int`,
+        completedVideos: sql<number>`COUNT(DISTINCT ${videoCompletions.videoId})::int`,
+      })
+      .from(videos)
+      .leftJoin(categories, eq(videos.categoryId, categories.id))
+      .leftJoin(videoCompletions, and(
+        eq(videos.id, videoCompletions.videoId),
+        eq(videoCompletions.userId, userId)
+      ))
+      .where(isNotNull(videos.categoryId))
+      .groupBy(videos.categoryId, categories.name);
+
+    return {
+      totalVideosWatched: uniqueVideosWatched[0]?.count || 0,
+      totalWatchTime: totalWatchTimeQuery[0]?.total || 0,
+      completedVideos: completedVideosCount[0]?.count || 0,
+      bookmarkedVideos: bookmarkedVideosCount[0]?.count || 0,
+      currentStreak: 0, // TODO: Implement streak calculation
+      lastActiveDate: lastActiveQuery[0]?.lastActive || null,
+      preferredDevice: null, // TODO: Implement based on session data
+      categoriesProgress: categoryProgressQuery.map(row => ({
+        categoryId: row.categoryId!,
+        categoryName: row.categoryName || 'Unknown',
+        completed: row.completedVideos,
+        total: row.totalVideos,
+        percentage: row.totalVideos > 0 ? Math.round((row.completedVideos / row.totalVideos) * 100) : 0,
+      })),
     };
   }
 }

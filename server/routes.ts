@@ -292,6 +292,100 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Video bookmark routes
+  app.post("/api/videos/:id/bookmark", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const videoId = parseInt(req.params.id);
+      const userId = req.user!.id;
+
+      await storage.bookmarkVideo(userId, videoId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error bookmarking video:", error);
+      res.status(500).json({ error: "Failed to bookmark video" });
+    }
+  });
+
+  app.delete("/api/videos/:id/bookmark", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const videoId = parseInt(req.params.id);
+      const userId = req.user!.id;
+
+      await storage.removeBookmark(userId, videoId);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error removing bookmark:", error);
+      res.status(500).json({ error: "Failed to remove bookmark" });
+    }
+  });
+
+  // Watch history routes
+  app.post("/api/watch-history", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const { videoId, watchDuration, progressPercentage, deviceInfo } = req.body;
+      const userId = req.user!.id;
+      const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+
+      await storage.recordWatchHistory({
+        userId,
+        videoId,
+        watchDuration,
+        progressPercentage,
+        deviceInfo,
+        ipAddress,
+      });
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Error recording watch history:", error);
+      res.status(500).json({ error: "Failed to record watch history" });
+    }
+  });
+
+  app.get("/api/watch-history", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const userId = req.user!.id;
+      const limit = parseInt(req.query.limit as string) || 50;
+
+      const history = await storage.getUserWatchHistory(userId, limit);
+      res.json(history);
+    } catch (error) {
+      console.error("Error fetching watch history:", error);
+      res.status(500).json({ error: "Failed to fetch watch history" });
+    }
+  });
+
+  // User learning analytics
+  app.get("/api/user/learning-stats", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const userId = req.user!.id;
+      const stats = await storage.getUserLearningStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Error fetching learning stats:", error);
+      res.status(500).json({ error: "Failed to fetch learning stats" });
+    }
+  });
+
   app.get("/api/categories/:categoryId/progress", async (req, res) => {
     try {
       if (!req.isAuthenticated()) {

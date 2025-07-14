@@ -105,6 +105,39 @@ export const videoCompletions = pgTable("video_completions", {
   uniqueUserVideo: unique().on(table.userId, table.videoId),
 }));
 
+// Video bookmarks for student tracking
+export const videoBookmarks = pgTable("video_bookmarks", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  videoId: integer("video_id").references(() => videos.id).notNull(),
+  bookmarkedAt: timestamp("bookmarked_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserVideo: unique().on(table.userId, table.videoId),
+}));
+
+// Watch history tracking
+export const watchHistory = pgTable("watch_history", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  videoId: integer("video_id").references(() => videos.id).notNull(),
+  watchedAt: timestamp("watched_at").defaultNow().notNull(),
+  watchDuration: integer("watch_duration").notNull().default(0), // in seconds
+  progressPercentage: integer("progress_percentage").notNull().default(0), // 0-100
+  deviceInfo: text("device_info"), // User agent or device type
+  ipAddress: text("ip_address"), // For tracking device/location
+});
+
+// User session tracking for admin monitoring
+export const userSessions = pgTable("user_sessions", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  sessionStart: timestamp("session_start").defaultNow().notNull(),
+  sessionEnd: timestamp("session_end"),
+  deviceInfo: text("device_info"),
+  ipAddress: text("ip_address"),
+  totalWatchTime: integer("total_watch_time").notNull().default(0), // in seconds
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   videoViews: many(videoViews),
@@ -175,6 +208,35 @@ export const userInvitationsRelations = relations(userInvitations, ({ one }) => 
   }),
 }));
 
+export const videoBookmarksRelations = relations(videoBookmarks, ({ one }) => ({
+  user: one(users, {
+    fields: [videoBookmarks.userId],
+    references: [users.id],
+  }),
+  video: one(videos, {
+    fields: [videoBookmarks.videoId],
+    references: [videos.id],
+  }),
+}));
+
+export const watchHistoryRelations = relations(watchHistory, ({ one }) => ({
+  user: one(users, {
+    fields: [watchHistory.userId],
+    references: [users.id],
+  }),
+  video: one(videos, {
+    fields: [watchHistory.videoId],
+    references: [videos.id],
+  }),
+}));
+
+export const userSessionsRelations = relations(userSessions, ({ one }) => ({
+  user: one(users, {
+    fields: [userSessions.userId],
+    references: [users.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -240,6 +302,27 @@ export const insertVideoCompletionSchema = createInsertSchema(videoCompletions).
   watchTime: true,
 });
 
+export const insertVideoBookmarkSchema = createInsertSchema(videoBookmarks).pick({
+  userId: true,
+  videoId: true,
+});
+
+export const insertWatchHistorySchema = createInsertSchema(watchHistory).pick({
+  userId: true,
+  videoId: true,
+  watchDuration: true,
+  progressPercentage: true,
+  deviceInfo: true,
+  ipAddress: true,
+});
+
+export const insertUserSessionSchema = createInsertSchema(userSessions).pick({
+  userId: true,
+  deviceInfo: true,
+  ipAddress: true,
+  totalWatchTime: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -261,11 +344,40 @@ export type InsertUserCategoryAccess = z.infer<typeof insertUserCategoryAccessSc
 export type VideoCompletion = typeof videoCompletions.$inferSelect;
 export type InsertVideoCompletion = z.infer<typeof insertVideoCompletionSchema>;
 
+export type VideoBookmark = typeof videoBookmarks.$inferSelect;
+export type InsertVideoBookmark = z.infer<typeof insertVideoBookmarkSchema>;
+
+export type WatchHistory = typeof watchHistory.$inferSelect;
+export type InsertWatchHistory = z.infer<typeof insertWatchHistorySchema>;
+
+export type UserSession = typeof userSessions.$inferSelect;
+export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
+
 // Extended types for API responses
 export type VideoWithCategory = Video & {
   category: Category | null;
   viewCount: number;
   isCompleted?: boolean;
+  isBookmarked?: boolean;
+  watchProgress?: number; // 0-100 percentage
+  lastWatchedAt?: Date;
+};
+
+export type UserLearningStats = {
+  totalVideosWatched: number;
+  totalWatchTime: number; // in seconds
+  completedVideos: number;
+  bookmarkedVideos: number;
+  currentStreak: number;
+  lastActiveDate: Date | null;
+  preferredDevice: string | null;
+  categoriesProgress: Array<{
+    categoryId: number;
+    categoryName: string;
+    completed: number;
+    total: number;
+    percentage: number;
+  }>;
 };
 
 export type AdminStats = {
@@ -273,4 +385,12 @@ export type AdminStats = {
   totalUsers: number;
   totalViews: number;
   totalWatchTime: string;
+  dailyActiveUsers: number;
+  weeklyActiveUsers: number;
+  monthlyActiveUsers: number;
+  popularDevices: Array<{
+    deviceInfo: string;
+    count: number;
+  }>;
+  recentSignups: number;
 };
