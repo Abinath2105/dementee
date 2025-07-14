@@ -47,10 +47,7 @@ export function VideoComments({ video }: VideoCommentsProps) {
 
   const commentMutation = useMutation({
     mutationFn: async (data: { content: string; parentId?: number }) => {
-      return await apiRequest(`/api/videos/${video.id}/comments`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", `/api/videos/${video.id}/comments`, data);
     },
     onSuccess: () => {
       toast({

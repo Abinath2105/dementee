@@ -25,10 +25,7 @@ export function VideoRating({ video, userRating, onRatingSubmit }: VideoRatingPr
 
   const ratingMutation = useMutation({
     mutationFn: async (data: { rating: number; review?: string }) => {
-      return await apiRequest(`/api/videos/${video.id}/rating`, {
-        method: "POST",
-        body: JSON.stringify(data),
-      });
+      return await apiRequest("POST", `/api/videos/${video.id}/rating`, data);
     },
     onSuccess: () => {
       toast({
