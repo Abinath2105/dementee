@@ -112,35 +112,17 @@ app.use((req, res, next) => {
       serveStatic(app);
     }
 
-    // Use PORT environment variable (Cloud Run requirement) or fallback to 5000
-    const defaultPort = parseInt(process.env.PORT || '5000', 10);
+    // Use PORT environment variable or fallback to 5000
+    // In Replit, we must use the exact PORT provided by the environment
+    const port = parseInt(process.env.PORT || '5000', 10);
     
-    // Helper function to find an available port
-    const findAvailablePort = (startPort: number): Promise<number> => {
-      return new Promise((resolve, reject) => {
-        const testServer = server.listen(startPort, '0.0.0.0', () => {
-          const actualPort = (testServer.address() as any)?.port;
-          testServer.close(() => resolve(actualPort));
-        });
-        
-        testServer.on('error', (err: any) => {
-          if (err.code === 'EADDRINUSE') {
-            findAvailablePort(startPort + 1).then(resolve).catch(reject);
-          } else {
-            reject(err);
-          }
-        });
-      });
-    };
-
-    // Find and use an available port
-    const port = await findAvailablePort(defaultPort);
-    
-    server.listen({
-      port,
-      host: "0.0.0.0",
-    }, () => {
+    server.listen(port, "0.0.0.0", () => {
       log(`serving on port ${port} in ${process.env.NODE_ENV} mode`);
+      
+      // Log additional connection info for debugging
+      if (process.env.REPL_SLUG) {
+        log(`Replit app should be accessible at: https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`);
+      }
     });
 
     // Graceful shutdown handling
