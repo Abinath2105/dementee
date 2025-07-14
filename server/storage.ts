@@ -667,8 +667,31 @@ export class DatabaseStorage implements IStorage {
 
   async getUserBookmarks(userId: number): Promise<VideoBookmark[]> {
     return await db
-      .select()
+      .select({
+        id: videoBookmarks.id,
+        userId: videoBookmarks.userId,
+        videoId: videoBookmarks.videoId,
+        bookmarkedAt: videoBookmarks.bookmarkedAt,
+        video: {
+          id: videos.id,
+          title: videos.title,
+          description: videos.description,
+          thumbnailUrl: videos.thumbnailUrl,
+          youtubeId: videos.youtubeId,
+          duration: videos.duration,
+          categoryId: videos.categoryId,
+          isPublic: videos.isPublic,
+          createdAt: videos.createdAt,
+          category: {
+            id: categories.id,
+            name: categories.name,
+            slug: categories.slug,
+          },
+        },
+      })
       .from(videoBookmarks)
+      .innerJoin(videos, eq(videoBookmarks.videoId, videos.id))
+      .leftJoin(categories, eq(videos.categoryId, categories.id))
       .where(eq(videoBookmarks.userId, userId))
       .orderBy(desc(videoBookmarks.bookmarkedAt));
   }

@@ -453,20 +453,36 @@ export function StudentDetail() {
                   </div>
                 ) : (
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    {bookmarks.map((bookmark: any) => (
-                      <div key={bookmark.id} className="border rounded-lg p-4">
-                        <img 
-                          src={bookmark.video.thumbnailUrl || '/api/placeholder/300/200'} 
-                          alt={bookmark.video.title}
-                          className="w-full h-32 object-cover rounded mb-2"
-                        />
-                        <h4 className="font-medium line-clamp-2 mb-1">{bookmark.video.title}</h4>
-                        <p className="text-sm text-gray-600 mb-2">{bookmark.video.category?.name}</p>
-                        <p className="text-xs text-gray-500">
-                          Bookmarked on {formatDate(bookmark.createdAt)}
-                        </p>
-                      </div>
-                    ))}
+                    {bookmarks.map((bookmark: any) => {
+                      if (!bookmark.video) {
+                        return (
+                          <div key={bookmark.id} className="border rounded-lg p-4">
+                            <div className="w-full h-32 bg-gray-200 rounded mb-2 flex items-center justify-center">
+                              <span className="text-gray-500">Video not found</span>
+                            </div>
+                            <h4 className="font-medium text-gray-500">Video unavailable</h4>
+                            <p className="text-xs text-gray-500">
+                              Bookmarked on {formatDate(bookmark.createdAt)}
+                            </p>
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <div key={bookmark.id} className="border rounded-lg p-4">
+                          <img 
+                            src={bookmark.video.thumbnailUrl || '/api/placeholder/300/200'} 
+                            alt={bookmark.video.title}
+                            className="w-full h-32 object-cover rounded mb-2"
+                          />
+                          <h4 className="font-medium line-clamp-2 mb-1">{bookmark.video.title}</h4>
+                          <p className="text-sm text-gray-600 mb-2">{bookmark.video.category?.name}</p>
+                          <p className="text-xs text-gray-500">
+                            Bookmarked on {formatDate(bookmark.createdAt)}
+                          </p>
+                        </div>
+                      );
+                    })}
                   </div>
                 )}
               </CardContent>
