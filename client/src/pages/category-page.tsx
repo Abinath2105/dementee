@@ -72,6 +72,16 @@ export function CategoryPage() {
     );
   });
 
+  // Debug logging
+  console.log('Category page debug:', {
+    categoryId: category?.id,
+    videosLength: videos.length,
+    filteredVideosLength: filteredVideos.length,
+    searchQuery,
+    videosLoading,
+    videos: videos.slice(0, 2) // Show first 2 videos for debugging
+  });
+
   const handleVideoClick = (video: VideoWithCategory) => {
     setLocation(`/video/${video.id}`);
   };
@@ -237,7 +247,7 @@ export function CategoryPage() {
         ) : (
           <>
             <div className="mb-4 text-sm text-gray-600 px-4">
-              Showing {filteredVideos.length} video{filteredVideos.length !== 1 ? 's' : ''}
+              Showing {filteredVideos.length} video{filteredVideos.length !== 1 ? 's' : ''} (Debug: Total videos loaded: {videos.length})
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
               {filteredVideos.map((video: VideoWithCategory, index: number) => (
