@@ -291,6 +291,7 @@ export class DatabaseStorage implements IStorage {
         categoryId: videos.categoryId,
         tags: videos.tags,
         views: videos.views,
+        isPublic: videos.isPublic,
         createdAt: videos.createdAt,
         updatedAt: videos.updatedAt,
         category: categories,

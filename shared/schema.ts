@@ -166,17 +166,19 @@ export const userSessions = pgTable("user_sessions", {
 export const usersRelations = relations(users, ({ many, one }) => ({
   videoViews: many(videoViews),
   videoCompletions: many(videoCompletions),
-  invitedUsers: many(userInvitations, { foreignKey: userInvitations.invitedBy }),
-  categoryAccess: many(userCategoryAccess, { foreignKey: userCategoryAccess.userId }),
+  invitedUsers: many(userInvitations, { relationName: "invitedUsers" }),
+  categoryAccess: many(userCategoryAccess, { relationName: "categoryAccess" }),
   invitedBy: one(users, {
     fields: [users.invitedBy],
     references: [users.id],
   }),
+  videoRatings: many(videoRatings),
+  videoComments: many(videoComments),
 }));
 
 export const categoriesRelations = relations(categories, ({ many }) => ({
   videos: many(videos),
-  userAccess: many(userCategoryAccess, { foreignKey: userCategoryAccess.categoryId }),
+  userAccess: many(userCategoryAccess, { relationName: "userAccess" }),
 }));
 
 export const userCategoryAccessRelations = relations(userCategoryAccess, ({ one }) => ({
