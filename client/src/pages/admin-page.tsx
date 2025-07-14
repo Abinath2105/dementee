@@ -696,6 +696,15 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell>
                               <div className="flex space-x-2">
+                                <Link href={`/admin/student/${userItem.id}`}>
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    title="View student analytics"
+                                  >
+                                    <Eye className="h-4 w-4" />
+                                  </Button>
+                                </Link>
                                 <Button
                                   size="sm"
                                   variant="outline"

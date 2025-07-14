@@ -257,6 +257,13 @@ export function CategoryPage() {
                       #{index + 1}
                     </Badge>
                   </div>
+                  {video.isCompleted && (
+                    <div className="absolute top-2 right-2">
+                      <Badge variant="default" className="text-xs bg-green-600 text-white">
+                        ✓ Complete
+                      </Badge>
+                    </div>
+                  )}
                   {video.duration && (
                     <div className="absolute bottom-2 right-2 bg-black/80 text-white text-xs px-2 py-1 rounded flex items-center space-x-1">
                       <Clock className="h-3 w-3" />
@@ -275,11 +282,18 @@ export function CategoryPage() {
                   )}
                   <div className="flex items-center justify-between text-xs text-gray-500">
                     <span>{video.viewCount || 0} views</span>
-                    {video.isPublic && (
-                      <Badge variant="outline" className="text-xs">
-                        Public
-                      </Badge>
-                    )}
+                    <div className="flex items-center gap-2">
+                      {video.isPublic && (
+                        <Badge variant="outline" className="text-xs">
+                          Public
+                        </Badge>
+                      )}
+                      {video.averageRating && (
+                        <div className="flex items-center text-yellow-500">
+                          <span>★ {video.averageRating.toFixed(1)}</span>
+                        </div>
+                      )}
+                    </div>
                   </div>
                 </div>
               </div>

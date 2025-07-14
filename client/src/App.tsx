@@ -12,6 +12,8 @@ import StudentLogin from "@/pages/student-login";
 import InvitationPage from "@/pages/invitation-page";
 import { CategoryPage } from "@/pages/category-page";
 import { VideoPage } from "@/pages/video-page";
+import { StudentDashboard } from "@/pages/student-dashboard";
+import { StudentDetail } from "@/pages/student-detail";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -19,6 +21,8 @@ function Router() {
     <Switch>
       <ProtectedRoute path="/" component={HomePage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
+      <ProtectedRoute path="/dashboard" component={StudentDashboard} />
+      <ProtectedRoute path="/admin/student/:id" component={StudentDetail} />
       <ProtectedRoute path="/category/:slug" component={CategoryPage} />
       <ProtectedRoute path="/video/:videoId" component={VideoPage} />
       <Route path="/auth" component={StudentLogin} />

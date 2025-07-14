@@ -492,6 +492,158 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // User learning analytics routes
+  app.get("/api/user/learning-stats", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const stats = await storage.getUserLearningStats(req.user.id);
+      res.json(stats);
+    } catch (error) {
+      console.error("User learning stats error:", error);
+      res.status(500).json({ message: "Failed to get learning stats" });
+    }
+  });
+
+  app.get("/api/user/bookmarks", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const bookmarks = await storage.getUserBookmarks(req.user.id);
+      res.json(bookmarks);
+    } catch (error) {
+      console.error("User bookmarks error:", error);
+      res.status(500).json({ message: "Failed to get bookmarks" });
+    }
+  });
+
+  app.get("/api/user/watch-history", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const history = await storage.getUserWatchHistory(req.user.id);
+      res.json(history);
+    } catch (error) {
+      console.error("User watch history error:", error);
+      res.status(500).json({ message: "Failed to get watch history" });
+    }
+  });
+
+  app.get("/api/user/sessions", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const sessions = await storage.getUserSessions(req.user.id);
+      res.json(sessions);
+    } catch (error) {
+      console.error("User sessions error:", error);
+      res.status(500).json({ message: "Failed to get sessions" });
+    }
+  });
+
+  // Admin user analytics routes
+  app.get("/api/admin/users/:id", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const userId = parseInt(req.params.id);
+      const user = await storage.getUser(userId);
+      if (!user) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      res.json(user);
+    } catch (error) {
+      console.error("Admin get user error:", error);
+      res.status(500).json({ message: "Failed to get user" });
+    }
+  });
+
+  app.get("/api/admin/users/:id/learning-stats", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const userId = parseInt(req.params.id);
+      const stats = await storage.getUserLearningStats(userId);
+      res.json(stats);
+    } catch (error) {
+      console.error("Admin user learning stats error:", error);
+      res.status(500).json({ message: "Failed to get user learning stats" });
+    }
+  });
+
+  app.get("/api/admin/users/:id/bookmarks", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const userId = parseInt(req.params.id);
+      const bookmarks = await storage.getUserBookmarks(userId);
+      res.json(bookmarks);
+    } catch (error) {
+      console.error("Admin user bookmarks error:", error);
+      res.status(500).json({ message: "Failed to get user bookmarks" });
+    }
+  });
+
+  app.get("/api/admin/users/:id/watch-history", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const userId = parseInt(req.params.id);
+      const history = await storage.getUserWatchHistory(userId);
+      res.json(history);
+    } catch (error) {
+      console.error("Admin user watch history error:", error);
+      res.status(500).json({ message: "Failed to get user watch history" });
+    }
+  });
+
+  app.get("/api/admin/users/:id/sessions", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const userId = parseInt(req.params.id);
+      const sessions = await storage.getUserSessions(userId);
+      res.json(sessions);
+    } catch (error) {
+      console.error("Admin user sessions error:", error);
+      res.status(500).json({ message: "Failed to get user sessions" });
+    }
+  });
+
+  app.get("/api/admin/users/:id/completions", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const userId = parseInt(req.params.id);
+      const completions = await storage.getUserVideoCompletions(userId);
+      res.json(completions);
+    } catch (error) {
+      console.error("Admin user completions error:", error);
+      res.status(500).json({ message: "Failed to get user completions" });
+    }
+  });
+
   // Test email endpoint (admin only)
   app.post("/api/test-email", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {

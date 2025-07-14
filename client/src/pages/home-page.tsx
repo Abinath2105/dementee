@@ -69,6 +69,14 @@ export default function HomePage() {
               </span>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              {!user?.isAdmin && (
+                <Link href="/dashboard">
+                  <Button variant="outline" size="sm" className="hidden sm:flex">
+                    <Settings className="h-4 w-4 mr-2" />
+                    Dashboard
+                  </Button>
+                </Link>
+              )}
               {user?.isAdmin && (
                 <Link href="/admin">
                   <Button variant="outline" size="sm" className="hidden sm:flex">
