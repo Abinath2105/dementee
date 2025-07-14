@@ -127,6 +127,30 @@ export const watchHistory = pgTable("watch_history", {
   ipAddress: text("ip_address"), // For tracking device/location
 });
 
+// Video ratings for student feedback
+export const videoRatings = pgTable("video_ratings", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  videoId: integer("video_id").references(() => videos.id).notNull(),
+  rating: integer("rating").notNull(), // 1-5 stars
+  review: text("review"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserVideo: unique().on(table.userId, table.videoId),
+}));
+
+// Video comments for discussion
+export const videoComments = pgTable("video_comments", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  videoId: integer("video_id").references(() => videos.id).notNull(),
+  content: text("content").notNull(),
+  parentId: integer("parent_id").references(() => videoComments.id), // For replies
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // User session tracking for admin monitoring
 export const userSessions = pgTable("user_sessions", {
   id: serial("id").primaryKey(),
@@ -177,6 +201,10 @@ export const videosRelations = relations(videos, ({ one, many }) => ({
   }),
   views: many(videoViews),
   completions: many(videoCompletions),
+  bookmarks: many(videoBookmarks),
+  watchHistory: many(watchHistory),
+  ratings: many(videoRatings),
+  comments: many(videoComments),
 }));
 
 export const videoViewsRelations = relations(videoViews, ({ one }) => ({
@@ -217,6 +245,33 @@ export const videoBookmarksRelations = relations(videoBookmarks, ({ one }) => ({
     fields: [videoBookmarks.videoId],
     references: [videos.id],
   }),
+}));
+
+export const videoRatingsRelations = relations(videoRatings, ({ one }) => ({
+  user: one(users, {
+    fields: [videoRatings.userId],
+    references: [users.id],
+  }),
+  video: one(videos, {
+    fields: [videoRatings.videoId],
+    references: [videos.id],
+  }),
+}));
+
+export const videoCommentsRelations = relations(videoComments, ({ one, many }) => ({
+  user: one(users, {
+    fields: [videoComments.userId],
+    references: [users.id],
+  }),
+  video: one(videos, {
+    fields: [videoComments.videoId],
+    references: [videos.id],
+  }),
+  parent: one(videoComments, {
+    fields: [videoComments.parentId],
+    references: [videoComments.id],
+  }),
+  replies: many(videoComments),
 }));
 
 export const watchHistoryRelations = relations(watchHistory, ({ one }) => ({
@@ -323,6 +378,20 @@ export const insertUserSessionSchema = createInsertSchema(userSessions).pick({
   totalWatchTime: true,
 });
 
+export const insertVideoRatingSchema = createInsertSchema(videoRatings).pick({
+  userId: true,
+  videoId: true,
+  rating: true,
+  review: true,
+});
+
+export const insertVideoCommentSchema = createInsertSchema(videoComments).pick({
+  userId: true,
+  videoId: true,
+  content: true,
+  parentId: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -353,6 +422,12 @@ export type InsertWatchHistory = z.infer<typeof insertWatchHistorySchema>;
 export type UserSession = typeof userSessions.$inferSelect;
 export type InsertUserSession = z.infer<typeof insertUserSessionSchema>;
 
+export type VideoRating = typeof videoRatings.$inferSelect;
+export type InsertVideoRating = z.infer<typeof insertVideoRatingSchema>;
+
+export type VideoComment = typeof videoComments.$inferSelect;
+export type InsertVideoComment = z.infer<typeof insertVideoCommentSchema>;
+
 // Extended types for API responses
 export type VideoWithCategory = Video & {
   category: Category | null;
@@ -361,6 +436,10 @@ export type VideoWithCategory = Video & {
   isBookmarked?: boolean;
   watchProgress?: number; // 0-100 percentage
   lastWatchedAt?: Date;
+  averageRating?: number; // 1-5 stars
+  totalRatings?: number;
+  userRating?: number; // Current user's rating
+  commentsCount?: number;
 };
 
 export type UserLearningStats = {

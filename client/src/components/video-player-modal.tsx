@@ -3,8 +3,11 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
-import { CheckCircle, Eye, ArrowRight, Bookmark, BookmarkCheck, History } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { CheckCircle, Eye, ArrowRight, Bookmark, BookmarkCheck, History, Star, MessageCircle } from "lucide-react";
 import { VideoCompletionBadge } from "@/components/video-completion-badge";
+import { VideoRating } from "@/components/video-rating";
+import { VideoComments } from "@/components/video-comments";
 import { useToast } from "@/hooks/use-toast";
 import type { VideoWithCategory } from "@shared/schema";
 
@@ -248,6 +251,44 @@ export function VideoPlayerModal({ video, isOpen, onClose, onNext }: VideoPlayer
               </div>
             </div>
           )}
+          
+          {/* Ratings and Comments Tabs */}
+          <Tabs defaultValue="rating" className="w-full">
+            <TabsList className="grid w-full grid-cols-2">
+              <TabsTrigger value="rating" className="text-sm">
+                <Star className="h-4 w-4 mr-1" />
+                Rating
+                {video.averageRating && (
+                  <Badge variant="secondary" className="ml-1 text-xs">
+                    {video.averageRating.toFixed(1)}
+                  </Badge>
+                )}
+              </TabsTrigger>
+              <TabsTrigger value="comments" className="text-sm">
+                <MessageCircle className="h-4 w-4 mr-1" />
+                Comments
+                {video.commentsCount && (
+                  <Badge variant="secondary" className="ml-1 text-xs">
+                    {video.commentsCount}
+                  </Badge>
+                )}
+              </TabsTrigger>
+            </TabsList>
+            
+            <TabsContent value="rating" className="mt-4">
+              <VideoRating
+                video={video}
+                userRating={video.userRating}
+                onRatingSubmit={() => {
+                  queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+                }}
+              />
+            </TabsContent>
+            
+            <TabsContent value="comments" className="mt-4">
+              <VideoComments video={video} />
+            </TabsContent>
+          </Tabs>
         </div>
       </DialogContent>
     </Dialog>

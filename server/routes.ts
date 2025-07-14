@@ -256,6 +256,80 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Video rating routes
+  app.post("/api/videos/:id/rating", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const videoId = parseInt(req.params.id);
+      const userId = req.user.id;
+      const { rating, review } = req.body;
+
+      if (!rating || rating < 1 || rating > 5) {
+        return res.status(400).json({ message: "Rating must be between 1 and 5" });
+      }
+
+      const ratingData = await storage.rateVideo(userId, videoId, rating, review);
+      res.json(ratingData);
+    } catch (error) {
+      console.error('Rate video error:', error);
+      res.status(500).json({ message: "Failed to rate video" });
+    }
+  });
+
+  app.get("/api/videos/:id/rating", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const videoId = parseInt(req.params.id);
+      const userId = req.user.id;
+
+      const rating = await storage.getUserVideoRating(userId, videoId);
+      res.json(rating);
+    } catch (error) {
+      console.error('Get rating error:', error);
+      res.status(500).json({ message: "Failed to get rating" });
+    }
+  });
+
+  // Video comment routes
+  app.get("/api/videos/:id/comments", async (req, res) => {
+    try {
+      const videoId = parseInt(req.params.id);
+      const comments = await storage.getVideoComments(videoId);
+      res.json(comments);
+    } catch (error) {
+      console.error('Get comments error:', error);
+      res.status(500).json({ message: "Failed to get comments" });
+    }
+  });
+
+  app.post("/api/videos/:id/comments", async (req, res) => {
+    try {
+      if (!req.isAuthenticated()) {
+        return res.status(401).json({ message: "Authentication required" });
+      }
+
+      const videoId = parseInt(req.params.id);
+      const userId = req.user.id;
+      const { content, parentId } = req.body;
+
+      if (!content || content.trim().length === 0) {
+        return res.status(400).json({ message: "Comment content is required" });
+      }
+
+      const comment = await storage.createVideoComment(userId, videoId, content.trim(), parentId);
+      res.json(comment);
+    } catch (error) {
+      console.error('Create comment error:', error);
+      res.status(500).json({ message: "Failed to create comment" });
+    }
+  });
+
   // Video completion tracking endpoints
   app.post("/api/videos/:id/complete", async (req, res) => {
     try {

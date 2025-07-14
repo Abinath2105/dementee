@@ -1,4 +1,4 @@
-import { users, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, videoCompletions, videoBookmarks, watchHistory, userSessions, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess, type VideoCompletion, type InsertVideoCompletion, type VideoBookmark, type InsertVideoBookmark, type WatchHistory, type InsertWatchHistory, type UserSession, type InsertUserSession, type UserLearningStats } from "@shared/schema";
+import { users, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, videoCompletions, videoBookmarks, watchHistory, userSessions, videoRatings, videoComments, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess, type VideoCompletion, type InsertVideoCompletion, type VideoBookmark, type InsertVideoBookmark, type WatchHistory, type InsertWatchHistory, type UserSession, type InsertUserSession, type VideoRating, type InsertVideoRating, type VideoComment, type InsertVideoComment, type UserLearningStats } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or, ilike, isNotNull } from "drizzle-orm";
 import session from "express-session";
@@ -82,6 +82,14 @@ export interface IStorage {
 
   // Admin stats
   getAdminStats(): Promise<AdminStats>;
+
+  // Video rating management
+  rateVideo(userId: number, videoId: number, rating: number, review?: string): Promise<VideoRating>;
+  getUserVideoRating(userId: number, videoId: number): Promise<VideoRating | undefined>;
+
+  // Video comment management
+  getVideoComments(videoId: number): Promise<any[]>;
+  createVideoComment(userId: number, videoId: number, content: string, parentId?: number): Promise<VideoComment>;
 
   sessionStore: any;
 }
@@ -753,6 +761,82 @@ export class DatabaseStorage implements IStorage {
         percentage: row.totalVideos > 0 ? Math.round((row.completedVideos / row.totalVideos) * 100) : 0,
       })),
     };
+  }
+  async rateVideo(userId: number, videoId: number, rating: number, review?: string): Promise<VideoRating> {
+    const [existingRating] = await db
+      .select()
+      .from(videoRatings)
+      .where(and(eq(videoRatings.userId, userId), eq(videoRatings.videoId, videoId)));
+
+    if (existingRating) {
+      const [updatedRating] = await db
+        .update(videoRatings)
+        .set({ rating, review, updatedAt: new Date() })
+        .where(and(eq(videoRatings.userId, userId), eq(videoRatings.videoId, videoId)))
+        .returning();
+      return updatedRating;
+    } else {
+      const [newRating] = await db
+        .insert(videoRatings)
+        .values({ userId, videoId, rating, review })
+        .returning();
+      return newRating;
+    }
+  }
+
+  async getUserVideoRating(userId: number, videoId: number): Promise<VideoRating | undefined> {
+    const [rating] = await db
+      .select()
+      .from(videoRatings)
+      .where(and(eq(videoRatings.userId, userId), eq(videoRatings.videoId, videoId)));
+    return rating || undefined;
+  }
+
+  async getVideoComments(videoId: number): Promise<any[]> {
+    const comments = await db
+      .select({
+        id: videoComments.id,
+        content: videoComments.content,
+        createdAt: videoComments.createdAt,
+        parentId: videoComments.parentId,
+        user: {
+          id: users.id,
+          username: users.username,
+          fullName: users.fullName,
+        },
+      })
+      .from(videoComments)
+      .innerJoin(users, eq(videoComments.userId, users.id))
+      .where(eq(videoComments.videoId, videoId))
+      .orderBy(desc(videoComments.createdAt));
+
+    // Organize comments with replies
+    const commentMap = new Map();
+    const rootComments = [];
+
+    for (const comment of comments) {
+      comment.replies = [];
+      commentMap.set(comment.id, comment);
+      
+      if (comment.parentId) {
+        const parent = commentMap.get(comment.parentId);
+        if (parent) {
+          parent.replies.push(comment);
+        }
+      } else {
+        rootComments.push(comment);
+      }
+    }
+
+    return rootComments;
+  }
+
+  async createVideoComment(userId: number, videoId: number, content: string, parentId?: number): Promise<VideoComment> {
+    const [comment] = await db
+      .insert(videoComments)
+      .values({ userId, videoId, content, parentId })
+      .returning();
+    return comment;
   }
 }
 
