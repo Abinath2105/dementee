@@ -273,19 +273,22 @@ export default function AdminPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Navigation */}
-      <nav className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
-              <Play className="h-8 w-8 text-primary mr-3" />
-              <span className="text-xl font-bold text-gray-900">VideoLearn Pro</span>
+      {/* Navigation - Mobile Responsive */}
+      <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            <div className="flex items-center min-w-0">
+              <Play className="h-6 w-6 sm:h-8 sm:w-8 text-primary mr-2 sm:mr-3 flex-shrink-0" />
+              <span className="text-base sm:text-xl font-bold text-gray-900 truncate">VideoLearn Pro</span>
             </div>
-            <div className="flex items-center space-x-4">
+            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
               <Link href="/">
-                <Button variant="outline" size="sm">
+                <Button variant="outline" size="sm" className="hidden sm:flex">
                   <ArrowLeft className="h-4 w-4 mr-2" />
                   Back to Videos
+                </Button>
+                <Button variant="outline" size="sm" className="sm:hidden">
+                  <ArrowLeft className="h-4 w-4" />
                 </Button>
               </Link>
               <Button 
@@ -293,32 +296,34 @@ export default function AdminPage() {
                 size="sm" 
                 onClick={() => logoutMutation.mutate()}
                 disabled={logoutMutation.isPending}
+                className="text-xs sm:text-sm"
               >
-                Logout
+                <span className="hidden sm:inline">Logout</span>
+                <span className="sm:hidden">Exit</span>
               </Button>
             </div>
           </div>
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Header */}
-        <div className="mb-8">
-          <h1 className="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600">Manage your video content and monitor platform activity</p>
+      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+        {/* Header - Mobile Responsive */}
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Admin Dashboard</h1>
+          <p className="text-gray-600 text-sm sm:text-base">Manage your video content and monitor platform activity</p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        {/* Stats - Mobile First Grid */}
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center">
-                <div className="p-3 bg-blue-100 rounded-full">
-                  <Video className="h-6 w-6 text-primary" />
+                <div className="p-2 sm:p-3 bg-blue-100 rounded-full flex-shrink-0">
+                  <Video className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-primary" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm text-gray-600">Total Videos</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">Total Videos</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
                     {stats?.totalVideos || 0}
                   </p>
                 </div>
@@ -327,14 +332,14 @@ export default function AdminPage() {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center">
-                <div className="p-3 bg-green-100 rounded-full">
-                  <Users className="h-6 w-6 text-green-600" />
+                <div className="p-2 sm:p-3 bg-green-100 rounded-full flex-shrink-0">
+                  <Users className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm text-gray-600">Active Users</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">Active Users</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
                     {stats?.totalUsers || 0}
                   </p>
                 </div>
@@ -343,14 +348,14 @@ export default function AdminPage() {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center">
-                <div className="p-3 bg-purple-100 rounded-full">
-                  <Eye className="h-6 w-6 text-purple-600" />
+                <div className="p-2 sm:p-3 bg-purple-100 rounded-full flex-shrink-0">
+                  <Eye className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-600" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm text-gray-600">Total Views</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">Total Views</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
                     {stats?.totalViews || 0}
                   </p>
                 </div>
@@ -359,14 +364,14 @@ export default function AdminPage() {
           </Card>
 
           <Card>
-            <CardContent className="p-6">
+            <CardContent className="p-3 sm:p-4 lg:p-6">
               <div className="flex items-center">
-                <div className="p-3 bg-yellow-100 rounded-full">
-                  <Clock className="h-6 w-6 text-yellow-600" />
+                <div className="p-2 sm:p-3 bg-yellow-100 rounded-full flex-shrink-0">
+                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-yellow-600" />
                 </div>
-                <div className="ml-4">
-                  <p className="text-sm text-gray-600">Watch Time</p>
-                  <p className="text-2xl font-bold text-gray-900">
+                <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
+                  <p className="text-xs sm:text-sm text-gray-600 truncate">Watch Time</p>
+                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
                     {stats?.totalWatchTime || "0h"}
                   </p>
                 </div>

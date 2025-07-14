@@ -29,11 +29,11 @@ export default function AdminLogin() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-4">
-      <div className="max-w-md w-full space-y-8">
+    <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100 flex items-center justify-center px-3 sm:px-4">
+      <div className="max-w-md w-full space-y-6 sm:space-y-8">
         <div className="text-center">
-          <Shield className="mx-auto h-12 w-12 text-gray-700" />
-          <h2 className="mt-6 text-3xl font-bold text-gray-900">Admin Login</h2>
+          <Shield className="mx-auto h-10 w-10 sm:h-12 sm:w-12 text-gray-700" />
+          <h2 className="mt-4 sm:mt-6 text-2xl sm:text-3xl font-bold text-gray-900">Admin Login</h2>
           <p className="mt-2 text-sm text-gray-600">
             Access the administration panel
           </p>

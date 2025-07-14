@@ -126,22 +126,23 @@ export function CategoryPage() {
 
   return (
     <div className="min-h-screen bg-gray-50">
-      {/* Header with App Branding */}
-      <div className="bg-white shadow-sm border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-          <div className="flex justify-between items-center h-16">
-            <div className="flex items-center">
+      {/* Header with App Branding - Mobile Responsive */}
+      <div className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+          <div className="flex justify-between items-center h-14 sm:h-16">
+            <div className="flex items-center min-w-0">
               <Link href="/">
-                <Button variant="ghost" size="sm" className="mr-4">
-                  <ArrowLeft className="h-4 w-4 mr-2" />
-                  Back to Home
+                <Button variant="ghost" size="sm" className="mr-2 sm:mr-4">
+                  <ArrowLeft className="h-4 w-4 mr-1 sm:mr-2" />
+                  <span className="hidden sm:inline">Back to Home</span>
+                  <span className="sm:hidden">Back</span>
                 </Button>
               </Link>
-              <div className="flex items-center">
+              <div className="flex items-center min-w-0">
                 {appSettings?.appLogo ? (
-                  <img src={appSettings.appLogo} alt="Logo" className="h-8 w-8 mr-3" />
+                  <img src={appSettings.appLogo} alt="Logo" className="h-6 w-6 sm:h-8 sm:w-8 mr-2 sm:mr-3 flex-shrink-0" />
                 ) : (
-                  <Play className="h-8 w-8 text-primary mr-3" />
+                  <Play className="h-6 w-6 sm:h-8 sm:w-8 text-primary mr-2 sm:mr-3 flex-shrink-0" />
                 )}
                 <span className="text-xl font-bold text-gray-900">
                   {appSettings?.appName || "VideoLearn Pro"}
@@ -152,12 +153,12 @@ export function CategoryPage() {
         </div>
       </div>
 
-      {/* Category Hero Section */}
+      {/* Category Hero Section - Mobile Responsive */}
       <div className="bg-white border-b">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
-          <div className="flex items-start space-x-8">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8 lg:py-12">
+          <div className="flex flex-col sm:flex-row sm:items-start space-y-4 sm:space-y-0 sm:space-x-6 lg:space-x-8">
             {category.coverImage && (
-              <div className="flex-shrink-0 w-40 h-40 rounded-xl overflow-hidden shadow-lg bg-gray-100">
+              <div className="flex-shrink-0 w-24 h-24 sm:w-32 sm:h-32 lg:w-40 lg:h-40 rounded-lg sm:rounded-xl overflow-hidden shadow-lg bg-gray-100 mx-auto sm:mx-0">
                 <img
                   src={category.coverImage}
                   alt={category.name}
@@ -165,39 +166,41 @@ export function CategoryPage() {
                 />
               </div>
             )}
-            <div className="flex-1">
-              <div className="mb-4">
-                <Badge variant="secondary" className="mb-3">Category</Badge>
-                <h1 className="text-4xl font-bold text-gray-900 mb-4">{category.name}</h1>
+            <div className="flex-1 text-center sm:text-left">
+              <div className="mb-3 sm:mb-4">
+                <Badge variant="secondary" className="mb-2 sm:mb-3">Category</Badge>
+                <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2 sm:mb-4">{category.name}</h1>
                 {category.description && (
-                  <p className="text-lg text-gray-600 mb-4 leading-relaxed">{category.description}</p>
+                  <p className="text-sm sm:text-base lg:text-lg text-gray-600 mb-3 sm:mb-4 leading-relaxed">{category.description}</p>
                 )}
                 {category.mentorName && (
-                  <p className="text-gray-600 mb-4 flex items-center">
+                  <p className="text-gray-600 mb-3 sm:mb-4 flex items-center justify-center sm:justify-start">
                     <span className="font-medium text-gray-900">Instructor:</span>
                     <span className="ml-2">{category.mentorName}</span>
                   </p>
                 )}
               </div>
-              <div className="flex items-center space-x-6 text-sm text-gray-600">
-                <div className="flex items-center space-x-2">
-                  <Play className="h-4 w-4" />
+              <div className="flex flex-col sm:flex-row sm:items-center space-y-2 sm:space-y-0 sm:space-x-4 lg:space-x-6 text-xs sm:text-sm text-gray-600">
+                <div className="flex items-center space-x-2 justify-center sm:justify-start">
+                  <Play className="h-3 w-3 sm:h-4 sm:w-4" />
                   <span>{filteredVideos.length} videos</span>
                 </div>
                 {progress && (
-                  <div className="flex items-center space-x-2">
+                  <div className="flex items-center space-x-2 justify-center sm:justify-start">
                     <ProgressRing 
                       completed={progress.completed} 
                       total={progress.total} 
-                      size={20} 
+                      size={16} 
                       strokeWidth={2} 
                     />
-                    <span>{progress.completed} of {progress.total} completed</span>
+                    <span className="hidden sm:inline">{progress.completed} of {progress.total} completed</span>
+                    <span className="sm:hidden">{progress.completed}/{progress.total}</span>
                   </div>
                 )}
-                <div className="flex items-center space-x-2">
-                  <Clock className="h-4 w-4" />
-                  <span>Learning Playlist</span>
+                <div className="flex items-center space-x-2 justify-center sm:justify-start">
+                  <Clock className="h-3 w-3 sm:h-4 sm:w-4" />
+                  <span className="hidden sm:inline">Learning Playlist</span>
+                  <span className="sm:hidden">Playlist</span>
                 </div>
               </div>
             </div>
@@ -205,29 +208,29 @@ export function CategoryPage() {
         </div>
       </div>
 
-      {/* Content */}
+      {/* Content - Mobile Responsive */}
       <div className="bg-gray-50 min-h-screen">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        {/* Search */}
-        <div className="mb-6">
-          <div className="relative max-w-md">
+        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+        {/* Search - Mobile Responsive */}
+        <div className="mb-4 sm:mb-6">
+          <div className="relative max-w-full sm:max-w-md">
             <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
             <Input
-              placeholder="Search videos in this category..."
+              placeholder="Search videos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10"
+              className="pl-10 text-sm sm:text-base"
             />
           </div>
         </div>
 
-        {/* Videos Grid */}
+        {/* Videos Grid - Mobile First */}
         {videosLoading ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {[...Array(8)].map((_, i) => (
               <div key={i} className="bg-white rounded-lg shadow-md overflow-hidden">
-                <div className="w-full h-48 bg-gray-200 animate-pulse"></div>
-                <div className="p-4">
+                <div className="w-full h-40 sm:h-48 bg-gray-200 animate-pulse"></div>
+                <div className="p-3 sm:p-4">
                   <div className="h-4 bg-gray-200 rounded w-3/4 mb-2 animate-pulse"></div>
                   <div className="h-3 bg-gray-200 rounded w-1/2 animate-pulse"></div>
                 </div>
@@ -235,12 +238,12 @@ export function CategoryPage() {
             ))}
           </div>
         ) : filteredVideos.length === 0 ? (
-          <div className="text-center py-16">
-            <div className="text-gray-400 text-6xl mb-4">🎥</div>
-            <h3 className="text-xl font-semibold text-gray-900 mb-2">
+          <div className="text-center py-12 sm:py-16">
+            <div className="text-gray-400 text-4xl sm:text-6xl mb-4">🎥</div>
+            <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
               {searchQuery ? "No videos found" : "No videos in this category yet"}
             </h3>
-            <p className="text-gray-600 mb-6">
+            <p className="text-gray-600 mb-4 sm:mb-6 text-sm sm:text-base px-4">
               {searchQuery
                 ? "Try adjusting your search terms"
                 : "Videos will appear here once they're added to this category"}
@@ -252,7 +255,7 @@ export function CategoryPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
             {filteredVideos.map((video: VideoWithCategory, index: number) => (
               <div
                 key={video.id}
