@@ -235,8 +235,12 @@ export function CategoryPage() {
             )}
           </div>
         ) : (
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {filteredVideos.map((video: VideoWithCategory, index: number) => (
+          <>
+            <div className="mb-4 text-sm text-gray-600 px-4">
+              Showing {filteredVideos.length} video{filteredVideos.length !== 1 ? 's' : ''}
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
+              {filteredVideos.map((video: VideoWithCategory, index: number) => (
               <div
                 key={video.id}
                 className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"
@@ -297,7 +301,8 @@ export function CategoryPage() {
                 </div>
               </div>
             ))}
-          </div>
+            </div>
+          </>
         )}
         </div>
       </div>
