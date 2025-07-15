@@ -691,6 +691,23 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Public users management endpoint (admin only)
+  app.get("/api/admin/public-users", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const publicUsers = await storage.getAllPublicUsers();
+      // Remove password from response
+      const safeUsers = publicUsers.map(({ password, ...user }) => user);
+      res.json(safeUsers);
+    } catch (error) {
+      console.error("Get public users error:", error);
+      res.status(500).json({ message: "Failed to fetch public users" });
+    }
+  });
+
   app.put("/api/admin/users/:id/admin", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
       return res.status(403).json({ message: "Admin access required" });

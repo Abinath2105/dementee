@@ -56,6 +56,10 @@ export default function AdminPage() {
     queryKey: ["/api/admin/users"],
   });
 
+  const { data: publicUsers = [], isLoading: publicUsersLoading } = useQuery({
+    queryKey: ["/api/admin/public-users"],
+  });
+
   const { data: categories = [] } = useQuery<Category[]>({
     queryKey: ["/api/categories"],
   });
@@ -391,10 +395,11 @@ export default function AdminPage() {
 
         {/* Tabs for different management sections */}
         <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="videos">Videos</TabsTrigger>
             <TabsTrigger value="categories">Categories</TabsTrigger>
             <TabsTrigger value="users">Users</TabsTrigger>
+            <TabsTrigger value="public-users">Public Users</TabsTrigger>
             <TabsTrigger value="invitations">Invitations</TabsTrigger>
             <TabsTrigger value="settings">Settings</TabsTrigger>
           </TabsList>
@@ -784,6 +789,69 @@ export default function AdminPage() {
                                   <Trash2 className="h-4 w-4 text-red-600" />
                                 </Button>
                               </div>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="public-users" className="mt-6">
+            {/* Public Users Management */}
+            <Card>
+              <CardHeader>
+                <CardTitle>Public Users (Landing Page Registrations)</CardTitle>
+                <p className="text-sm text-gray-600">
+                  Users who registered directly from the landing page. These users can only access "Other" category videos.
+                </p>
+              </CardHeader>
+              <CardContent>
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      <TableRow>
+                        <TableHead>Email</TableHead>
+                        <TableHead>Full Name</TableHead>
+                        <TableHead>Status</TableHead>
+                        <TableHead>Registration Date</TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {publicUsersLoading ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center py-8">
+                            Loading public users...
+                          </TableCell>
+                        </TableRow>
+                      ) : publicUsers.length === 0 ? (
+                        <TableRow>
+                          <TableCell colSpan={4} className="text-center text-gray-500 py-8">
+                            No public users registered yet
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        publicUsers.map((publicUser: any) => (
+                          <TableRow key={publicUser.id}>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <Mail className="h-4 w-4 text-gray-400" />
+                                <span>{publicUser.email}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <span className="font-medium">{publicUser.fullName}</span>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={publicUser.isVerified ? "default" : "secondary"}>
+                                {publicUser.isVerified ? "Verified" : "Unverified"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>
+                              {new Date(publicUser.createdAt).toLocaleDateString()}
                             </TableCell>
                           </TableRow>
                         ))

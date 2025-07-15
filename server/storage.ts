@@ -25,6 +25,7 @@ export interface IStorage {
   getPublicUserByEmail(email: string): Promise<PublicUser | undefined>;
   createPublicUser(user: InsertPublicUser): Promise<PublicUser>;
   verifyPublicUser(email: string): Promise<void>;
+  getAllPublicUsers(): Promise<PublicUser[]>;
 
   // User invitation management
   createUserInvitation(invitation: InsertUserInvitation & { invitedBy: number }): Promise<UserInvitation>;
@@ -161,6 +162,10 @@ export class DatabaseStorage implements IStorage {
 
   async verifyPublicUser(email: string): Promise<void> {
     await db.update(publicUsers).set({ isVerified: true }).where(eq(publicUsers.email, email));
+  }
+
+  async getAllPublicUsers(): Promise<PublicUser[]> {
+    return await db.select().from(publicUsers).orderBy(publicUsers.email);
   }
 
   async getAllUsers(): Promise<User[]> {
