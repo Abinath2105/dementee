@@ -173,6 +173,8 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 15, 2025: Complete production data export created in development environment
 - January 15, 2025: Full database documentation: 3 users, 8 categories, 31 videos, comprehensive access control
 - January 15, 2025: Production deployment scripts and backup procedures established
+- January 15, 2025: Updated homepage category filter dropdown to show only user-assigned categories
+- January 15, 2025: Improved UX for single-category users by hiding "All Categories" option when only one category available
 
 ## User Preferences
 

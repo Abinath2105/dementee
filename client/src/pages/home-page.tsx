@@ -155,10 +155,10 @@ export default function HomePage() {
             <span className="font-medium text-gray-700 text-sm sm:text-base">Filter by:</span>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder="All Categories" />
+                <SelectValue placeholder={categories.length > 1 ? "All Categories" : "Select Category"} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="all">All Categories</SelectItem>
+                {categories.length > 1 && <SelectItem value="all">All Categories</SelectItem>}
                 {categories.map((category) => (
                   <SelectItem key={category.id} value={category.id.toString()}>
                     {category.name}
@@ -191,7 +191,7 @@ export default function HomePage() {
           <h2 className="text-lg sm:text-xl font-semibold text-gray-900">
             {selectedCategory && selectedCategory !== "all" 
               ? `${categories.find(c => c.id.toString() === selectedCategory)?.name || "Category"} Videos`
-              : "All Videos"
+              : categories.length > 1 ? "All Videos" : "Videos"
             }
           </h2>
           <div className="text-secondary text-sm sm:text-base">
