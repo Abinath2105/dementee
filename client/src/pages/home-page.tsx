@@ -155,7 +155,7 @@ export default function HomePage() {
             <span className="font-medium text-gray-700 text-sm sm:text-base">Filter by:</span>
             <Select value={selectedCategory} onValueChange={setSelectedCategory}>
               <SelectTrigger className="w-full sm:w-48">
-                <SelectValue placeholder={categories.length > 1 ? "All Categories" : "Select Category"} />
+                <SelectValue placeholder="All Categories" />
               </SelectTrigger>
               <SelectContent>
                 {categories.length > 1 && <SelectItem value="all">All Categories</SelectItem>}
