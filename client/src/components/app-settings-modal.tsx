@@ -117,6 +117,23 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
     updateSettingsMutation.mutate(data);
   };
 
+  const handleLogoUpload = async (file: File) => {
+    try {
+      const result = await uploadMutation.mutateAsync(file);
+      form.setValue("appLogo", result.url);
+      toast({
+        title: "Logo uploaded",
+        description: "Logo has been uploaded successfully.",
+      });
+    } catch (error) {
+      toast({
+        title: "Upload failed",
+        description: "Failed to upload logo. Please try again.",
+        variant: "destructive",
+      });
+    }
+  };
+
   const handleAddBanner = () => {
     if (newBannerUrl.trim()) {
       const currentBanners = form.getValues("bannerImages");

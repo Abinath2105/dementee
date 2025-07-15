@@ -64,6 +64,10 @@ export default function AdminPage() {
     queryKey: ["/api/admin/invitations"],
   });
 
+  const { data: appSettings } = useQuery({
+    queryKey: ["/api/settings"],
+  });
+
   const deleteVideoMutation = useMutation({
     mutationFn: async (videoId: number) => {
       const response = await fetch(`/api/videos/${videoId}`, {
@@ -281,8 +285,21 @@ export default function AdminPage() {
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             <div className="flex items-center min-w-0">
-              <Play className="h-6 w-6 sm:h-8 sm:w-8 text-primary mr-2 sm:mr-3 flex-shrink-0" />
-              <span className="text-base sm:text-xl font-bold text-gray-900 truncate">VideoLearn Pro</span>
+              {appSettings?.appLogo ? (
+                <img src={appSettings.appLogo} alt="Zmartclass Logo" className="h-8 w-auto mr-2 sm:mr-3 flex-shrink-0" />
+              ) : (
+                <div className="mr-2 sm:mr-3 flex-shrink-0">
+                  <div className="text-lg sm:text-xl font-bold text-blue-600 relative">
+                    <div>Zmartclass</div>
+                    <div className="text-xs text-gray-500 font-normal absolute -bottom-0.5 right-0 translate-y-full">De mentee</div>
+                  </div>
+                </div>
+              )}
+              {!appSettings?.appLogo && (
+                <span className="text-base sm:text-xl font-bold text-gray-900 truncate ml-12">
+                  {appSettings?.appName || "Zmartclass"}
+                </span>
+              )}
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
               <Link href="/">

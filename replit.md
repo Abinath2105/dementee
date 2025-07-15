@@ -188,6 +188,10 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 15, 2025: Added comprehensive navigation bar with About Us, Our Programs, Jobs, and Contact sections
 - January 15, 2025: Created complete landing page sections with detailed About, Programs, Jobs, and Contact information
 - January 15, 2025: Enhanced landing page with smooth scrolling navigation and prominent Zmartclass branding
+- January 15, 2025: Updated branding positioning to show "De mentee" very close below and to the right of "Zmartclass"
+- January 15, 2025: Added admin logo upload feature - allows PNG format logo uploads through app settings
+- January 15, 2025: Implemented logo display across all pages (landing, home, admin) with fallback text branding
+- January 15, 2025: Enhanced app settings modal with logo upload functionality and preview
 
 ## User Preferences
 
