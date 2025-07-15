@@ -205,179 +205,194 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
 
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent className="max-w-6xl w-full max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>Edit Category</DialogTitle>
           <DialogDescription>
-            Update the category details and cover image below.
+            Update the category details and customization options below.
           </DialogDescription>
         </DialogHeader>
         
         <Form {...form}>
-          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-            <FormField
-              control={form.control}
-              name="name"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Category Name</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter category name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="description"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Description (Optional)</FormLabel>
-                  <FormControl>
-                    <Textarea 
-                      placeholder="Enter category description" 
-                      {...field} 
-                      rows={3}
-                    />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            <FormField
-              control={form.control}
-              name="mentorName"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>Mentor Name (Optional)</FormLabel>
-                  <FormControl>
-                    <Input placeholder="Enter mentor name" {...field} />
-                  </FormControl>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
-
-            {/* Cover Image Upload */}
-            <div className="space-y-2">
-              <Label>Cover Image</Label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                {uploadedImageUrl ? (
-                  <div className="relative">
-                    <img 
-                      src={uploadedImageUrl} 
-                      alt="Cover" 
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={handleRemoveImage}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <Image className="mx-auto h-12 w-12 text-gray-400" />
-                    <div className="mt-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => fileInputRef.current?.click()}
-                        disabled={uploadImageMutation.isPending}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        {uploadImageMutation.isPending ? "Uploading..." : "Upload Cover Image"}
-                      </Button>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
-                  </div>
-                )}
-              </div>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleImageUpload}
-                className="hidden"
-              />
-            </div>
-
-            {/* Background Image Upload */}
-            <div className="space-y-2">
-              <Label>Background Image (For Hero Section)</Label>
-              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
-                {uploadedBackgroundImageUrl ? (
-                  <div className="relative">
-                    <img 
-                      src={uploadedBackgroundImageUrl} 
-                      alt="Background" 
-                      className="w-full h-32 object-cover rounded-lg"
-                    />
-                    <Button
-                      type="button"
-                      variant="destructive"
-                      size="sm"
-                      className="absolute top-2 right-2"
-                      onClick={handleRemoveBackgroundImage}
-                    >
-                      <X className="h-4 w-4" />
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center">
-                    <Image className="mx-auto h-12 w-12 text-gray-400" />
-                    <div className="mt-2">
-                      <Button
-                        type="button"
-                        variant="outline"
-                        onClick={() => backgroundImageInputRef.current?.click()}
-                      >
-                        <Upload className="h-4 w-4 mr-2" />
-                        Upload Background Image
-                      </Button>
-                    </div>
-                    <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
-                  </div>
-                )}
-              </div>
-              <input
-                ref={backgroundImageInputRef}
-                type="file"
-                accept="image/*"
-                onChange={handleBackgroundImageUpload}
-                className="hidden"
-              />
-            </div>
-
-            {/* Background Color */}
-            <div className="space-y-2">
-              <Label>Background Color</Label>
-              <div className="flex items-center space-x-2">
-                <input
-                  type="color"
-                  value={backgroundColor}
-                  onChange={(e) => setBackgroundColor(e.target.value)}
-                  className="w-12 h-12 border border-gray-300 rounded-lg cursor-pointer"
+          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
+            {/* Two Column Layout */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+              
+              {/* Left Column - Basic Details */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">Basic Details</h3>
+                
+                <FormField
+                  control={form.control}
+                  name="name"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Category Name</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter category name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
-                <Input
-                  type="text"
-                  value={backgroundColor}
-                  onChange={(e) => setBackgroundColor(e.target.value)}
-                  placeholder="#f3f4f6"
-                  className="flex-1"
+
+                <FormField
+                  control={form.control}
+                  name="description"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Description (Optional)</FormLabel>
+                      <FormControl>
+                        <Textarea 
+                          placeholder="Enter category description" 
+                          {...field} 
+                          rows={3}
+                        />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
                 />
+
+                <FormField
+                  control={form.control}
+                  name="mentorName"
+                  render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Mentor Name (Optional)</FormLabel>
+                      <FormControl>
+                        <Input placeholder="Enter mentor name" {...field} />
+                      </FormControl>
+                      <FormMessage />
+                    </FormItem>
+                  )}
+                />
+
+                {/* Cover Image Upload */}
+                <div className="space-y-2">
+                  <Label>Cover Image</Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                    {uploadedImageUrl ? (
+                      <div className="relative">
+                        <img 
+                          src={uploadedImageUrl} 
+                          alt="Cover" 
+                          className="w-full h-32 object-cover rounded-lg"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={handleRemoveImage}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <Image className="mx-auto h-12 w-12 text-gray-400" />
+                        <div className="mt-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => fileInputRef.current?.click()}
+                            disabled={uploadImageMutation.isPending}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            {uploadImageMutation.isPending ? "Uploading..." : "Upload Cover Image"}
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                </div>
               </div>
-              <p className="text-xs text-gray-500">Used as fallback when no background image is set</p>
+
+              {/* Right Column - Visual Customization */}
+              <div className="space-y-4">
+                <h3 className="text-lg font-semibold text-gray-900">Visual Customization</h3>
+                
+                {/* Background Image Upload */}
+                <div className="space-y-2">
+                  <Label>Background Image (For Hero Section)</Label>
+                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                    {uploadedBackgroundImageUrl ? (
+                      <div className="relative">
+                        <img 
+                          src={uploadedBackgroundImageUrl} 
+                          alt="Background" 
+                          className="w-full h-32 object-cover rounded-lg"
+                        />
+                        <Button
+                          type="button"
+                          variant="destructive"
+                          size="sm"
+                          className="absolute top-2 right-2"
+                          onClick={handleRemoveBackgroundImage}
+                        >
+                          <X className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    ) : (
+                      <div className="text-center">
+                        <Image className="mx-auto h-12 w-12 text-gray-400" />
+                        <div className="mt-2">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => backgroundImageInputRef.current?.click()}
+                          >
+                            <Upload className="h-4 w-4 mr-2" />
+                            Upload Background Image
+                          </Button>
+                        </div>
+                        <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                      </div>
+                    )}
+                  </div>
+                  <input
+                    ref={backgroundImageInputRef}
+                    type="file"
+                    accept="image/*"
+                    onChange={handleBackgroundImageUpload}
+                    className="hidden"
+                  />
+                </div>
+
+                {/* Background Color */}
+                <div className="space-y-2">
+                  <Label>Background Color</Label>
+                  <div className="flex items-center space-x-2">
+                    <input
+                      type="color"
+                      value={backgroundColor}
+                      onChange={(e) => setBackgroundColor(e.target.value)}
+                      className="w-12 h-12 border border-gray-300 rounded-lg cursor-pointer"
+                    />
+                    <Input
+                      type="text"
+                      value={backgroundColor}
+                      onChange={(e) => setBackgroundColor(e.target.value)}
+                      placeholder="#f3f4f6"
+                      className="flex-1"
+                    />
+                  </div>
+                  <p className="text-xs text-gray-500">Used as fallback when no background image is set</p>
+                </div>
+              </div>
             </div>
 
-            <div className="flex justify-end space-x-2 pt-4">
+            {/* Action Buttons */}
+            <div className="flex justify-end space-x-2 pt-4 border-t">
               <Button type="button" variant="outline" onClick={onClose}>
                 Cancel
               </Button>
