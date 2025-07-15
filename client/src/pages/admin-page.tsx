@@ -8,7 +8,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, UserPlus, Mail, Palette } from "lucide-react";
+import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, UserPlus, Mail, Palette, KeyRound } from "lucide-react";
 import { AddVideoModal } from "@/components/add-video-modal";
 import { EditVideoModal } from "@/components/edit-video-modal";
 import { InviteUserModal } from "@/components/invite-user-modal";
@@ -16,6 +16,7 @@ import { AppSettingsModal } from "@/components/app-settings-modal";
 import { AddCategoryModal } from "@/components/add-category-modal";
 import { EditCategoryModal } from "@/components/edit-category-modal";
 import { AssignCategoryModal } from "@/components/assign-category-modal";
+import { ResetPasswordModal } from "@/components/reset-password-modal";
 import { CategoryCard } from "@/components/category-card";
 import { queryClient } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
@@ -34,6 +35,8 @@ export default function AdminPage() {
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
   const [showAssignCategory, setShowAssignCategory] = useState(false);
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
+  const [showResetPassword, setShowResetPassword] = useState(false);
+  const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
   const { toast } = useToast();
 
   // Redirect if not admin
@@ -720,6 +723,17 @@ export default function AdminPage() {
                                 </Button>
                                 <Button
                                   size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setResetPasswordUser(userItem);
+                                    setShowResetPassword(true);
+                                  }}
+                                  title="Reset Password"
+                                >
+                                  <KeyRound className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
                                   variant="ghost"
                                   onClick={() => handleDeleteUser(userItem.id)}
                                   disabled={deleteUserMutation.isPending || userItem.id === user?.id}
@@ -896,6 +910,12 @@ export default function AdminPage() {
         user={selectedUser}
         isOpen={showAssignCategory}
         onClose={handleCloseAssignCategory}
+      />
+
+      <ResetPasswordModal
+        open={showResetPassword}
+        onClose={() => setShowResetPassword(false)}
+        user={resetPasswordUser}
       />
     </div>
   );

@@ -189,9 +189,7 @@ export class DatabaseStorage implements IStorage {
 
     // Check if user is admin
     const user = await this.getUser(userId);
-    console.log('getCategories - userId:', userId, 'user:', user, 'isAdmin:', user?.isAdmin);
     if (user?.isAdmin) {
-      console.log('Admin user detected - returning all categories');
       return await db.select().from(categories).orderBy(categories.name);
     }
 

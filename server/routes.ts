@@ -735,6 +735,28 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  app.put("/api/admin/users/:id/password", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const userId = parseInt(req.params.id);
+      const { newPassword } = req.body;
+
+      if (!newPassword || newPassword.length < 6) {
+        return res.status(400).json({ message: "Password must be at least 6 characters long" });
+      }
+
+      const user = await storage.setUserPassword(userId, newPassword);
+      const { password, ...safeUser } = user;
+      res.json(safeUser);
+    } catch (error) {
+      console.error("Reset password error:", error);
+      res.status(500).json({ message: "Failed to reset password" });
+    }
+  });
+
   // User invitation routes (admin only)
   app.post("/api/admin/invitations", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
