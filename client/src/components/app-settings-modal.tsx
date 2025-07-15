@@ -117,22 +117,7 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
     updateSettingsMutation.mutate(data);
   };
 
-  const handleLogoUpload = async (file: File) => {
-    try {
-      const result = await uploadMutation.mutateAsync(file);
-      form.setValue("appLogo", result.url);
-      toast({
-        title: "Logo uploaded",
-        description: "Logo has been uploaded successfully.",
-      });
-    } catch (error) {
-      toast({
-        title: "Upload failed",
-        description: "Failed to upload logo. Please try again.",
-        variant: "destructive",
-      });
-    }
-  };
+
 
   const handleAddBanner = () => {
     if (newBannerUrl.trim()) {
@@ -147,18 +132,14 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
     form.setValue("bannerImages", currentBanners.filter((_, i) => i !== index));
   };
 
-  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, field: "appLogo" | "banner") => {
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>, field: "banner") => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     try {
       const result = await uploadMutation.mutateAsync(file);
-      if (field === "appLogo") {
-        form.setValue("appLogo", result.url);
-      } else {
-        const currentBanners = form.getValues("bannerImages");
-        form.setValue("bannerImages", [...currentBanners, result.url]);
-      }
+      const currentBanners = form.getValues("bannerImages");
+      form.setValue("bannerImages", [...currentBanners, result.url]);
     } catch (error) {
       toast({
         title: "Upload failed",
@@ -194,48 +175,7 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
               )}
             />
 
-            <FormField
-              control={form.control}
-              name="appLogo"
-              render={({ field }) => (
-                <FormItem>
-                  <FormLabel>App Logo</FormLabel>
-                  <div className="space-y-2">
-                    {field.value && (
-                      <div className="w-32 h-16 border rounded-lg overflow-hidden bg-gray-50 flex items-center justify-center">
-                        <img 
-                          src={field.value} 
-                          alt="App Logo Preview" 
-                          className="max-w-full max-h-full object-contain"
-                          onError={(e) => {
-                            (e.target as HTMLImageElement).style.display = 'none';
-                          }}
-                        />
-                      </div>
-                    )}
-                    <div className="flex space-x-2">
-                      <FormControl>
-                        <Input placeholder="https://example.com/logo.png" {...field} />
-                      </FormControl>
-                      <label className="cursor-pointer">
-                        <Button type="button" variant="outline" size="icon" asChild>
-                          <span>
-                            <Upload className="h-4 w-4" />
-                          </span>
-                        </Button>
-                        <input
-                          type="file"
-                          accept="image/*"
-                          className="hidden"
-                          onChange={(e) => handleFileUpload(e, "appLogo")}
-                        />
-                      </label>
-                    </div>
-                  </div>
-                  <FormMessage />
-                </FormItem>
-              )}
-            />
+
 
             <div className="grid grid-cols-2 gap-4">
               <FormField

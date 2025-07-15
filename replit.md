@@ -192,6 +192,8 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 15, 2025: Added admin logo upload feature - allows PNG format logo uploads through app settings
 - January 15, 2025: Implemented logo display across all pages (landing, home, admin) with fallback text branding
 - January 15, 2025: Enhanced app settings modal with logo upload functionality and preview
+- January 15, 2025: Removed PNG logo upload feature per user request, keeping text-only branding
+- January 15, 2025: Applied responsive mobile design to text branding with proper font sizing
 
 ## User Preferences
 

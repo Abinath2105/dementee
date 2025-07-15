@@ -149,18 +149,10 @@ export function LandingPage() {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              {settings?.appLogo ? (
-                <img 
-                  src={settings.appLogo} 
-                  alt="Zmartclass Logo" 
-                  className="h-10 w-auto"
-                />
-              ) : (
-                <div className="flex flex-col leading-tight">
-                  <div className="text-2xl font-bold text-blue-600">Zmartclass</div>
-                  <div className="text-sm text-gray-500 font-normal -mt-1 text-right">De mentee</div>
-                </div>
-              )}
+              <div className="flex flex-col leading-tight">
+                <div className="text-xl sm:text-2xl font-bold text-blue-600">Zmartclass</div>
+                <div className="text-xs sm:text-sm text-gray-500 font-normal -mt-1 text-right">De mentee</div>
+              </div>
             </div>
             
             {/* Navigation Links */}
