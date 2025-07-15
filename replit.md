@@ -207,6 +207,12 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 15, 2025: All backend services now consistently use "Zmartclass" branding throughout
 - January 15, 2025: Enhanced email service reliability with improved SMTP configuration and connection pooling
 - January 15, 2025: Fixed user invitation email delivery issues - system now working reliably with Gmail SMTP
+- January 15, 2025: DEPLOYMENT FIX - Solved category cover images disappearing after deployment
+- January 15, 2025: Created backup and restore scripts for uploads directory to persist through deployments
+- January 15, 2025: Updated category cover image database reference to existing file (image-1752610607548-94515505.jpeg)
+- January 15, 2025: Fixed mobile navigation to show hamburger menu instead of login button with proper dropdown
+- January 15, 2025: Added Public Users tab in admin dashboard to manage landing page registrations
+- January 15, 2025: Created comprehensive deployment scripts: backup_uploads.sh, restore_uploads.sh, ensure_uploads_directory.js
 
 ## User Preferences
 
