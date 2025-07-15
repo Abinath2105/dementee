@@ -970,6 +970,47 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Contact form submission endpoint
+  app.post('/api/contact', async (req, res) => {
+    try {
+      const { name, email, message } = req.body;
+      
+      if (!name || !email || !message) {
+        return res.status(400).json({ message: 'Name, email, and message are required' });
+      }
+
+      // Send email to healthyemp@gmail.com
+      const { sendEmail } = await import('./services/email.js');
+      
+      const emailSent = await sendEmail({
+        to: 'healthyemp@gmail.com',
+        from: email,
+        subject: `New Contact Form Submission from ${name}`,
+        text: `
+Name: ${name}
+Email: ${email}
+Message: ${message}
+        `,
+        html: `
+          <h2>New Contact Form Submission</h2>
+          <p><strong>Name:</strong> ${name}</p>
+          <p><strong>Email:</strong> ${email}</p>
+          <p><strong>Message:</strong></p>
+          <p>${message.replace(/\n/g, '<br>')}</p>
+        `
+      });
+
+      if (emailSent) {
+        res.json({ message: 'Message sent successfully' });
+      } else {
+        res.status(500).json({ message: 'Failed to send message' });
+      }
+    } catch (error) {
+      console.error('Contact form error:', error);
+      res.status(500).json({ message: 'Failed to send message' });
+    }
+  });
+
   const httpServer = createServer(app);
   return httpServer;
 }

@@ -7,6 +7,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
+import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
@@ -34,7 +35,14 @@ const loginSchema = z.object({
   password: z.string().min(1, "Password is required"),
 });
 
+const contactSchema = z.object({
+  name: z.string().min(1, "Name is required"),
+  email: z.string().min(1, "Email is required").email("Invalid email address"),
+  message: z.string().min(1, "Message is required"),
+});
+
 type LoginForm = z.infer<typeof loginSchema>;
+type ContactForm = z.infer<typeof contactSchema>;
 
 export function LandingPage() {
   const { toast } = useToast();
@@ -65,6 +73,15 @@ export function LandingPage() {
     },
   });
 
+  const contactForm = useForm<ContactForm>({
+    resolver: zodResolver(contactSchema),
+    defaultValues: {
+      name: "",
+      email: "",
+      message: "",
+    },
+  });
+
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
       const response = await apiRequest("POST", "/api/login", {
@@ -86,10 +103,35 @@ export function LandingPage() {
     },
   });
 
+  const contactMutation = useMutation({
+    mutationFn: async (data: ContactForm) => {
+      const response = await apiRequest("POST", "/api/contact", data);
+      return response.json();
+    },
+    onSuccess: () => {
+      toast({
+        title: "Message sent successfully!",
+        description: "We'll get back to you soon.",
+      });
+      contactForm.reset();
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Failed to send message",
+        description: error.message || "Please try again later.",
+        variant: "destructive",
+      });
+    },
+  });
+
   const onSubmit = (data: LoginForm) => {
     setIsLoading(true);
     loginMutation.mutate(data);
     setIsLoading(false);
+  };
+
+  const onContactSubmit = (data: ContactForm) => {
+    contactMutation.mutate(data);
   };
 
   // If user is already logged in, redirect to home
@@ -640,10 +682,10 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Get in Touch
+              {settings?.contactTitle || "Get In Touch"}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Have questions? We're here to help you on your learning journey
+              {settings?.contactDescription || "Ready to start your learning journey? Contact us today!"}
             </p>
           </div>
           
@@ -655,7 +697,7 @@ export function LandingPage() {
                   <div className="space-y-4">
                     <div className="flex items-center space-x-3">
                       <Mail className="h-5 w-5 text-blue-600" />
-                      <span className="text-gray-600">support@zmartclass.com</span>
+                      <span className="text-gray-600">{settings?.contactEmail || "info@zmartclass.com"}</span>
                     </div>
                     <div className="flex items-center space-x-3">
                       <Users className="h-5 w-5 text-blue-600" />
@@ -681,27 +723,60 @@ export function LandingPage() {
             
             <div className="bg-white p-8 rounded-xl shadow-lg">
               <h3 className="text-xl font-bold text-gray-900 mb-6">Send us a Message</h3>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
-                  <Input placeholder="Your full name" className="w-full" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
-                  <Input type="email" placeholder="your@email.com" className="w-full" />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
-                  <textarea 
-                    className="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-blue-500"
-                    rows={4}
-                    placeholder="How can we help you?"
+              <Form {...contactForm}>
+                <form onSubmit={contactForm.handleSubmit(onContactSubmit)} className="space-y-4">
+                  <FormField
+                    control={contactForm.control}
+                    name="name"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Name</FormLabel>
+                        <FormControl>
+                          <Input placeholder="Your full name" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
                   />
-                </div>
-                <Button className="w-full bg-blue-600 hover:bg-blue-700">
-                  Send Message
-                </Button>
-              </form>
+                  <FormField
+                    control={contactForm.control}
+                    name="email"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Email</FormLabel>
+                        <FormControl>
+                          <Input type="email" placeholder="your@email.com" {...field} />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <FormField
+                    control={contactForm.control}
+                    name="message"
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>Message</FormLabel>
+                        <FormControl>
+                          <Textarea 
+                            placeholder="How can we help you?"
+                            rows={4}
+                            {...field}
+                          />
+                        </FormControl>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+                  <Button 
+                    type="submit" 
+                    className="w-full bg-blue-600 hover:bg-blue-700"
+                    disabled={contactMutation.isPending}
+                  >
+                    {contactMutation.isPending ? "Sending..." : "Send Message"}
+                  </Button>
+                </form>
+              </Form>
             </div>
           </div>
         </div>
