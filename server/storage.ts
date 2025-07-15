@@ -26,6 +26,7 @@ export interface IStorage {
   createPublicUser(user: InsertPublicUser): Promise<PublicUser>;
   verifyPublicUser(email: string): Promise<void>;
   getAllPublicUsers(): Promise<PublicUser[]>;
+  deletePublicUser(id: number): Promise<void>;
 
   // User invitation management
   createUserInvitation(invitation: InsertUserInvitation & { invitedBy: number }): Promise<UserInvitation>;
@@ -166,6 +167,10 @@ export class DatabaseStorage implements IStorage {
 
   async getAllPublicUsers(): Promise<PublicUser[]> {
     return await db.select().from(publicUsers).orderBy(publicUsers.email);
+  }
+
+  async deletePublicUser(id: number): Promise<void> {
+    await db.delete(publicUsers).where(eq(publicUsers.id, id));
   }
 
   async getAllUsers(): Promise<User[]> {

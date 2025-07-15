@@ -25,6 +25,8 @@ import { useToast } from "@/hooks/use-toast";
 import { apiRequest } from "@/lib/queryClient";
 import { Plus, X, Upload } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Switch } from "@/components/ui/switch";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const appSettingsSchema = z.object({
   appName: z.string().min(1, "App name is required"),
@@ -68,6 +70,10 @@ const appSettingsSchema = z.object({
   contactDescription: z.string().optional(),
   contactEmail: z.string().optional(),
   contactPhone: z.string().optional(),
+  
+  // Public user access configuration
+  allowPublicRegistration: z.boolean().optional(),
+  publicUserAccessCategories: z.array(z.number()).optional(),
 });
 
 type AppSettingsData = z.infer<typeof appSettingsSchema>;
@@ -84,6 +90,11 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
 
   const { data: settings } = useQuery({
     queryKey: ["/api/settings"],
+    enabled: isOpen,
+  });
+
+  const { data: categories = [] } = useQuery({
+    queryKey: ["/api/categories"],
     enabled: isOpen,
   });
 
@@ -121,6 +132,8 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
       contactDescription: "",
       contactEmail: "",
       contactPhone: "",
+      allowPublicRegistration: false,
+      publicUserAccessCategories: [],
     },
   });
 
@@ -158,6 +171,8 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
         contactDescription: settings.contactDescription || "",
         contactEmail: settings.contactEmail || "",
         contactPhone: settings.contactPhone || "",
+        allowPublicRegistration: settings.allowPublicRegistration || false,
+        publicUserAccessCategories: settings.publicUserAccessCategories || [],
       });
     }
   }, [settings, form]);
@@ -248,11 +263,12 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
         <Form {...form}>
           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-6">
             <Tabs defaultValue="general" className="w-full">
-              <TabsList className="grid w-full grid-cols-4">
+              <TabsList className="grid w-full grid-cols-5">
                 <TabsTrigger value="general">General</TabsTrigger>
                 <TabsTrigger value="hero">Hero Section</TabsTrigger>
                 <TabsTrigger value="content">Content</TabsTrigger>
                 <TabsTrigger value="contact">Contact</TabsTrigger>
+                <TabsTrigger value="access">Access</TabsTrigger>
               </TabsList>
               
               <TabsContent value="general" className="space-y-4">
@@ -750,6 +766,73 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
                     </FormItem>
                   )}
                 />
+              </TabsContent>
+
+              <TabsContent value="access" className="space-y-4">
+                <div className="space-y-4">
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">Allow Public Registration</p>
+                      <p className="text-sm text-muted-foreground">
+                        Allow users to register from the landing page
+                      </p>
+                    </div>
+                    <FormField
+                      control={form.control}
+                      name="allowPublicRegistration"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+                  </div>
+
+                  <div className="space-y-3">
+                    <div>
+                      <p className="text-sm font-medium">Category Access for Public Users</p>
+                      <p className="text-sm text-muted-foreground">
+                        Select categories that public users can access
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-4">
+                      {categories.map((category) => (
+                        <FormField
+                          key={category.id}
+                          control={form.control}
+                          name="publicUserAccessCategories"
+                          render={({ field }) => (
+                            <FormItem className="flex flex-row items-start space-x-3 space-y-0">
+                              <FormControl>
+                                <Checkbox
+                                  checked={field.value?.includes(category.id)}
+                                  onCheckedChange={(checked) => {
+                                    const value = field.value || [];
+                                    if (checked) {
+                                      field.onChange([...value, category.id]);
+                                    } else {
+                                      field.onChange(value.filter(id => id !== category.id));
+                                    }
+                                  }}
+                                />
+                              </FormControl>
+                              <div className="grid gap-1.5 leading-none">
+                                <FormLabel className="text-sm font-normal">
+                                  {category.name}
+                                </FormLabel>
+                              </div>
+                            </FormItem>
+                          )}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
               </TabsContent>
             </Tabs>
 

@@ -252,6 +252,36 @@ export default function AdminPage() {
     }
   };
 
+  const deletePublicUserMutation = useMutation({
+    mutationFn: async (userId: number) => {
+      const response = await fetch(`/api/admin/public-users/${userId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to delete public user");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/public-users"] });
+      toast({
+        title: "Public user deleted",
+        description: "Public user deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleDeletePublicUser = (userId: number) => {
+    if (confirm("Are you sure you want to delete this public user account? This action cannot be undone.")) {
+      deletePublicUserMutation.mutate(userId);
+    }
+  };
+
   const handleEditVideo = (video: VideoWithCategory) => {
     setEditingVideo(video);
     setShowEditVideo(true);
@@ -818,18 +848,19 @@ export default function AdminPage() {
                         <TableHead>Full Name</TableHead>
                         <TableHead>Status</TableHead>
                         <TableHead>Registration Date</TableHead>
+                        <TableHead>Actions</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {publicUsersLoading ? (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center py-8">
+                          <TableCell colSpan={5} className="text-center py-8">
                             Loading public users...
                           </TableCell>
                         </TableRow>
                       ) : publicUsers.length === 0 ? (
                         <TableRow>
-                          <TableCell colSpan={4} className="text-center text-gray-500 py-8">
+                          <TableCell colSpan={5} className="text-center text-gray-500 py-8">
                             No public users registered yet
                           </TableCell>
                         </TableRow>
@@ -852,6 +883,16 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell>
                               {new Date(publicUser.createdAt).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell>
+                              <Button
+                                size="sm"
+                                variant="ghost"
+                                onClick={() => handleDeletePublicUser(publicUser.id)}
+                                disabled={deletePublicUserMutation.isPending}
+                              >
+                                <Trash2 className="h-4 w-4 text-red-600" />
+                              </Button>
                             </TableCell>
                           </TableRow>
                         ))

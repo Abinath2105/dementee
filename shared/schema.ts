@@ -118,6 +118,10 @@ export const appSettings = pgTable("app_settings", {
   contactEmail: text("contact_email").default("info@zmartclass.com"),
   contactPhone: text("contact_phone").default("+1 (555) 123-4567"),
   
+  // Public user access configuration
+  allowPublicRegistration: boolean("allow_public_registration").default(true).notNull(),
+  publicUserAccessCategories: jsonb("public_user_access_categories").$type<number[]>().default([]),
+  
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
@@ -394,6 +398,8 @@ export const insertAppSettingsSchema = createInsertSchema(appSettings).pick({
   contactDescription: true,
   contactEmail: true,
   contactPhone: true,
+  allowPublicRegistration: true,
+  publicUserAccessCategories: true,
 });
 
 export const insertOtpSchema = createInsertSchema(otpCodes).pick({

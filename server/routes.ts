@@ -708,6 +708,22 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Delete public user endpoint (admin only)
+  app.delete("/api/admin/public-users/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const userId = parseInt(req.params.id);
+      await storage.deletePublicUser(userId);
+      res.json({ message: "Public user deleted successfully" });
+    } catch (error) {
+      console.error("Delete public user error:", error);
+      res.status(500).json({ message: "Failed to delete public user" });
+    }
+  });
+
   app.put("/api/admin/users/:id/admin", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
       return res.status(403).json({ message: "Admin access required" });
