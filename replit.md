@@ -205,6 +205,8 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 15, 2025: Updated email templates, server health checks, and database defaults to use "Zmartclass"
 - January 15, 2025: Fixed session secrets, schema defaults, and API responses to reflect new branding
 - January 15, 2025: All backend services now consistently use "Zmartclass" branding throughout
+- January 15, 2025: Enhanced email service reliability with improved SMTP configuration and connection pooling
+- January 15, 2025: Fixed user invitation email delivery issues - system now working reliably with Gmail SMTP
 
 ## User Preferences
 

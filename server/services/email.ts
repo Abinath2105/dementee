@@ -15,7 +15,16 @@ const transporter = nodemailer.createTransport({
   },
   tls: {
     rejectUnauthorized: false
-  }
+  },
+  // Add connection timeout and retry settings
+  connectionTimeout: 30000, // 30 seconds
+  greetingTimeout: 30000,
+  socketTimeout: 30000,
+  // Pool settings for better performance
+  pool: true,
+  maxConnections: 5,
+  maxMessages: 10,
+  rateLimit: 14 // 14 emails per second max (Gmail limit)
 });
 
 // Test email configuration
