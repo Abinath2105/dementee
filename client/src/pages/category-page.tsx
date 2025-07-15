@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { useRoute } from "wouter";
 import { useQuery } from "@tanstack/react-query";
-import { ArrowLeft, Search, Play, Clock, Users, BarChart3 } from "lucide-react";
+import { ArrowLeft, Search, Play, Clock, Users, BarChart3, Calendar, TrendingUp, Filter } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Badge } from "@/components/ui/badge";
 import { Progress } from "@/components/ui/progress";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Link, useLocation } from "wouter";
 import { VideoWithCategory } from "@shared/schema";
 import { VideoCompletionBadge } from "@/components/video-completion-badge";
@@ -15,6 +16,7 @@ export function CategoryPage() {
   const [, params] = useRoute("/category/:slug");
   const slug = params?.slug;
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState("newest");
   const [, setLocation] = useLocation();
 
   // Fetch category details
@@ -69,6 +71,25 @@ export function CategoryPage() {
       video.description?.toLowerCase().includes(searchQuery.toLowerCase())
     );
   });
+
+  // Sort videos based on selected option
+  const sortedVideos = [...filteredVideos].sort((a, b) => {
+    switch (sortBy) {
+      case "newest":
+        return new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime();
+      case "oldest":
+        return new Date(a.createdAt).getTime() - new Date(b.createdAt).getTime();
+      case "popular":
+        return (b.views || 0) - (a.views || 0);
+      case "alphabetical":
+        return a.title.localeCompare(b.title);
+      default:
+        return 0;
+    }
+  });
+
+  // Get featured video (first video or most recent)
+  const featuredVideo = sortedVideos[0];
 
   const handleVideoClick = (video: VideoWithCategory) => {
     setLocation(`/video/${video.id}`);
@@ -129,69 +150,170 @@ export function CategoryPage() {
         </div>
       </div>
 
-      {/* Category Hero Section - Mobile Responsive */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
-          <div className="flex flex-col sm:flex-row sm:items-center sm:space-x-6">
-            <div className="mb-4 sm:mb-0">
-              <img
-                src={category.coverImage || '/api/placeholder/300/200'}
-                alt={category.name}
-                className="w-16 h-16 sm:w-20 sm:h-20 lg:w-24 lg:h-24 rounded-full object-cover border-4 border-blue-100"
-              />
-            </div>
-            <div className="flex-1 min-w-0">
-              <div className="flex items-center mb-2">
-                <Badge variant="secondary" className="mr-2 text-xs">
-                  Category
-                </Badge>
-                {progress && (
-                  <div className="text-xs text-gray-600">
-                    {progress.completed} of {progress.total} completed
-                  </div>
-                )}
+      {/* Enhanced Hero Section */}
+      <div 
+        className="relative overflow-hidden"
+        style={{
+          background: category.backgroundImage 
+            ? `linear-gradient(135deg, rgba(0,0,0,0.7), rgba(0,0,0,0.5)), url(${category.backgroundImage})` 
+            : `linear-gradient(135deg, ${category.backgroundColor || '#3B82F6'}, ${category.backgroundColor ? category.backgroundColor + '90' : '#8B5CF6'})`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+        }}
+      >
+        {/* Animated background elements */}
+        <div className="absolute inset-0 bg-gradient-to-r from-black/20 via-transparent to-black/20"></div>
+        <div className="absolute top-0 left-0 w-full h-full bg-[radial-gradient(ellipse_at_top,rgba(255,255,255,0.1),transparent)]"></div>
+        
+        <div className="relative z-10 max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-12 sm:py-16 lg:py-20">
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-12 items-center">
+            <div>
+              <div className="inline-flex items-center px-3 py-1 rounded-full bg-white/20 backdrop-blur-sm text-white text-sm font-medium mb-4">
+                <span className="w-2 h-2 bg-green-400 rounded-full mr-2 animate-pulse"></span>
+                {videos.length} Videos Available
               </div>
-              <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
+              
+              <h1 className="text-3xl sm:text-4xl lg:text-5xl font-bold mb-4 sm:mb-6 text-white leading-tight">
                 {category.name}
               </h1>
-              <p className="text-gray-600 text-sm sm:text-base mb-4">
-                {category.description}
-              </p>
-              <div className="flex flex-wrap items-center gap-4 text-sm text-gray-500">
-                <div className="flex items-center">
-                  <Users className="h-4 w-4 mr-1" />
-                  <span>Instructor: {category.mentorName}</span>
-                </div>
-                <div className="flex items-center">
-                  <BarChart3 className="h-4 w-4 mr-1" />
-                  <span>{videos.length} video{videos.length !== 1 ? 's' : ''}</span>
+              
+              {category.description && (
+                <p className="text-lg sm:text-xl text-white/90 mb-6 sm:mb-8 leading-relaxed">
+                  {category.description}
+                </p>
+              )}
+              
+              <div className="flex flex-wrap gap-6 mb-8">
+                {category.mentorName && (
+                  <div className="flex items-center space-x-2 text-white/90">
+                    <Users className="h-5 w-5" />
+                    <span className="font-medium">Instructor: {category.mentorName}</span>
+                  </div>
+                )}
+                <div className="flex items-center space-x-2 text-white/90">
+                  <BarChart3 className="h-5 w-5" />
+                  <span className="font-medium">{videos.length} Videos</span>
                 </div>
                 {progress && (
-                  <div className="flex items-center">
-                    <div className="w-20 mr-2">
-                      <Progress value={(progress.completed / progress.total) * 100} className="h-2" />
-                    </div>
-                    <span>{Math.round((progress.completed / progress.total) * 100)}% Complete</span>
+                  <div className="flex items-center space-x-2 text-white/90">
+                    <Clock className="h-5 w-5" />
+                    <span className="font-medium">{Math.round((progress.completed / progress.total) * 100)}% Complete</span>
                   </div>
                 )}
               </div>
+              
+              {progress && (
+                <div className="bg-white/10 backdrop-blur-sm rounded-lg p-4 mb-6">
+                  <div className="flex justify-between text-sm text-white/90 mb-2">
+                    <span>Course Progress</span>
+                    <span>{progress.completed} of {progress.total}</span>
+                  </div>
+                  <Progress 
+                    value={(progress.completed / progress.total) * 100} 
+                    className="h-3 bg-white/20"
+                  />
+                </div>
+              )}
             </div>
+            
+            {/* Featured Video Preview */}
+            {featuredVideo && (
+              <div className="flex justify-center lg:justify-end">
+                <div className="w-full max-w-md lg:max-w-lg">
+                  <div className="bg-white/10 backdrop-blur-sm rounded-xl p-4 sm:p-6 shadow-2xl">
+                    <div 
+                      className="aspect-video bg-gray-900 rounded-lg mb-4 relative group cursor-pointer overflow-hidden shadow-lg"
+                      onClick={() => handleVideoClick(featuredVideo)}
+                    >
+                      <img 
+                        src={featuredVideo.thumbnailUrl || "/api/placeholder/320/180"}
+                        alt={featuredVideo.title}
+                        className="w-full h-full object-cover rounded-lg"
+                      />
+                      <div className="absolute inset-0 bg-black/30 group-hover:bg-black/50 transition-all duration-300 flex items-center justify-center">
+                        <div className="w-16 h-16 bg-white/90 rounded-full flex items-center justify-center group-hover:scale-110 transition-transform duration-300">
+                          <Play className="h-8 w-8 text-gray-900 ml-1" />
+                        </div>
+                      </div>
+                      <VideoCompletionBadge 
+                        video={featuredVideo}
+                        className="absolute top-3 left-3"
+                      />
+                    </div>
+                    
+                    <div className="text-center">
+                      <h3 className="text-lg font-bold text-white mb-2 line-clamp-2">
+                        {featuredVideo.title}
+                      </h3>
+                      <p className="text-sm text-white/80 line-clamp-2 mb-4">
+                        {featuredVideo.description}
+                      </p>
+                      <Button 
+                        onClick={() => handleVideoClick(featuredVideo)}
+                        className="bg-white/20 hover:bg-white/30 text-white border-white/30 backdrop-blur-sm"
+                        variant="outline"
+                      >
+                        <Play className="h-4 w-4 mr-2" />
+                        Watch Now
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
 
       {/* Content Section - Mobile Responsive */}
       <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-6 sm:py-8">
-        {/* Search Bar - Mobile Responsive */}
-        <div className="mb-4 sm:mb-6">
-          <div className="relative max-w-full sm:max-w-md">
-            <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
-            <Input
-              placeholder="Search videos..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 text-sm sm:text-base"
-            />
+        {/* Search and Sort Controls - Mobile Responsive */}
+        <div className="mb-6 sm:mb-8">
+          <div className="flex flex-col sm:flex-row gap-4 sm:gap-6 items-start sm:items-center">
+            <div className="relative flex-1 max-w-md">
+              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-gray-400" />
+              <Input
+                placeholder="Search videos..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 text-sm sm:text-base"
+              />
+            </div>
+            
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-gray-500" />
+              <Select value={sortBy} onValueChange={setSortBy}>
+                <SelectTrigger className="w-48">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="newest">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Newest First
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="oldest">
+                    <div className="flex items-center gap-2">
+                      <Calendar className="h-4 w-4" />
+                      Oldest First
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="popular">
+                    <div className="flex items-center gap-2">
+                      <TrendingUp className="h-4 w-4" />
+                      Most Popular
+                    </div>
+                  </SelectItem>
+                  <SelectItem value="alphabetical">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-mono">A-Z</span>
+                      Alphabetical
+                    </div>
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
           </div>
         </div>
 
@@ -208,7 +330,7 @@ export function CategoryPage() {
               </div>
             ))}
           </div>
-        ) : filteredVideos.length === 0 ? (
+        ) : sortedVideos.length === 0 ? (
           <div className="text-center py-12 sm:py-16">
             <div className="text-gray-400 text-4xl sm:text-6xl mb-4">🎥</div>
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">
@@ -228,10 +350,10 @@ export function CategoryPage() {
         ) : (
           <div className="space-y-4">
             <div className="text-sm text-gray-600 px-4">
-              Showing {filteredVideos.length} video{filteredVideos.length !== 1 ? 's' : ''}
+              Showing {sortedVideos.length} video{sortedVideos.length !== 1 ? 's' : ''}
             </div>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-              {filteredVideos.map((video: VideoWithCategory, index: number) => (
+              {sortedVideos.map((video: VideoWithCategory, index: number) => (
                 <div
                   key={video.id}
                   className="bg-white rounded-lg shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer group"

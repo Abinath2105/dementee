@@ -35,6 +35,8 @@ export const categories = pgTable("categories", {
   mentorName: text("mentor_name"),
   description: text("description"),
   coverImage: text("cover_image"),
+  backgroundImage: text("background_image"),
+  backgroundColor: text("background_color").default("#f3f4f6"),
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
