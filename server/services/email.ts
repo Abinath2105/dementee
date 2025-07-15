@@ -86,10 +86,8 @@ export async function sendInvitationEmail(email: string, token: string, role: st
   }
   
   try {
-    // Use the proper Replit domain or fallback to localhost for development
-    const baseUrl = process.env.REPL_SLUG && process.env.REPL_OWNER
-      ? `https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`
-      : process.env.FRONTEND_URL || 'http://localhost:5000';
+    // Use custom domain or fallback to Replit domain
+    const baseUrl = process.env.CUSTOM_DOMAIN || 'https://zmartclass.com';
     const inviteUrl = `${baseUrl}/invite/${token}`;
     
     const mailOptions = {
