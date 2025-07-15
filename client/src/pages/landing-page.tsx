@@ -149,9 +149,9 @@ export function LandingPage() {
           <div className="flex justify-between items-center h-16">
             {/* Logo */}
             <div className="flex items-center">
-              <div className="text-2xl font-bold text-gray-900">
-                <span className="text-blue-600">Zmartclass</span>
-                <span className="text-sm text-gray-600 ml-2">by De mentee</span>
+              <div className="text-2xl font-bold text-blue-600">
+                <div>Zmartclass</div>
+                <div className="text-sm text-gray-500 font-light">De mentee</div>
               </div>
             </div>
             
@@ -199,7 +199,7 @@ export function LandingPage() {
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
                     Zmartclass
                   </span>
-                  <span className="text-2xl lg:text-3xl text-gray-600 block mt-2">by De mentee</span>
+                  <span className="text-2xl lg:text-3xl text-gray-500 font-light block mt-2">De mentee</span>
                 </h1>
                 <p className="text-xl text-gray-600 leading-relaxed">
                   Join thousands of students learning cutting-edge skills through our expert-designed courses. 
@@ -414,11 +414,12 @@ export function LandingPage() {
       <section id="about" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2">
               About Zmartclass
             </h2>
+            <p className="text-lg text-gray-500 font-light mb-4">De mentee</p>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-              Built by De mentee, Zmartclass is dedicated to making quality education accessible to everyone
+              Dedicated to making quality education accessible to everyone
             </p>
           </div>
           
@@ -750,7 +751,8 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
-              <h3 className="text-2xl font-bold mb-4">Zmartclass <span className="text-lg text-gray-400">by De mentee</span></h3>
+              <h3 className="text-2xl font-bold mb-2">Zmartclass</h3>
+              <p className="text-lg text-gray-400 font-light mb-4">De mentee</p>
               <p className="text-gray-400 mb-4">
                 Empowering learners worldwide with high-quality, accessible education through innovative video-based courses. De mentee's mission is to make quality education accessible to everyone.
               </p>
@@ -788,7 +790,7 @@ export function LandingPage() {
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 Zmartclass by De mentee. All rights reserved.</p>
+            <p>&copy; 2025 Zmartclass. All rights reserved.</p>
           </div>
         </div>
       </footer>
