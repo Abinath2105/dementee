@@ -193,7 +193,7 @@ export class DatabaseStorage implements IStorage {
       return await db.select().from(categories).orderBy(categories.name);
     }
 
-    // Regular user - return only assigned categories
+    // Regular user - return assigned categories PLUS "Other" category
     const userCategories = await db
       .select({ category: categories })
       .from(categories)
@@ -201,7 +201,25 @@ export class DatabaseStorage implements IStorage {
       .where(eq(userCategoryAccess.userId, userId))
       .orderBy(categories.name);
     
-    return userCategories.map(row => row.category);
+    // Get the "Other" category
+    const otherCategory = await db
+      .select()
+      .from(categories)
+      .where(eq(categories.slug, 'other'))
+      .limit(1);
+    
+    const assignedCategories = userCategories.map(row => row.category);
+    
+    // Add "Other" category if it exists and isn't already in assigned categories
+    if (otherCategory.length > 0) {
+      const otherCat = otherCategory[0];
+      const alreadyAssigned = assignedCategories.some(cat => cat.id === otherCat.id);
+      if (!alreadyAssigned) {
+        assignedCategories.push(otherCat);
+      }
+    }
+    
+    return assignedCategories.sort((a, b) => a.name.localeCompare(b.name));
   }
 
   async createCategory(insertCategory: InsertCategory): Promise<Category> {
@@ -261,6 +279,45 @@ export class DatabaseStorage implements IStorage {
 
     if (categoryId) {
       conditions.push(eq(videos.categoryId, categoryId));
+    }
+
+    // Add category access control for non-admin users
+    if (userId) {
+      const user = await this.getUser(userId);
+      if (user && !user.isAdmin) {
+        // Get user's assigned categories
+        const userCategories = await db
+          .select({ categoryId: userCategoryAccess.categoryId })
+          .from(userCategoryAccess)
+          .where(eq(userCategoryAccess.userId, userId));
+        
+        // Get "Other" category ID
+        const otherCategory = await db
+          .select({ id: categories.id })
+          .from(categories)
+          .where(eq(categories.slug, 'other'))
+          .limit(1);
+        
+        const allowedCategoryIds = userCategories.map(row => row.categoryId);
+        if (otherCategory.length > 0) {
+          allowedCategoryIds.push(otherCategory[0].id);
+        }
+        
+        // Only show videos from allowed categories
+        if (allowedCategoryIds.length > 0) {
+          conditions.push(
+            or(...allowedCategoryIds.map(id => eq(videos.categoryId, id)))
+          );
+        } else {
+          // If no categories assigned, only show "Other" category videos
+          if (otherCategory.length > 0) {
+            conditions.push(eq(videos.categoryId, otherCategory[0].id));
+          } else {
+            // If no "Other" category exists, show no videos
+            conditions.push(sql`FALSE`);
+          }
+        }
+      }
     }
 
     if (conditions.length > 0) {
