@@ -156,9 +156,9 @@ export function LandingPage() {
                   className="h-10 w-auto"
                 />
               ) : (
-                <div className="text-2xl font-bold text-blue-600 relative">
-                  <div>Zmartclass</div>
-                  <div className="text-sm text-gray-500 font-normal absolute -bottom-0.5 right-0 translate-y-full">De mentee</div>
+                <div className="flex flex-col leading-tight">
+                  <div className="text-2xl font-bold text-blue-600">Zmartclass</div>
+                  <div className="text-sm text-gray-500 font-normal -mt-1">De mentee</div>
                 </div>
               )}
             </div>
@@ -204,9 +204,11 @@ export function LandingPage() {
                 </Badge>
                 <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
                   Master New Skills with{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 relative">
-                    Zmartclass
-                    <span className="text-2xl lg:text-3xl text-gray-500 font-normal absolute -bottom-2 right-0 translate-y-full">De mentee</span>
+                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 inline-block">
+                    <div className="flex flex-col leading-tight">
+                      <span>Zmartclass</span>
+                      <span className="text-2xl lg:text-3xl text-gray-500 font-normal -mt-2">De mentee</span>
+                    </div>
                   </span>
                 </h1>
                 <p className="text-xl text-gray-600 leading-relaxed">
@@ -422,9 +424,11 @@ export function LandingPage() {
       <section id="about" className="py-20 bg-white">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
-            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 relative inline-block">
-              <span>About Zmartclass</span>
-              <span className="text-xl text-gray-500 font-normal absolute -bottom-1 right-0 translate-y-full">De mentee</span>
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 inline-block">
+              <div className="flex flex-col leading-tight">
+                <span>About Zmartclass</span>
+                <span className="text-xl text-gray-500 font-normal -mt-1">De mentee</span>
+              </div>
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mt-8">
               Dedicated to making quality education accessible to everyone
@@ -759,9 +763,11 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
-              <h3 className="text-2xl font-bold mb-6 relative inline-block">
-                <span>Zmartclass</span>
-                <span className="text-lg text-gray-400 font-normal absolute -bottom-0.5 right-0 translate-y-full">De mentee</span>
+              <h3 className="text-2xl font-bold mb-6 inline-block">
+                <div className="flex flex-col leading-tight">
+                  <span>Zmartclass</span>
+                  <span className="text-lg text-gray-400 font-normal -mt-1">De mentee</span>
+                </div>
               </h3>
               <p className="text-gray-400 mb-4">
                 Empowering learners worldwide with high-quality, accessible education through innovative video-based courses. De mentee's mission is to make quality education accessible to everyone.

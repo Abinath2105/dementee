@@ -288,17 +288,10 @@ export default function AdminPage() {
               {appSettings?.appLogo ? (
                 <img src={appSettings.appLogo} alt="Zmartclass Logo" className="h-8 w-auto mr-2 sm:mr-3 flex-shrink-0" />
               ) : (
-                <div className="mr-2 sm:mr-3 flex-shrink-0">
-                  <div className="text-lg sm:text-xl font-bold text-blue-600 relative">
-                    <div>Zmartclass</div>
-                    <div className="text-xs text-gray-500 font-normal absolute -bottom-0.5 right-0 translate-y-full">De mentee</div>
-                  </div>
+                <div className="flex flex-col leading-tight mr-2 sm:mr-3 flex-shrink-0">
+                  <div className="text-lg sm:text-xl font-bold text-blue-600">Zmartclass</div>
+                  <div className="text-xs text-gray-500 font-normal -mt-1">De mentee</div>
                 </div>
-              )}
-              {!appSettings?.appLogo && (
-                <span className="text-base sm:text-xl font-bold text-gray-900 truncate ml-12">
-                  {appSettings?.appName || "Zmartclass"}
-                </span>
               )}
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
