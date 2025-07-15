@@ -564,27 +564,56 @@ export default function AdminPage() {
               {categories.map((category) => {
                 const categoryVideoCount = videos.filter(v => v.categoryId === category.id).length;
                 return (
-                  <div key={category.id} className="relative group">
-                    <CategoryCard
-                      category={category}
-                      videoCount={categoryVideoCount}
-                      onClick={() => {}}
-                    />
-                    <div className="absolute top-2 right-2 opacity-90 group-hover:opacity-100 transition-opacity space-x-1">
+                  <div key={category.id} className="space-y-2">
+                    <div className="relative group">
+                      <CategoryCard
+                        category={category}
+                        videoCount={categoryVideoCount}
+                        onClick={() => {}}
+                      />
+                      <div className="absolute top-2 right-2 flex space-x-1">
+                        <Button
+                          size="sm"
+                          variant="outline"
+                          onClick={() => handleEditCategory(category)}
+                          className="bg-white/90 hover:bg-white shadow-sm"
+                          title="Edit category"
+                        >
+                          <Edit className="h-4 w-4" />
+                        </Button>
+                        <Button
+                          size="sm"
+                          variant="destructive"
+                          onClick={() => handleDeleteCategory(category.id)}
+                          disabled={deleteCategoryMutation.isPending}
+                          className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
+                          title="Delete category"
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      </div>
+                    </div>
+                    
+                    {/* Action buttons below each category */}
+                    <div className="flex space-x-2">
                       <Button
                         size="sm"
                         variant="outline"
                         onClick={() => handleEditCategory(category)}
+                        className="flex-1"
                       >
-                        <Edit className="h-4 w-4" />
+                        <Edit className="h-4 w-4 mr-2" />
+                        Edit
                       </Button>
                       <Button
                         size="sm"
                         variant="destructive"
                         onClick={() => handleDeleteCategory(category.id)}
                         disabled={deleteCategoryMutation.isPending}
+                        className="flex-1"
                       >
-                        <Trash2 className="h-4 w-4" />
+                        <Trash2 className="h-4 w-4 mr-2" />
+                        Delete
                       </Button>
                     </div>
                   </div>
