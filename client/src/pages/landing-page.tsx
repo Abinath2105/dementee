@@ -99,27 +99,27 @@ export function LandingPage() {
   }
 
   const stats = [
-    { icon: Users, label: "Active Students", value: "10,000+", color: "text-blue-600" },
-    { icon: BookOpen, label: "Courses", value: categories?.length || "50+", color: "text-green-600" },
-    { icon: Video, label: "Video Lessons", value: featuredVideos?.length || "500+", color: "text-purple-600" },
-    { icon: Trophy, label: "Success Rate", value: "95%", color: "text-orange-600" },
+    { icon: Users, label: settings?.stat1Label || "Active Students", value: settings?.stat1Value || "10,000+", color: "text-blue-600" },
+    { icon: BookOpen, label: settings?.stat2Label || "Courses", value: settings?.stat2Value || categories?.length || "50+", color: "text-green-600" },
+    { icon: Video, label: settings?.stat3Label || "Video Lessons", value: settings?.stat3Value || featuredVideos?.length || "500+", color: "text-purple-600" },
+    { icon: Trophy, label: settings?.stat4Label || "Success Rate", value: settings?.stat4Value || "95%", color: "text-orange-600" },
   ];
 
   const features = [
     {
       icon: GraduationCap,
-      title: "Expert-Led Courses",
-      description: "Learn from industry professionals with real-world experience",
+      title: settings?.feature1Title || "Expert-Led Courses",
+      description: settings?.feature1Description || "Learn from industry professionals with real-world experience",
     },
     {
       icon: Target,
-      title: "Practical Learning",
-      description: "Hands-on projects and real case studies to build your portfolio",
+      title: settings?.feature2Title || "Practical Learning",
+      description: settings?.feature2Description || "Hands-on projects and real case studies to build your portfolio",
     },
     {
       icon: Zap,
-      title: "Fast-Track Progress",
-      description: "Accelerated learning paths designed for busy professionals",
+      title: settings?.feature3Title || "Fast-Track Progress",
+      description: settings?.feature3Description || "Accelerated learning paths designed for busy professionals",
     },
     {
       icon: Clock,
@@ -192,17 +192,10 @@ export function LandingPage() {
                   🚀 New Course Alert
                 </Badge>
                 <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
-                  Master New Skills with{" "}
-                  <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600 inline-block">
-                    <div className="flex flex-col leading-tight">
-                      <span>Zmartclass</span>
-                      <span className="text-2xl lg:text-3xl text-gray-500 font-normal -mt-2 text-right">De mentee</span>
-                    </div>
-                  </span>
+                  {settings?.heroTitle || "Transform Your Learning Journey"}
                 </h1>
                 <p className="text-xl text-gray-600 leading-relaxed">
-                  Join thousands of students learning cutting-edge skills through our expert-designed courses. 
-                  Start your journey today and unlock your potential.
+                  {settings?.heroSubtitle || "Join thousands of students advancing their careers with our expert-led courses"}
                 </p>
               </div>
 
@@ -213,7 +206,7 @@ export function LandingPage() {
                   className="bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white px-8 py-3 rounded-lg shadow-lg"
                   onClick={() => navigate("/register")}
                 >
-                  Start Learning Now
+                  {settings?.heroButtonText || "Get Started Today"}
                   <ArrowRight className="ml-2 h-5 w-5" />
                 </Button>
                 <Button 
@@ -324,7 +317,7 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Why Choose Zmartclass?
+              {settings?.featuresTitle || "Why Choose Zmartclass?"}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               We provide everything you need to succeed in your learning journey
@@ -414,13 +407,10 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-2 inline-block">
-              <div className="flex flex-col leading-tight">
-                <span>About Zmartclass</span>
-                <span className="text-xl text-gray-500 font-normal -mt-1 text-right">De mentee</span>
-              </div>
+              {settings?.aboutTitle || "About Zmartclass"}
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mt-8">
-              Dedicated to making quality education accessible to everyone
+              {settings?.aboutDescription || "We're dedicated to making quality education accessible to everyone. Our platform combines cutting-edge technology with expert instruction to deliver exceptional learning experiences."}
             </p>
           </div>
           

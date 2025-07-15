@@ -82,6 +82,42 @@ export const appSettings = pgTable("app_settings", {
   secondaryColor: text("secondary_color").notNull().default("#1f2937"),
   bannerImages: jsonb("banner_images").$type<string[]>().default([]),
   footerText: text("footer_text"),
+  
+  // Landing page configuration
+  heroTitle: text("hero_title").default("Transform Your Learning Journey"),
+  heroSubtitle: text("hero_subtitle").default("Join thousands of students advancing their careers with our expert-led courses"),
+  heroButtonText: text("hero_button_text").default("Get Started Today"),
+  
+  // Stats section
+  statsTitle: text("stats_title").default("Trusted by Students Worldwide"),
+  stat1Label: text("stat1_label").default("Active Students"),
+  stat1Value: text("stat1_value").default("10,000+"),
+  stat2Label: text("stat2_label").default("Courses"),
+  stat2Value: text("stat2_value").default("50+"),
+  stat3Label: text("stat3_label").default("Video Lessons"),
+  stat3Value: text("stat3_value").default("500+"),
+  stat4Label: text("stat4_label").default("Success Rate"),
+  stat4Value: text("stat4_value").default("95%"),
+  
+  // About section
+  aboutTitle: text("about_title").default("About Zmartclass"),
+  aboutDescription: text("about_description").default("We're dedicated to making quality education accessible to everyone. Our platform combines cutting-edge technology with expert instruction to deliver exceptional learning experiences."),
+  
+  // Features section
+  featuresTitle: text("features_title").default("Why Choose Zmartclass?"),
+  feature1Title: text("feature1_title").default("Expert-Led Courses"),
+  feature1Description: text("feature1_description").default("Learn from industry professionals with real-world experience"),
+  feature2Title: text("feature2_title").default("Practical Learning"),
+  feature2Description: text("feature2_description").default("Hands-on projects and real case studies to build your portfolio"),
+  feature3Title: text("feature3_title").default("Fast-Track Progress"),
+  feature3Description: text("feature3_description").default("Accelerated learning paths designed for busy professionals"),
+  
+  // Contact section
+  contactTitle: text("contact_title").default("Get In Touch"),
+  contactDescription: text("contact_description").default("Ready to start your learning journey? Contact us today!"),
+  contactEmail: text("contact_email").default("info@zmartclass.com"),
+  contactPhone: text("contact_phone").default("+1 (555) 123-4567"),
+  
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
 
@@ -333,6 +369,31 @@ export const insertAppSettingsSchema = createInsertSchema(appSettings).pick({
   secondaryColor: true,
   bannerImages: true,
   footerText: true,
+  heroTitle: true,
+  heroSubtitle: true,
+  heroButtonText: true,
+  statsTitle: true,
+  stat1Label: true,
+  stat1Value: true,
+  stat2Label: true,
+  stat2Value: true,
+  stat3Label: true,
+  stat3Value: true,
+  stat4Label: true,
+  stat4Value: true,
+  aboutTitle: true,
+  aboutDescription: true,
+  featuresTitle: true,
+  feature1Title: true,
+  feature1Description: true,
+  feature2Title: true,
+  feature2Description: true,
+  feature3Title: true,
+  feature3Description: true,
+  contactTitle: true,
+  contactDescription: true,
+  contactEmail: true,
+  contactPhone: true,
 });
 
 export const insertOtpSchema = createInsertSchema(otpCodes).pick({
