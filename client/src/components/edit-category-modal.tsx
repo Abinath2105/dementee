@@ -32,7 +32,10 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
   const { toast } = useToast();
   const queryClient = useQueryClient();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const backgroundImageInputRef = useRef<HTMLInputElement>(null);
   const [uploadedImageUrl, setUploadedImageUrl] = useState<string>("");
+  const [uploadedBackgroundImageUrl, setUploadedBackgroundImageUrl] = useState<string>("");
+  const [backgroundColor, setBackgroundColor] = useState<string>("#f3f4f6");
 
   const form = useForm<CategoryData>({
     resolver: zodResolver(categorySchema),
@@ -53,6 +56,8 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
         mentorName: category.mentorName || "",
       });
       setUploadedImageUrl(category.coverImage || "");
+      setUploadedBackgroundImageUrl(category.backgroundImage || "");
+      setBackgroundColor(category.backgroundColor || "#f3f4f6");
     }
   }, [category, form]);
 
@@ -108,6 +113,8 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
           ...data,
           slug,
           coverImage: uploadedImageUrl,
+          backgroundImage: uploadedBackgroundImageUrl,
+          backgroundColor: backgroundColor,
         }),
       });
       
@@ -127,6 +134,8 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
       });
       form.reset();
       setUploadedImageUrl("");
+      setUploadedBackgroundImageUrl("");
+      setBackgroundColor("#f3f4f6");
       onClose();
     },
     onError: (error: Error) => {
@@ -146,6 +155,38 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
     }
   };
 
+  const handleBackgroundImageUpload = (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (file) {
+      const formData = new FormData();
+      formData.append("image", file);
+      
+      fetch("/api/upload/image", {
+        method: "POST",
+        body: formData,
+        credentials: "include",
+      })
+      .then(response => {
+        if (!response.ok) throw new Error("Failed to upload background image");
+        return response.json();
+      })
+      .then(data => {
+        setUploadedBackgroundImageUrl(data.url);
+        toast({
+          title: "Success",
+          description: "Background image uploaded successfully",
+        });
+      })
+      .catch(error => {
+        toast({
+          variant: "destructive",
+          title: "Error",
+          description: error.message,
+        });
+      });
+    }
+  };
+
   const onSubmit = (data: CategoryData) => {
     console.log('Form submitted with data:', data);
     console.log('Form errors:', form.formState.errors);
@@ -154,6 +195,10 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
 
   const handleRemoveImage = () => {
     setUploadedImageUrl("");
+  };
+
+  const handleRemoveBackgroundImage = () => {
+    setUploadedBackgroundImageUrl("");
   };
 
   if (!category) return null;
@@ -262,6 +307,74 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
                 onChange={handleImageUpload}
                 className="hidden"
               />
+            </div>
+
+            {/* Background Image Upload */}
+            <div className="space-y-2">
+              <Label>Background Image (For Hero Section)</Label>
+              <div className="border-2 border-dashed border-gray-300 rounded-lg p-4">
+                {uploadedBackgroundImageUrl ? (
+                  <div className="relative">
+                    <img 
+                      src={uploadedBackgroundImageUrl} 
+                      alt="Background" 
+                      className="w-full h-32 object-cover rounded-lg"
+                    />
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      className="absolute top-2 right-2"
+                      onClick={handleRemoveBackgroundImage}
+                    >
+                      <X className="h-4 w-4" />
+                    </Button>
+                  </div>
+                ) : (
+                  <div className="text-center">
+                    <Image className="mx-auto h-12 w-12 text-gray-400" />
+                    <div className="mt-2">
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => backgroundImageInputRef.current?.click()}
+                      >
+                        <Upload className="h-4 w-4 mr-2" />
+                        Upload Background Image
+                      </Button>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-1">PNG, JPG up to 5MB</p>
+                  </div>
+                )}
+              </div>
+              <input
+                ref={backgroundImageInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleBackgroundImageUpload}
+                className="hidden"
+              />
+            </div>
+
+            {/* Background Color */}
+            <div className="space-y-2">
+              <Label>Background Color</Label>
+              <div className="flex items-center space-x-2">
+                <input
+                  type="color"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  className="w-12 h-12 border border-gray-300 rounded-lg cursor-pointer"
+                />
+                <Input
+                  type="text"
+                  value={backgroundColor}
+                  onChange={(e) => setBackgroundColor(e.target.value)}
+                  placeholder="#f3f4f6"
+                  className="flex-1"
+                />
+              </div>
+              <p className="text-xs text-gray-500">Used as fallback when no background image is set</p>
             </div>
 
             <div className="flex justify-end space-x-2 pt-4">
