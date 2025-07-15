@@ -486,7 +486,15 @@ export default function AdminPage() {
                         </TableCell>
                         <TableCell>
                           {video.category ? (
-                            <Badge variant="outline">{video.category.name}</Badge>
+                            <div className="max-w-[150px]">
+                              <Badge 
+                                variant="outline" 
+                                className="truncate block"
+                                title={video.category.name}
+                              >
+                                {video.category.name}
+                              </Badge>
+                            </div>
                           ) : (
                             <span className="text-gray-400">Uncategorized</span>
                           )}
