@@ -157,6 +157,9 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 14, 2025: Enhanced database queries to properly join video and category information for analytics pages
 - January 14, 2025: Fixed critical undefined video property errors in student analytics by updating getUserWatchHistory method
 - January 14, 2025: Applied consistent professional chip/tag-style completion indicators across all pages with minimal variant styling
+- January 15, 2025: Fixed invitation email URLs to use proper live Replit domain instead of localhost
+- January 15, 2025: Updated email service to construct URLs using REPL_SLUG and REPL_OWNER environment variables
+- January 15, 2025: Invitation links now properly point to https://workspace-aurolakshmanan.replit.app for live access
 
 ## User Preferences
 

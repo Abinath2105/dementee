@@ -87,8 +87,8 @@ export async function sendInvitationEmail(email: string, token: string, role: st
   
   try {
     // Use the proper Replit domain or fallback to localhost for development
-    const baseUrl = process.env.REPLIT_DEV_DOMAIN 
-      ? `https://${process.env.REPLIT_DEV_DOMAIN}` 
+    const baseUrl = process.env.REPL_SLUG && process.env.REPL_OWNER
+      ? `https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app`
       : process.env.FRONTEND_URL || 'http://localhost:5000';
     const inviteUrl = `${baseUrl}/invite/${token}`;
     
