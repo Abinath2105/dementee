@@ -127,7 +127,14 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
     },
     onSuccess: (updatedCategory) => {
       console.log('Category updated successfully:', updatedCategory);
+      // Invalidate all category-related caches with exact query keys
       queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/categories", category.slug] });
+      queryClient.invalidateQueries({ queryKey: ["/api/categories", updatedCategory.slug] });
+      // Invalidate videos cache
+      queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+      // Force refetch of all category queries
+      queryClient.refetchQueries({ queryKey: ["/api/categories"] });
       toast({
         title: "Success",
         description: "Category updated successfully",

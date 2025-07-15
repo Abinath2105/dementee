@@ -331,6 +331,8 @@ export const insertCategorySchema = createInsertSchema(categories).pick({
   mentorName: true,
   description: true,
   coverImage: true,
+  backgroundImage: true,
+  backgroundColor: true,
 });
 
 export const insertVideoSchema = createInsertSchema(videos).pick({
