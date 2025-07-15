@@ -16,7 +16,7 @@ export function CategoryPage() {
   const [, params] = useRoute("/category/:slug");
   const slug = params?.slug;
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState("newest");
+  const [sortBy, setSortBy] = useState("alphabetical");
   const [, setLocation] = useLocation();
 
   // Fetch category details
