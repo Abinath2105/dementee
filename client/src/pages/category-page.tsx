@@ -136,7 +136,7 @@ export function CategoryPage() {
                 </Button>
               </Link>
               <h1 className="text-lg sm:text-xl font-bold text-gray-900 truncate">
-                VideoLearn Pro
+                Zmartclass
               </h1>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4">

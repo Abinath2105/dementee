@@ -85,7 +85,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       queryClient.setQueryData(["/api/user"], response.user);
       toast({
         title: "Email verified",
-        description: "Welcome to VideoLearn Pro!",
+        description: "Welcome to Zmartclass!",
       });
     },
     onError: (error: Error) => {

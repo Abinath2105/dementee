@@ -112,7 +112,7 @@ async function createDefaultCategories() {
 
 export function setupAuth(app: Express) {
   const sessionSettings: session.SessionOptions = {
-    secret: process.env.SESSION_SECRET || 'VideoLearn-Pro-Default-Secret-' + Date.now(),
+    secret: process.env.SESSION_SECRET || 'Zmartclass-Default-Secret-' + Date.now(),
     resave: false,
     saveUninitialized: false,
     store: storage.sessionStore,

@@ -147,7 +147,7 @@ export default function InvitationPage() {
         <CardHeader className="text-center">
           <CardTitle>Complete Your Registration</CardTitle>
           <CardDescription>
-            You've been invited to join VideoLearn Pro as a <strong>{invitation.role}</strong>.
+            You've been invited to join Zmartclass as a <strong>{invitation.role}</strong>.
             <br />
             Email: <strong>{invitation.email}</strong>
           </CardDescription>

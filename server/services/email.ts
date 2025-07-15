@@ -40,18 +40,18 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: email,
-      subject: 'VideoLearn Pro - Email Verification',
+      subject: 'Zmartclass - Email Verification',
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #2563EB; margin: 0;">VideoLearn Pro</h1>
+            <h1 style="color: #2563EB; margin: 0;">Zmartclass</h1>
             <p style="color: #64748B; margin: 5px 0;">Learning Management Platform</p>
           </div>
           
           <div style="background: #F8FAFC; padding: 30px; border-radius: 12px; text-align: center;">
             <h2 style="color: #1E293B; margin-bottom: 20px;">Verify Your Email Address</h2>
             <p style="color: #64748B; margin-bottom: 30px;">
-              Thank you for joining VideoLearn Pro! Please use the verification code below to complete your registration:
+              Thank you for joining Zmartclass! Please use the verification code below to complete your registration:
             </p>
             
             <div style="background: white; padding: 20px; border-radius: 8px; margin: 20px 0; border: 2px solid #E2E8F0;">
@@ -66,7 +66,7 @@ export async function sendOtpEmail(email: string, otp: string): Promise<void> {
           </div>
           
           <div style="text-align: center; margin-top: 30px; color: #64748B; font-size: 12px;">
-            <p>© 2024 VideoLearn Pro. All rights reserved.</p>
+            <p>© 2024 Zmartclass. All rights reserved.</p>
           </div>
         </div>
       `,
@@ -93,18 +93,18 @@ export async function sendInvitationEmail(email: string, token: string, role: st
     const mailOptions = {
       from: process.env.SMTP_USER,
       to: email,
-      subject: `VideoLearn Pro - You're invited as a ${role}`,
+      subject: `Zmartclass - You're invited as a ${role}`,
       html: `
         <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px;">
           <div style="text-align: center; margin-bottom: 30px;">
-            <h1 style="color: #2563EB; margin: 0;">VideoLearn Pro</h1>
+            <h1 style="color: #2563EB; margin: 0;">Zmartclass</h1>
             <p style="color: #64748B; margin: 5px 0;">Learning Management Platform</p>
           </div>
           
           <div style="background: #F8FAFC; padding: 30px; border-radius: 12px;">
             <h2 style="color: #1E293B; margin-bottom: 20px; text-align: center;">You're Invited!</h2>
             <p style="color: #64748B; margin-bottom: 20px;">
-              You have been invited to join VideoLearn Pro as a <strong>${role}</strong>.
+              You have been invited to join Zmartclass as a <strong>${role}</strong>.
             </p>
             <p style="color: #64748B; margin-bottom: 30px;">
               Click the button below to accept your invitation and set up your account:
@@ -129,7 +129,7 @@ export async function sendInvitationEmail(email: string, token: string, role: st
           </div>
           
           <div style="text-align: center; margin-top: 30px; color: #64748B; font-size: 12px;">
-            <p>© 2024 VideoLearn Pro. All rights reserved.</p>
+            <p>© 2024 Zmartclass. All rights reserved.</p>
           </div>
         </div>
       `,

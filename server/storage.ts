@@ -632,7 +632,7 @@ export class DatabaseStorage implements IStorage {
       const [defaultSettings] = await db
         .insert(appSettings)
         .values({
-          appName: "VideoLearn Pro",
+          appName: "Zmartclass",
           primaryColor: "#3b82f6",
           secondaryColor: "#1f2937",
           bannerImages: [],

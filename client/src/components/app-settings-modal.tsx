@@ -168,7 +168,7 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
                 <FormItem>
                   <FormLabel>App Name</FormLabel>
                   <FormControl>
-                    <Input placeholder="VideoLearn Pro" {...field} />
+                    <Input placeholder="Zmartclass" {...field} />
                   </FormControl>
                   <FormMessage />
                 </FormItem>
@@ -271,7 +271,7 @@ export function AppSettingsModal({ isOpen, onClose }: AppSettingsModalProps) {
                   <FormLabel>Footer Text</FormLabel>
                   <FormControl>
                     <Textarea 
-                      placeholder="© 2024 VideoLearn Pro. All rights reserved."
+                      placeholder="© 2024 Zmartclass. All rights reserved."
                       {...field}
                     />
                   </FormControl>

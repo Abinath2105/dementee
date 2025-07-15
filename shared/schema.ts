@@ -76,7 +76,7 @@ export const videoViews = pgTable("video_views", {
 // App settings for customization
 export const appSettings = pgTable("app_settings", {
   id: serial("id").primaryKey(),
-  appName: text("app_name").notNull().default("VideoLearn Pro"),
+  appName: text("app_name").notNull().default("Zmartclass"),
   appLogo: text("app_logo"),
   primaryColor: text("primary_color").notNull().default("#3b82f6"),
   secondaryColor: text("secondary_color").notNull().default("#1f2937"),

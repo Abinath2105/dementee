@@ -24,7 +24,7 @@ export function BannerCarousel({ banners, className = "" }: BannerCarouselProps)
     return (
       <div className={`relative h-64 bg-gradient-to-r from-blue-600 to-purple-600 rounded-lg flex items-center justify-center ${className}`}>
         <div className="text-center text-white">
-          <h2 className="text-3xl font-bold mb-2">Welcome to VideoLearn Pro</h2>
+          <h2 className="text-3xl font-bold mb-2">Welcome to Zmartclass</h2>
           <p className="text-xl opacity-90">Your premier video learning platform</p>
         </div>
       </div>
