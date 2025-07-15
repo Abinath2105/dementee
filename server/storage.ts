@@ -393,7 +393,6 @@ export class DatabaseStorage implements IStorage {
     await db.delete(videoCompletions).where(eq(videoCompletions.videoId, id));
     await db.delete(videoViews).where(eq(videoViews.videoId, id));
     await db.delete(watchHistory).where(eq(watchHistory.videoId, id));
-    await db.delete(userSessions).where(eq(userSessions.videoId, id));
     await db.delete(videoRatings).where(eq(videoRatings.videoId, id));
     await db.delete(videoComments).where(eq(videoComments.videoId, id));
     
