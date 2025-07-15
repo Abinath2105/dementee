@@ -570,7 +570,7 @@ export default function AdminPage() {
                       videoCount={categoryVideoCount}
                       onClick={() => {}}
                     />
-                    <div className="absolute top-2 right-2 opacity-0 group-hover:opacity-100 transition-opacity space-x-1">
+                    <div className="absolute top-2 right-2 opacity-90 group-hover:opacity-100 transition-opacity space-x-1">
                       <Button
                         size="sm"
                         variant="outline"
