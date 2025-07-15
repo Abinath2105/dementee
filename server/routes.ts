@@ -73,7 +73,7 @@ export function registerRoutes(app: Express): Server {
       // Check if user has access to this category (if not admin)
       if (userId && !req.user?.isAdmin) {
         const userAccess = await storage.getUserCategoryAccess(userId);
-        const hasAccess = userAccess.some(access => access.categoryId === category.id);
+        const hasAccess = userAccess.some(access => access.categoryId === category.id) || category.slug === 'other';
         if (!hasAccess) {
           return res.status(403).json({ message: "You don't have access to this category" });
         }
