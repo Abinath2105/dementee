@@ -1,4 +1,4 @@
-import { users, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, videoCompletions, videoBookmarks, watchHistory, userSessions, videoRatings, videoComments, type User, type InsertUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess, type VideoCompletion, type InsertVideoCompletion, type VideoBookmark, type InsertVideoBookmark, type WatchHistory, type InsertWatchHistory, type UserSession, type InsertUserSession, type VideoRating, type InsertVideoRating, type VideoComment, type InsertVideoComment, type UserLearningStats } from "@shared/schema";
+import { users, publicUsers, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, videoCompletions, videoBookmarks, watchHistory, userSessions, videoRatings, videoComments, type User, type InsertUser, type PublicUser, type InsertPublicUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess, type VideoCompletion, type InsertVideoCompletion, type VideoBookmark, type InsertVideoBookmark, type WatchHistory, type InsertWatchHistory, type UserSession, type InsertUserSession, type VideoRating, type InsertVideoRating, type VideoComment, type InsertVideoComment, type UserLearningStats } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or, ilike, isNotNull } from "drizzle-orm";
 import session from "express-session";
@@ -19,6 +19,12 @@ export interface IStorage {
   updateUserAdminStatus(userId: number, isAdmin: boolean): Promise<User>;
   deleteUser(userId: number): Promise<void>;
   setUserPassword(userId: number, password: string): Promise<User>;
+
+  // Public user management
+  getPublicUser(id: number): Promise<PublicUser | undefined>;
+  getPublicUserByEmail(email: string): Promise<PublicUser | undefined>;
+  createPublicUser(user: InsertPublicUser): Promise<PublicUser>;
+  verifyPublicUser(email: string): Promise<void>;
 
   // User invitation management
   createUserInvitation(invitation: InsertUserInvitation & { invitedBy: number }): Promise<UserInvitation>;
@@ -134,6 +140,29 @@ export class DatabaseStorage implements IStorage {
       .where(eq(users.email, email));
   }
 
+  // Public user management
+  async getPublicUser(id: number): Promise<PublicUser | undefined> {
+    const [user] = await db.select().from(publicUsers).where(eq(publicUsers.id, id));
+    return user || undefined;
+  }
+
+  async getPublicUserByEmail(email: string): Promise<PublicUser | undefined> {
+    const [user] = await db.select().from(publicUsers).where(eq(publicUsers.email, email));
+    return user || undefined;
+  }
+
+  async createPublicUser(insertUser: InsertPublicUser): Promise<PublicUser> {
+    const [user] = await db
+      .insert(publicUsers)
+      .values(insertUser)
+      .returning();
+    return user;
+  }
+
+  async verifyPublicUser(email: string): Promise<void> {
+    await db.update(publicUsers).set({ isVerified: true }).where(eq(publicUsers.email, email));
+  }
+
   async getAllUsers(): Promise<User[]> {
     return await db.select().from(users).orderBy(users.email);
   }
@@ -193,7 +222,14 @@ export class DatabaseStorage implements IStorage {
       return await db.select().from(categories).orderBy(categories.name);
     }
 
-    // Regular user - return assigned categories PLUS "Other" category
+    // Check if user is a public user (only has access to "Other" category)
+    const publicUser = await this.getPublicUser(userId);
+    if (publicUser) {
+      // Public users can only access "Other" category
+      return await db.select().from(categories).where(eq(categories.slug, 'other')).orderBy(categories.name);
+    }
+
+    // Regular admin user - return assigned categories PLUS "Other" category
     const userCategories = await db
       .select({ category: categories })
       .from(categories)
@@ -284,8 +320,24 @@ export class DatabaseStorage implements IStorage {
     // Add category access control for non-admin users
     if (userId) {
       const user = await this.getUser(userId);
-      if (user && !user.isAdmin) {
-        // Get user's assigned categories
+      const publicUser = await this.getPublicUser(userId);
+      
+      if (publicUser) {
+        // Public users can only access "Other" category videos
+        const otherCategory = await db
+          .select({ id: categories.id })
+          .from(categories)
+          .where(eq(categories.slug, 'other'))
+          .limit(1);
+        
+        if (otherCategory.length > 0) {
+          conditions.push(eq(videos.categoryId, otherCategory[0].id));
+        } else {
+          // If no "Other" category exists, show no videos
+          conditions.push(sql`FALSE`);
+        }
+      } else if (user && !user.isAdmin) {
+        // Regular admin users - get assigned categories
         const userCategories = await db
           .select({ categoryId: userCategoryAccess.categoryId })
           .from(userCategoryAccess)

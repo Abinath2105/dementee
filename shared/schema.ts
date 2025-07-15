@@ -19,6 +19,16 @@ export const users = pgTable("users", {
   createdAt: timestamp("created_at").defaultNow().notNull(),
 });
 
+// Public users table for landing page registrations
+export const publicUsers = pgTable("public_users", {
+  id: serial("id").primaryKey(),
+  email: text("email").notNull().unique(),
+  password: text("password").notNull(),
+  fullName: text("full_name").notNull(),
+  isVerified: boolean("is_verified").default(false).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
 export const otpCodes = pgTable("otp_codes", {
   id: serial("id").primaryKey(),
   email: text("email").notNull(),
@@ -305,6 +315,12 @@ export const insertUserSchema = createInsertSchema(users).pick({
   role: true,
 });
 
+export const insertPublicUserSchema = createInsertSchema(publicUsers).pick({
+  email: true,
+  password: true,
+  fullName: true,
+});
+
 export const insertUserInvitationSchema = createInsertSchema(userInvitations).pick({
   email: true,
   role: true,
@@ -402,6 +418,8 @@ export const insertVideoCommentSchema = createInsertSchema(videoComments).pick({
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
 export type SelectUser = User;
+export type PublicUser = typeof publicUsers.$inferSelect;
+export type InsertPublicUser = z.infer<typeof insertPublicUserSchema>;
 export type OtpCode = typeof otpCodes.$inferSelect;
 export type InsertOtp = z.infer<typeof insertOtpSchema>;
 export type Category = typeof categories.$inferSelect;

@@ -134,14 +134,31 @@ export function setupAuth(app: Express) {
       { usernameField: 'email' },
       async (email, password, done) => {
         try {
+          // First check admin users
           const user = await storage.getUserByEmail(email);
-          if (!user || !(await comparePasswords(password, user.password))) {
-            return done(null, false);
+          if (user && (await comparePasswords(password, user.password))) {
+            if (!user.isVerified) {
+              return done(null, false, { message: 'Email not verified' });
+            }
+            return done(null, user);
           }
-          if (!user.isVerified) {
-            return done(null, false, { message: 'Email not verified' });
+          
+          // Then check public users
+          const publicUser = await storage.getPublicUserByEmail(email);
+          if (publicUser && (await comparePasswords(password, publicUser.password))) {
+            if (!publicUser.isVerified) {
+              return done(null, false, { message: 'Email not verified' });
+            }
+            // Convert public user to user format for session
+            return done(null, {
+              ...publicUser,
+              username: publicUser.email,
+              isAdmin: false,
+              role: 'student'
+            });
           }
-          return done(null, user);
+          
+          return done(null, false);
         } catch (error) {
           return done(error);
         }
@@ -149,11 +166,27 @@ export function setupAuth(app: Express) {
     )
   );
 
-  passport.serializeUser((user, done) => done(null, user.id));
-  passport.deserializeUser(async (id: number, done) => {
+  passport.serializeUser((user, done) => done(null, { id: user.id, isPublic: !user.isAdmin && !user.username }));
+  passport.deserializeUser(async (sessionData: any, done) => {
     try {
-      const user = await storage.getUser(id);
-      done(null, user);
+      if (sessionData.isPublic) {
+        // Deserialize public user
+        const publicUser = await storage.getPublicUser(sessionData.id);
+        if (publicUser) {
+          done(null, {
+            ...publicUser,
+            username: publicUser.email,
+            isAdmin: false,
+            role: 'student'
+          });
+        } else {
+          done(null, false);
+        }
+      } else {
+        // Deserialize admin user
+        const user = await storage.getUser(sessionData.id);
+        done(null, user);
+      }
     } catch (error) {
       done(error);
     }
@@ -163,24 +196,21 @@ export function setupAuth(app: Express) {
     try {
       const { email, username, password, fullName } = req.body;
 
-      // Check if user already exists
+      // Check if user already exists in either table
       const existingUser = await storage.getUserByEmail(email);
-      if (existingUser) {
+      const existingPublicUser = await storage.getPublicUserByEmail(email);
+      
+      if (existingUser || existingPublicUser) {
         return res.status(400).json({ message: "Email already exists" });
       }
 
-      const existingUsername = await storage.getUserByUsername(username);
-      if (existingUsername) {
-        return res.status(400).json({ message: "Username already exists" });
-      }
-
-      // Create user (unverified)
+      // Create public user (unverified)
       const hashedPassword = await hashPassword(password);
-      const user = await storage.createUser({
+      const publicUser = await storage.createPublicUser({
         email,
-        username,
-        password: hashedPassword,
         fullName,
+        password: hashedPassword,
+        isVerified: false,
       });
 
       // Generate and send OTP
@@ -197,13 +227,13 @@ export function setupAuth(app: Express) {
         await sendOtpEmail(email, otp);
         res.status(201).json({ 
           message: "Registration successful. Please check your email for verification code.",
-          email: user.email 
+          email: publicUser.email 
         });
       } catch (emailError) {
         console.error('Email sending failed, providing OTP in response for testing:', emailError);
         res.status(201).json({ 
           message: `Registration successful. Email service unavailable - use this verification code: ${otp}`,
-          email: user.email,
+          email: publicUser.email,
           testOtp: otp // Temporary for testing
         });
       }
@@ -222,16 +252,32 @@ export function setupAuth(app: Express) {
         return res.status(400).json({ message: "Invalid or expired verification code" });
       }
 
-      // Mark OTP as used and verify user
+      // Mark OTP as used
       await storage.markOtpAsUsed(otp.id);
-      await storage.verifyUser(email);
 
-      // Auto-login the user
+      // Check if it's an admin user or public user
       const user = await storage.getUserByEmail(email);
+      const publicUser = await storage.getPublicUserByEmail(email);
+
       if (user) {
+        // Admin user
+        await storage.verifyUser(email);
         req.login(user, (err) => {
           if (err) return res.status(500).json({ message: "Login failed" });
           res.json({ message: "Email verified successfully", user });
+        });
+      } else if (publicUser) {
+        // Public user
+        await storage.verifyPublicUser(email);
+        const userSession = {
+          ...publicUser,
+          username: publicUser.email,
+          isAdmin: false,
+          role: 'student'
+        };
+        req.login(userSession, (err) => {
+          if (err) return res.status(500).json({ message: "Login failed" });
+          res.json({ message: "Email verified successfully", user: userSession });
         });
       } else {
         res.status(404).json({ message: "User not found" });
@@ -247,11 +293,13 @@ export function setupAuth(app: Express) {
       const { email } = req.body;
 
       const user = await storage.getUserByEmail(email);
-      if (!user) {
+      const publicUser = await storage.getPublicUserByEmail(email);
+
+      if (!user && !publicUser) {
         return res.status(404).json({ message: "User not found" });
       }
 
-      if (user.isVerified) {
+      if ((user && user.isVerified) || (publicUser && publicUser.isVerified)) {
         return res.status(400).json({ message: "Email already verified" });
       }
 
