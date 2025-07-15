@@ -24,7 +24,8 @@ import {
   Target,
   Zap,
   Clock,
-  Award
+  Award,
+  Mail
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -142,6 +143,45 @@ export function LandingPage() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-blue-50 via-white to-purple-50">
+      {/* Navigation Bar */}
+      <nav className="bg-white shadow-lg sticky top-0 z-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="flex justify-between items-center h-16">
+            {/* Logo */}
+            <div className="flex items-center">
+              <div className="text-2xl font-bold text-gray-900">
+                <span className="text-blue-600">Zmartclass</span>
+                <span className="text-sm text-gray-600 ml-2">by De mentee</span>
+              </div>
+            </div>
+            
+            {/* Navigation Links */}
+            <div className="hidden md:flex items-center space-x-8">
+              <a href="#about" className="text-gray-700 hover:text-blue-600 font-medium">About Us</a>
+              <a href="#programs" className="text-gray-700 hover:text-blue-600 font-medium">Our Programs</a>
+              <a href="#jobs" className="text-gray-700 hover:text-blue-600 font-medium">Jobs</a>
+              <a href="#contact" className="text-gray-700 hover:text-blue-600 font-medium">Contact</a>
+              <Button 
+                onClick={() => navigate("/register")}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+              >
+                Get Started
+              </Button>
+            </div>
+            
+            {/* Mobile menu button */}
+            <div className="md:hidden">
+              <Button 
+                onClick={() => navigate("/register")}
+                className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg"
+              >
+                Login
+              </Button>
+            </div>
+          </div>
+        </div>
+      </nav>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-to-r from-blue-600/5 to-purple-600/5"></div>
@@ -157,8 +197,9 @@ export function LandingPage() {
                 <h1 className="text-4xl lg:text-6xl font-bold text-gray-900 leading-tight">
                   Master New Skills with{" "}
                   <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-600 to-purple-600">
-                    {settings?.appName || "VideoLearn Pro"}
+                    Zmartclass
                   </span>
+                  <span className="text-2xl lg:text-3xl text-gray-600 block mt-2">by De mentee</span>
                 </h1>
                 <p className="text-xl text-gray-600 leading-relaxed">
                   Join thousands of students learning cutting-edge skills through our expert-designed courses. 
@@ -284,7 +325,7 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="text-center mb-16">
             <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-              Why Choose {settings?.appName || "VideoLearn Pro"}?
+              Why Choose Zmartclass?
             </h2>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto">
               We provide everything you need to succeed in your learning journey
@@ -369,6 +410,311 @@ export function LandingPage() {
         </div>
       </section>
 
+      {/* About Us Section */}
+      <section id="about" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              About Zmartclass
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Built by De mentee, Zmartclass is dedicated to making quality education accessible to everyone
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-12 items-center">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">Our Mission</h3>
+              <p className="text-gray-600 mb-6">
+                At Zmartclass, we believe that education should be accessible to everyone, regardless of their location or background. 
+                Our platform connects learners with industry experts and provides practical, hands-on learning experiences that prepare 
+                students for real-world challenges.
+              </p>
+              <p className="text-gray-600">
+                Founded by De mentee, we combine cutting-edge technology with proven educational methodologies to create an 
+                engaging learning environment that adapts to each student's needs and pace.
+              </p>
+            </div>
+            <div className="bg-gradient-to-br from-blue-50 to-purple-50 p-8 rounded-xl">
+              <div className="space-y-6">
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center">
+                    <GraduationCap className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Expert Instructors</h4>
+                    <p className="text-sm text-gray-600">Learn from industry professionals</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-green-600 rounded-lg flex items-center justify-center">
+                    <Target className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Practical Learning</h4>
+                    <p className="text-sm text-gray-600">Real-world projects and applications</p>
+                  </div>
+                </div>
+                <div className="flex items-center space-x-4">
+                  <div className="w-12 h-12 bg-purple-600 rounded-lg flex items-center justify-center">
+                    <Users className="h-6 w-6 text-white" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Community Support</h4>
+                    <p className="text-sm text-gray-600">Collaborative learning environment</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Our Programs Section */}
+      <section id="programs" className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              Our Programs
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Comprehensive learning programs designed to help you achieve your career goals
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+              <div className="w-16 h-16 bg-blue-100 rounded-xl flex items-center justify-center mb-6">
+                <Video className="h-8 w-8 text-blue-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Video-Based Learning</h3>
+              <p className="text-gray-600 mb-6">
+                Engaging video content with interactive elements, quizzes, and practical exercises to reinforce learning.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  HD quality video lessons
+                </li>
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  Interactive assignments
+                </li>
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  Progress tracking
+                </li>
+              </ul>
+            </div>
+            
+            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+              <div className="w-16 h-16 bg-green-100 rounded-xl flex items-center justify-center mb-6">
+                <Award className="h-8 w-8 text-green-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Certification Programs</h3>
+              <p className="text-gray-600 mb-6">
+                Earn recognized certifications that validate your skills and enhance your professional profile.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  Industry-recognized certificates
+                </li>
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  Skill assessments
+                </li>
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  Career advancement
+                </li>
+              </ul>
+            </div>
+            
+            <div className="bg-white p-8 rounded-xl shadow-lg hover:shadow-xl transition-shadow">
+              <div className="w-16 h-16 bg-purple-100 rounded-xl flex items-center justify-center mb-6">
+                <Users className="h-8 w-8 text-purple-600" />
+              </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Mentorship Programs</h3>
+              <p className="text-gray-600 mb-6">
+                Connect with experienced professionals who provide guidance and support throughout your learning journey.
+              </p>
+              <ul className="space-y-2 text-sm text-gray-600">
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  One-on-one mentorship
+                </li>
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  Career guidance
+                </li>
+                <li className="flex items-center">
+                  <CheckCircle className="h-4 w-4 text-green-500 mr-2" />
+                  Industry insights
+                </li>
+              </ul>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Jobs Section */}
+      <section id="jobs" className="py-20 bg-white">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              Career Opportunities
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Launch your career with our job placement assistance and career development programs
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-12">
+            <div>
+              <h3 className="text-2xl font-bold text-gray-900 mb-6">Job Placement Support</h3>
+              <div className="space-y-4">
+                <div className="flex items-start space-x-4">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mt-1">
+                    <CheckCircle className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Resume Building</h4>
+                    <p className="text-gray-600">Professional resume templates and guidance</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mt-1">
+                    <CheckCircle className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Interview Preparation</h4>
+                    <p className="text-gray-600">Mock interviews and feedback sessions</p>
+                  </div>
+                </div>
+                <div className="flex items-start space-x-4">
+                  <div className="w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center mt-1">
+                    <CheckCircle className="h-5 w-5 text-blue-600" />
+                  </div>
+                  <div>
+                    <h4 className="font-semibold text-gray-900">Industry Connections</h4>
+                    <p className="text-gray-600">Network with hiring partners and employers</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-gradient-to-br from-gray-50 to-blue-50 p-8 rounded-xl">
+              <h3 className="text-xl font-bold text-gray-900 mb-4">Current Job Openings</h3>
+              <div className="space-y-4">
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Frontend Developer</h4>
+                      <p className="text-sm text-gray-600">Remote • Full-time</p>
+                    </div>
+                    <Badge className="bg-green-100 text-green-800">New</Badge>
+                  </div>
+                </div>
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold text-gray-900">UI/UX Designer</h4>
+                      <p className="text-sm text-gray-600">Hybrid • Full-time</p>
+                    </div>
+                    <Badge className="bg-blue-100 text-blue-800">Featured</Badge>
+                  </div>
+                </div>
+                <div className="bg-white p-4 rounded-lg border border-gray-200">
+                  <div className="flex justify-between items-start">
+                    <div>
+                      <h4 className="font-semibold text-gray-900">Data Analyst</h4>
+                      <p className="text-sm text-gray-600">Remote • Part-time</p>
+                    </div>
+                    <Badge className="bg-purple-100 text-purple-800">Remote</Badge>
+                  </div>
+                </div>
+              </div>
+              <Button className="w-full mt-6 bg-blue-600 hover:bg-blue-700">
+                View All Jobs
+              </Button>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      {/* Contact Section */}
+      <section id="contact" className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <div className="text-center mb-16">
+            <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+              Get in Touch
+            </h2>
+            <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+              Have questions? We're here to help you on your learning journey
+            </p>
+          </div>
+          
+          <div className="grid md:grid-cols-2 gap-12">
+            <div>
+              <div className="space-y-8">
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">Contact Information</h3>
+                  <div className="space-y-4">
+                    <div className="flex items-center space-x-3">
+                      <Mail className="h-5 w-5 text-blue-600" />
+                      <span className="text-gray-600">support@zmartclass.com</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Users className="h-5 w-5 text-blue-600" />
+                      <span className="text-gray-600">Join our community of learners</span>
+                    </div>
+                    <div className="flex items-center space-x-3">
+                      <Clock className="h-5 w-5 text-blue-600" />
+                      <span className="text-gray-600">24/7 student support</span>
+                    </div>
+                  </div>
+                </div>
+                
+                <div>
+                  <h3 className="text-xl font-bold text-gray-900 mb-4">Office Hours</h3>
+                  <div className="space-y-2 text-gray-600">
+                    <p>Monday - Friday: 9:00 AM - 6:00 PM</p>
+                    <p>Saturday: 10:00 AM - 4:00 PM</p>
+                    <p>Sunday: Closed</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+            
+            <div className="bg-white p-8 rounded-xl shadow-lg">
+              <h3 className="text-xl font-bold text-gray-900 mb-6">Send us a Message</h3>
+              <form className="space-y-4">
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Name</label>
+                  <Input placeholder="Your full name" className="w-full" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Email</label>
+                  <Input type="email" placeholder="your@email.com" className="w-full" />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">Message</label>
+                  <textarea 
+                    className="w-full p-3 border border-gray-300 rounded-lg focus:border-blue-500 focus:ring-blue-500"
+                    rows={4}
+                    placeholder="How can we help you?"
+                  />
+                </div>
+                <Button className="w-full bg-blue-600 hover:bg-blue-700">
+                  Send Message
+                </Button>
+              </form>
+            </div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20 bg-gradient-to-r from-blue-600 to-purple-600">
         <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
@@ -404,9 +750,9 @@ export function LandingPage() {
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
           <div className="grid md:grid-cols-4 gap-8">
             <div className="md:col-span-2">
-              <h3 className="text-2xl font-bold mb-4">{settings?.appName || "VideoLearn Pro"}</h3>
+              <h3 className="text-2xl font-bold mb-4">Zmartclass <span className="text-lg text-gray-400">by De mentee</span></h3>
               <p className="text-gray-400 mb-4">
-                Empowering learners worldwide with high-quality, accessible education through innovative video-based courses.
+                Empowering learners worldwide with high-quality, accessible education through innovative video-based courses. De mentee's mission is to make quality education accessible to everyone.
               </p>
               <div className="flex space-x-4">
                 <div className="flex items-center">
@@ -442,7 +788,7 @@ export function LandingPage() {
           </div>
           
           <div className="border-t border-gray-800 mt-8 pt-8 text-center text-gray-400">
-            <p>&copy; 2025 {settings?.appName || "VideoLearn Pro"}. All rights reserved.</p>
+            <p>&copy; 2025 Zmartclass by De mentee. All rights reserved.</p>
           </div>
         </div>
       </footer>
