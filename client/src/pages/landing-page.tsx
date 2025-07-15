@@ -67,15 +67,15 @@ export function LandingPage() {
 
   const loginMutation = useMutation({
     mutationFn: async (data: LoginForm) => {
-      const response = await apiRequest("POST", "/api/auth/login", data);
-      return response;
-    },
-    onSuccess: () => {
-      toast({
-        title: "Welcome back!",
-        description: "You have successfully logged in.",
+      const response = await apiRequest("POST", "/api/login", {
+        email: data.username,
+        password: data.password
       });
-      navigate("/home");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      // Refetch user data to update auth state
+      window.location.href = "/home";
     },
     onError: (error: any) => {
       toast({

@@ -30,7 +30,7 @@ function Router() {
       <ProtectedRoute path="/admin/student/:id" component={StudentDetail} />
       <ProtectedRoute path="/category/:slug" component={CategoryPage} />
       <ProtectedRoute path="/video/:videoId" component={VideoPage} />
-      <Route path="/auth" component={StudentLogin} />
+      <Route path="/auth" component={LandingPage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/invite/:token" component={InvitationPage} />
       <Route component={NotFound} />

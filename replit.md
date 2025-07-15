@@ -194,6 +194,13 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 15, 2025: Enhanced app settings modal with logo upload functionality and preview
 - January 15, 2025: Removed PNG logo upload feature per user request, keeping text-only branding
 - January 15, 2025: Applied responsive mobile design to text branding with proper font sizing
+- January 15, 2025: MAJOR FEATURE UPDATE - Implemented public user registration system with separate table
+- January 15, 2025: Created publicUsers table for users registering from landing page
+- January 15, 2025: Updated authentication to support both admin and public users
+- January 15, 2025: Restricted public users to only access "Other" category videos
+- January 15, 2025: Fixed login flow to prevent duplicate login pages - users now login directly on landing page
+- January 15, 2025: Updated protected routes to redirect to landing page instead of separate login pages
+- January 15, 2025: Fixed endpoint mismatch between frontend and backend login routes
 
 ## User Preferences
 
