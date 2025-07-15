@@ -290,7 +290,7 @@ export default function AdminPage() {
               ) : (
                 <div className="flex flex-col leading-tight mr-2 sm:mr-3 flex-shrink-0">
                   <div className="text-lg sm:text-xl font-bold text-blue-600">Zmartclass</div>
-                  <div className="text-xs text-gray-500 font-normal -mt-1">De mentee</div>
+                  <div className="text-xs text-gray-500 font-normal -mt-1 text-right">De mentee</div>
                 </div>
               )}
             </div>
