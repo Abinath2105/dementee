@@ -1,0 +1,69 @@
+Build a premium, modern landing page for an LMS (Learning Management System) platform inspired by Growth School.
+
+🎯 Purpose:
+The landing page should attract students and creators to join courses hosted on the LMS platform. The goal is to convert visitors into students or leads.
+
+---
+
+🧩 Key Sections:
+
+1. **Hero Section**
+   - Full-width banner with headline, subheadline
+   - “Join Now” / “Explore Courses” CTA button
+   - Optional YouTube intro video or founder image
+
+2. **Top Features Section**
+   - Display 3–4 unique LMS features (e.g., "Learn from Experts", "Lifetime Access", "Structured Curriculum", "Project-Based Learning")
+
+3. **Courses Preview Section**
+   - Cards with:
+     - Course thumbnail
+     - Course title
+     - Mentor name
+     - Short description
+     - “Enroll Now” button
+
+4. **Testimonials**
+   - 2–3 student quotes with avatar and course name
+
+5. **Why Choose Us**
+   - Icons + text blocks showcasing advantages (e.g., “Learn Anytime”, “Live Sessions”, “Community Access”)
+
+6. **How It Works**
+   - Steps (like: “Sign Up → Choose Course → Start Learning”)
+
+7. **Mentor Profiles**
+   - Circular photos, mentor names, brief about them
+
+8. **FAQ Section**
+   - Collapsible Q&A cards (accordion style)
+
+9. **Footer**
+   - Logo, social links, quick navigation (Courses, About, Contact), newsletter form
+
+---
+
+🖥️ Design Requirements:
+- Fully responsive for desktop, tablet, mobile
+- Use modern fonts (e.g., Inter, Poppins)
+- Smooth scroll & subtle animations (on scroll or hover)
+- Clean, elegant layout like Growth School
+- Use TailwindCSS or Bootstrap for styling (your choice)
+- Animate elements on scroll (e.g., AOS or CSS transitions)
+
+---
+
+🛠️ Technologies:
+- HTML
+- CSS (Tailwind preferred) or Bootstrap
+- JavaScript (for interactivity)
+- Use dummy course & testimonial data (can be updated later)
+
+---
+
+🎨 Optional Add-ons:
+- Add video lightbox (click thumbnail opens YouTube popup)
+- Include countdown timer for limited time course launch
+- Include “Join our WhatsApp community” CTA banner
+
+Ensure the landing page is fully working and viewable on Replit. All assets should be responsive and look great on all devices.

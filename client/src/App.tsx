@@ -14,12 +14,17 @@ import { CategoryPage } from "@/pages/category-page";
 import { VideoPage } from "@/pages/video-page";
 import { StudentDashboard } from "@/pages/student-dashboard";
 import { StudentDetail } from "@/pages/student-detail";
+import { LandingPage } from "@/pages/landing-page";
+import { RegisterPage } from "@/pages/register-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
   return (
     <Switch>
-      <ProtectedRoute path="/" component={HomePage} />
+      <Route path="/" component={LandingPage} />
+      <Route path="/register" component={RegisterPage} />
+      <Route path="/login" component={LandingPage} />
+      <ProtectedRoute path="/home" component={HomePage} />
       <ProtectedRoute path="/admin" component={AdminPage} />
       <ProtectedRoute path="/dashboard" component={StudentDashboard} />
       <ProtectedRoute path="/admin/student/:id" component={StudentDetail} />
