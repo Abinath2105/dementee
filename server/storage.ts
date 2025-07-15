@@ -388,6 +388,16 @@ export class DatabaseStorage implements IStorage {
   }
 
   async deleteVideo(id: number): Promise<void> {
+    // Delete all related records first to avoid foreign key constraint violations
+    await db.delete(videoBookmarks).where(eq(videoBookmarks.videoId, id));
+    await db.delete(videoCompletions).where(eq(videoCompletions.videoId, id));
+    await db.delete(videoViews).where(eq(videoViews.videoId, id));
+    await db.delete(watchHistory).where(eq(watchHistory.videoId, id));
+    await db.delete(userSessions).where(eq(userSessions.videoId, id));
+    await db.delete(videoRatings).where(eq(videoRatings.videoId, id));
+    await db.delete(videoComments).where(eq(videoComments.videoId, id));
+    
+    // Now delete the video itself
     await db.delete(videos).where(eq(videos.id, id));
   }
 
