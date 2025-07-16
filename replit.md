@@ -213,6 +213,11 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 15, 2025: Fixed mobile navigation to show hamburger menu instead of login button with proper dropdown
 - January 15, 2025: Added Public Users tab in admin dashboard to manage landing page registrations
 - January 15, 2025: Created comprehensive deployment scripts: backup_uploads.sh, restore_uploads.sh, ensure_uploads_directory.js
+- January 16, 2025: CRITICAL FIX - Fixed registration endpoint bug preventing user registration (email field mapping issue)
+- January 16, 2025: Enhanced verification process - removed need to re-enter email, auto-populated from registration flow
+- January 16, 2025: Added resend OTP functionality accessible from both verification page and admin dashboard
+- January 16, 2025: Created dedicated /verify page for streamlined OTP verification process
+- January 16, 2025: Successfully tested complete registration → verification → login flow
 
 ## User Preferences
 

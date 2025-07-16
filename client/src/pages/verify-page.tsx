@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -13,7 +13,6 @@ import { ArrowLeft, CheckCircle, Mail, RefreshCw } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
 const verifySchema = z.object({
-  email: z.string().email("Please enter a valid email address"),
   code: z.string().length(6, "Verification code must be 6 digits"),
 });
 
@@ -23,11 +22,20 @@ export function VerifyPage() {
   const { toast } = useToast();
   const [, navigate] = useLocation();
   const [isSuccess, setIsSuccess] = useState(false);
+  const [email, setEmail] = useState("");
+
+  // Get email from URL params
+  useEffect(() => {
+    const urlParams = new URLSearchParams(window.location.search);
+    const emailParam = urlParams.get('email');
+    if (emailParam) {
+      setEmail(decodeURIComponent(emailParam));
+    }
+  }, []);
 
   const form = useForm<VerifyForm>({
     resolver: zodResolver(verifySchema),
     defaultValues: {
-      email: "",
       code: "",
     },
   });
@@ -35,7 +43,7 @@ export function VerifyPage() {
   const verifyMutation = useMutation({
     mutationFn: async (data: VerifyForm) => {
       const response = await apiRequest("POST", "/api/verify-otp", {
-        email: data.email,
+        email: email,
         code: data.code,
       });
       return response;
@@ -53,7 +61,7 @@ export function VerifyPage() {
   });
 
   const resendMutation = useMutation({
-    mutationFn: async (email: string) => {
+    mutationFn: async () => {
       const response = await apiRequest("POST", "/api/resend-otp", {
         email,
       });
@@ -79,16 +87,15 @@ export function VerifyPage() {
   };
 
   const handleResend = () => {
-    const email = form.getValues().email;
     if (!email) {
       toast({
         title: "Email required",
-        description: "Please enter your email address first",
+        description: "Please go back to registration to start the process",
         variant: "destructive",
       });
       return;
     }
-    resendMutation.mutate(email);
+    resendMutation.mutate();
   };
 
   if (isSuccess) {
@@ -137,30 +144,13 @@ export function VerifyPage() {
             Verify Your Email
           </CardTitle>
           <CardDescription className="text-gray-600">
-            Enter the 6-digit verification code sent to your email
+            Enter the 6-digit verification code sent to{" "}
+            <span className="font-medium text-gray-900">{email || "your email"}</span>
           </CardDescription>
         </CardHeader>
         <CardContent>
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-              <FormField
-                control={form.control}
-                name="email"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Email Address</FormLabel>
-                    <FormControl>
-                      <Input
-                        type="email"
-                        placeholder="Enter your email"
-                        className="h-12 rounded-lg border-gray-300 focus:border-blue-500 focus:ring-blue-500"
-                        {...field}
-                      />
-                    </FormControl>
-                    <FormMessage />
-                  </FormItem>
-                )}
-              />
               <FormField
                 control={form.control}
                 name="code"
