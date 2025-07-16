@@ -8,7 +8,8 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
-import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, UserPlus, Mail, Palette, KeyRound } from "lucide-react";
+import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
+import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, UserPlus, Mail, Palette, KeyRound, Menu, X } from "lucide-react";
 import { AddVideoModal } from "@/components/add-video-modal";
 import { EditVideoModal } from "@/components/edit-video-modal";
 import { InviteUserModal } from "@/components/invite-user-modal";
@@ -18,7 +19,7 @@ import { EditCategoryModal } from "@/components/edit-category-modal";
 import { AssignCategoryModal } from "@/components/assign-category-modal";
 import { ResetPasswordModal } from "@/components/reset-password-modal";
 import { CategoryCard } from "@/components/category-card";
-import { queryClient } from "@/lib/queryClient";
+import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { VideoWithCategory, AdminStats, User, Category, UserInvitation } from "@shared/schema";
 
@@ -37,6 +38,7 @@ export default function AdminPage() {
   const [selectedUser, setSelectedUser] = useState<User | null>(null);
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
+  const [sidebarOpen, setSidebarOpen] = useState(false);
   const { toast } = useToast();
 
   // Redirect if not admin
@@ -70,6 +72,26 @@ export default function AdminPage() {
 
   const { data: appSettings } = useQuery({
     queryKey: ["/api/settings"],
+  });
+
+  const deleteCategoryMutation = useMutation({
+    mutationFn: (categoryId: number) => {
+      return apiRequest("DELETE", `/api/categories/${categoryId}`);
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
+      toast({
+        title: "Success",
+        description: "Category deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
   });
 
   const deleteVideoMutation = useMutation({
@@ -144,30 +166,7 @@ export default function AdminPage() {
     },
   });
 
-  const deleteCategoryMutation = useMutation({
-    mutationFn: async (categoryId: number) => {
-      const response = await fetch(`/api/categories/${categoryId}`, {
-        method: "DELETE",
-        credentials: "include",
-      });
-      if (!response.ok) throw new Error("Failed to delete category");
-    },
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["/api/categories"] });
-      queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
-      toast({
-        title: "Category deleted",
-        description: "Category deleted successfully",
-      });
-    },
-    onError: (error: Error) => {
-      toast({
-        title: "Error",
-        description: error.message,
-        variant: "destructive",
-      });
-    },
-  });
+
 
   const updateVideoVisibilityMutation = useMutation({
     mutationFn: async ({ videoId, isPublic }: { videoId: number; isPublic: boolean }) => {
@@ -385,13 +384,63 @@ export default function AdminPage() {
     setShowAssignCategory(false);
   };
 
+  const sidebarItems = [
+    { id: "videos", label: "Videos", icon: Video },
+    { id: "categories", label: "Categories", icon: Play },
+    { id: "users", label: "Users", icon: Users },
+    { id: "public-users", label: "Public Users", icon: UserPlus },
+    { id: "invitations", label: "Invitations", icon: Mail },
+    { id: "settings", label: "Settings", icon: Palette },
+  ];
+
+  const SidebarContent = () => (
+    <div className="space-y-2 p-4">
+      <div className="mb-6">
+        <h2 className="text-lg font-semibold text-gray-900 mb-1">Admin Dashboard</h2>
+        <p className="text-sm text-gray-600">Manage your platform</p>
+      </div>
+      {sidebarItems.map((item) => {
+        const Icon = item.icon;
+        return (
+          <button
+            key={item.id}
+            onClick={() => {
+              setActiveTab(item.id);
+              setSidebarOpen(false);
+            }}
+            className={`w-full flex items-center space-x-3 px-3 py-2 rounded-lg text-left transition-colors ${
+              activeTab === item.id
+                ? 'bg-blue-50 text-blue-700 border border-blue-200'
+                : 'hover:bg-gray-100 text-gray-700'
+            }`}
+          >
+            <Icon className="h-5 w-5" />
+            <span className="font-medium">{item.label}</span>
+          </button>
+        );
+      })}
+    </div>
+  );
+
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Navigation - Mobile Responsive */}
       <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
-        <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
+        <div className="px-3 sm:px-4 lg:px-8">
           <div className="flex justify-between items-center h-14 sm:h-16">
             <div className="flex items-center min-w-0">
+              {/* Mobile menu button */}
+              <Sheet open={sidebarOpen} onOpenChange={setSidebarOpen}>
+                <SheetTrigger asChild>
+                  <Button variant="ghost" size="sm" className="mr-3 md:hidden">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-64 p-0">
+                  <SidebarContent />
+                </SheetContent>
+              </Sheet>
+              
               <div className="flex flex-col leading-tight mr-2 sm:mr-3 flex-shrink-0">
                 <div className="text-base sm:text-lg font-bold text-blue-600">Zmartclass</div>
                 <div className="text-xs text-gray-500 font-normal -mt-1 text-right">De mentee</div>
@@ -422,761 +471,402 @@ export default function AdminPage() {
         </div>
       </nav>
 
-      <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
-        {/* Header - Mobile Responsive */}
-        <div className="mb-6 sm:mb-8">
-          <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Admin Dashboard</h1>
-          <p className="text-gray-600 text-sm sm:text-base">Manage your video content and monitor platform activity</p>
+      <div className="flex">
+        {/* Desktop Sidebar */}
+        <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0 md:top-14 lg:top-16">
+          <div className="flex-1 flex flex-col min-h-0 bg-white border-r border-gray-200">
+            <SidebarContent />
+          </div>
         </div>
 
-        {/* Stats - Mobile First Grid */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
-          <Card>
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-center">
-                <div className="p-2 sm:p-3 bg-blue-100 rounded-full flex-shrink-0">
-                  <Video className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-primary" />
-                </div>
-                <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-600 truncate">Total Videos</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
-                    {stats?.totalVideos || 0}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-center">
-                <div className="p-2 sm:p-3 bg-green-100 rounded-full flex-shrink-0">
-                  <Users className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600" />
-                </div>
-                <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-600 truncate">Active Users</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
-                    {stats?.totalUsers || 0}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-center">
-                <div className="p-2 sm:p-3 bg-purple-100 rounded-full flex-shrink-0">
-                  <Eye className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-600" />
-                </div>
-                <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-600 truncate">Total Views</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
-                    {stats?.totalViews || 0}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-
-          <Card>
-            <CardContent className="p-3 sm:p-4 lg:p-6">
-              <div className="flex items-center">
-                <div className="p-2 sm:p-3 bg-yellow-100 rounded-full flex-shrink-0">
-                  <Clock className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-yellow-600" />
-                </div>
-                <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
-                  <p className="text-xs sm:text-sm text-gray-600 truncate">Watch Time</p>
-                  <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
-                    {stats?.totalWatchTime || "0h"}
-                  </p>
-                </div>
-              </div>
-            </CardContent>
-          </Card>
-        </div>
-
-        {/* Tabs for different management sections */}
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid w-full grid-cols-6">
-            <TabsTrigger value="videos">Videos</TabsTrigger>
-            <TabsTrigger value="categories">Categories</TabsTrigger>
-            <TabsTrigger value="users">Users</TabsTrigger>
-            <TabsTrigger value="public-users">Public Users</TabsTrigger>
-            <TabsTrigger value="invitations">Invitations</TabsTrigger>
-            <TabsTrigger value="settings">Settings</TabsTrigger>
-          </TabsList>
-          
-          <TabsContent value="videos" className="mt-6">
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-4 mb-6">
-              <Button onClick={() => setShowAddVideo(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Video or Category
-              </Button>
+        {/* Main Content */}
+        <div className="flex-1 md:ml-64">
+          <div className="px-3 sm:px-4 lg:px-8 py-4 sm:py-6 lg:py-8">
+            {/* Header - Mobile Responsive */}
+            <div className="mb-6 sm:mb-8 md:hidden">
+              <h1 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-1 sm:mb-2">Admin Dashboard</h1>
+              <p className="text-gray-600 text-sm sm:text-base">Manage your video content and monitor platform activity</p>
             </div>
 
-            {/* Video Management Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Video Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  <TableRow>
-                    <TableHead>Video</TableHead>
-                    <TableHead>Category</TableHead>
-                    <TableHead>Visibility</TableHead>
-                    <TableHead>Views</TableHead>
-                    <TableHead>Date Added</TableHead>
-                    <TableHead>Actions</TableHead>
-                  </TableRow>
-                </TableHeader>
-                <TableBody>
-                  {isLoading ? (
-                    [...Array(5)].map((_, i) => (
-                      <TableRow key={i}>
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            <div className="w-16 h-9 bg-gray-200 rounded animate-pulse"></div>
-                            <div className="space-y-1">
-                              <div className="h-4 bg-gray-200 rounded w-48 animate-pulse"></div>
-                              <div className="h-3 bg-gray-200 rounded w-24 animate-pulse"></div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="h-6 bg-gray-200 rounded w-20 animate-pulse"></div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="h-6 bg-gray-200 rounded w-16 animate-pulse"></div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="h-4 bg-gray-200 rounded w-12 animate-pulse"></div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="h-4 bg-gray-200 rounded w-20 animate-pulse"></div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
-                            <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  ) : videos.length === 0 ? (
-                    <TableRow>
-                      <TableCell colSpan={6} className="text-center py-8">
-                        <Video className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500">No videos found</p>
-                      </TableCell>
-                    </TableRow>
-                  ) : (
-                    videos.map((video) => (
-                      <TableRow key={video.id}>
-                        <TableCell>
-                          <div className="flex items-center space-x-3">
-                            <img
-                              src={video.thumbnailUrl || `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`}
-                              alt={video.title}
-                              className="w-16 h-9 object-cover rounded"
-                            />
-                            <div>
-                              <div 
-                                className="font-medium text-gray-900 truncate max-w-xs cursor-pointer hover:text-blue-600 transition-colors"
-                                onClick={() => handleEditVideo(video)}
-                                title="Click to edit video"
-                              >
-                                {video.title}
-                              </div>
-                              <div className="text-sm text-gray-500">
-                                {video.duration || "N/A"} duration
-                              </div>
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex flex-wrap gap-1 max-w-48">
-                            {video.categories && video.categories.length > 0 ? (
-                              video.categories.map((category) => (
-                                <Badge 
-                                  key={category.id} 
-                                  variant={video.categoryId === category.id ? "default" : "secondary"}
-                                  className="text-xs"
-                                >
-                                  <span 
-                                    className="truncate max-w-20" 
-                                    title={category.name}
-                                  >
-                                    {category.name}
-                                  </span>
-                                  {video.categoryId === category.id && (
-                                    <span className="ml-1 text-xs opacity-75">*</span>
-                                  )}
-                                </Badge>
-                              ))
-                            ) : (
-                              <Badge variant="secondary">No Category</Badge>
-                            )}
-                          </div>
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex items-center space-x-2">
-                            <Switch
-                              checked={video.isPublic}
-                              onCheckedChange={(checked) => handleVisibilityToggle(video.id, checked)}
-                              disabled={updateVideoVisibilityMutation.isPending}
-                            />
-                            <div className="flex items-center space-x-1">
-                              {video.isPublic ? (
-                                <>
-                                  <Eye className="h-4 w-4 text-green-600" />
-                                  <span className="text-xs text-green-600">Public</span>
-                                </>
-                              ) : (
-                                <>
-                                  <EyeOff className="h-4 w-4 text-gray-600" />
-                                  <span className="text-xs text-gray-600">Private</span>
-                                </>
-                              )}
-                            </div>
-                          </div>
-                        </TableCell>
-                        <TableCell>{video.viewCount}</TableCell>
-                        <TableCell>
-                          {new Date(video.createdAt).toLocaleDateString()}
-                        </TableCell>
-                        <TableCell>
-                          <div className="flex space-x-2">
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              onClick={() => handleEditVideo(video)}
-                              title="Edit video"
-                            >
-                              <Edit className="h-4 w-4" />
-                            </Button>
-                            <Button 
-                              size="sm" 
-                              variant="ghost"
-                              onClick={() => handleDeleteVideo(video.id)}
-                              disabled={deleteVideoMutation.isPending}
-                              title="Delete video"
-                            >
-                              <Trash2 className="h-4 w-4 text-red-600" />
-                            </Button>
-                          </div>
-                        </TableCell>
-                      </TableRow>
-                    ))
-                  )}
-                </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-
-
-          </TabsContent>
-
-          <TabsContent value="categories" className="mt-6">
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-4 mb-6">
-              <Button onClick={() => setShowAddCategory(true)}>
-                <Plus className="h-4 w-4 mr-2" />
-                Add Category
-              </Button>
-            </div>
-
-            {/* Categories Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {categories.map((category) => {
-                const categoryVideoCount = videos.filter(v => v.categoryId === category.id).length;
-                return (
-                  <div key={category.id} className="space-y-2">
-                    <div className="relative group">
-                      <CategoryCard
-                        category={category}
-                        videoCount={categoryVideoCount}
-                        onClick={() => {}}
-                      />
-                      <div className="absolute top-2 right-2 flex space-x-1">
-                        <Button
-                          size="sm"
-                          variant="outline"
-                          onClick={() => handleEditCategory(category)}
-                          className="bg-white/90 hover:bg-white shadow-sm"
-                          title="Edit category"
-                        >
-                          <Edit className="h-4 w-4" />
-                        </Button>
-                        <Button
-                          size="sm"
-                          variant="destructive"
-                          onClick={() => handleDeleteCategory(category.id)}
-                          disabled={deleteCategoryMutation.isPending}
-                          className="bg-red-500 hover:bg-red-600 text-white shadow-sm"
-                          title="Delete category"
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      </div>
+            {/* Stats - Mobile First Grid */}
+            <div className="grid grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4 lg:gap-6 mb-6 sm:mb-8">
+              <Card>
+                <CardContent className="p-3 sm:p-4 lg:p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 sm:p-3 bg-blue-100 rounded-full flex-shrink-0">
+                      <Video className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-primary" />
                     </div>
-                    
-                    {/* Action buttons below each category */}
-                    <div className="flex space-x-2">
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        onClick={() => handleEditCategory(category)}
-                        className="flex-1"
-                      >
-                        <Edit className="h-4 w-4 mr-2" />
-                        Edit
-                      </Button>
-                      <Button
-                        size="sm"
-                        variant="destructive"
-                        onClick={() => handleDeleteCategory(category.id)}
-                        disabled={deleteCategoryMutation.isPending}
-                        className="flex-1"
-                      >
-                        <Trash2 className="h-4 w-4 mr-2" />
-                        Delete
-                      </Button>
+                    <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600 truncate">Total Videos</p>
+                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                        {stats?.totalVideos || 0}
+                      </p>
                     </div>
                   </div>
-                );
-              })}
-              
-              {categories.length === 0 && (
-                <div className="col-span-full text-center py-12">
-                  <div className="text-gray-400 text-lg mb-4">No categories yet</div>
-                  <Button onClick={() => setShowAddCategory(true)}>
-                    Create your first category
-                  </Button>
-                </div>
-              )}
-            </div>
-          </TabsContent>
+                </CardContent>
+              </Card>
 
-          <TabsContent value="users" className="mt-6">
-            {/* User Management Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>User Management</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>User</TableHead>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {usersLoading ? (
-                        [...Array(5)].map((_, i) => (
-                          <TableRow key={i}>
-                            <TableCell>
-                              <div className="h-4 bg-gray-200 rounded w-24 animate-pulse"></div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="h-4 bg-gray-200 rounded w-32 animate-pulse"></div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="h-6 bg-gray-200 rounded w-16 animate-pulse"></div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="h-6 bg-gray-200 rounded w-12 animate-pulse"></div>
-                            </TableCell>
-                            <TableCell>
-                              <div className="h-8 w-8 bg-gray-200 rounded animate-pulse"></div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      ) : users.length === 0 ? (
+              <Card>
+                <CardContent className="p-3 sm:p-4 lg:p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 sm:p-3 bg-green-100 rounded-full flex-shrink-0">
+                      <Users className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-green-600" />
+                    </div>
+                    <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600 truncate">Active Users</p>
+                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                        {stats?.totalUsers || 0}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-3 sm:p-4 lg:p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 sm:p-3 bg-purple-100 rounded-full flex-shrink-0">
+                      <Eye className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-purple-600" />
+                    </div>
+                    <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600 truncate">Total Views</p>
+                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                        {stats?.totalViews || 0}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <Card>
+                <CardContent className="p-3 sm:p-4 lg:p-6">
+                  <div className="flex items-center">
+                    <div className="p-2 sm:p-3 bg-yellow-100 rounded-full flex-shrink-0">
+                      <Clock className="h-4 w-4 sm:h-5 sm:w-5 lg:h-6 lg:w-6 text-yellow-600" />
+                    </div>
+                    <div className="ml-2 sm:ml-3 lg:ml-4 min-w-0">
+                      <p className="text-xs sm:text-sm text-gray-600 truncate">Watch Time</p>
+                      <p className="text-lg sm:text-xl lg:text-2xl font-bold text-gray-900">
+                        {stats?.totalWatchTime || "0h"}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+
+            {/* Content based on active tab */}
+            <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+              {activeTab === "videos" && (
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Video Management</h2>
+                      <p className="text-sm text-gray-600">Add, edit, and manage your video content</p>
+                    </div>
+                    <Button onClick={() => setShowAddVideo(true)} className="w-full sm:w-auto">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Video
+                    </Button>
+                  </div>
+                  
+                  {/* Video Table */}
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8">
-                            <Users className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-                            <p className="text-gray-500">No users found</p>
-                          </TableCell>
+                          <TableHead className="min-w-[200px]">Title</TableHead>
+                          <TableHead className="min-w-[150px]">Categories</TableHead>
+                          <TableHead className="min-w-[100px]">Views</TableHead>
+                          <TableHead className="min-w-[100px]">Actions</TableHead>
                         </TableRow>
-                      ) : (
-                        users.map((userItem) => (
-                          <TableRow key={userItem.id}>
+                      </TableHeader>
+                      <TableBody>
+                        {videos.map((video) => (
+                          <TableRow key={video.id}>
                             <TableCell>
                               <div className="flex items-center space-x-3">
-                                <div className="flex-shrink-0 w-8 h-8 bg-blue-100 rounded-full flex items-center justify-center">
-                                  <span className="text-sm font-semibold text-blue-600">
-                                    {userItem.fullName.split(' ').map(n => n[0]).join('').toUpperCase()}
-                                  </span>
+                                <div className="w-16 h-12 bg-gray-100 rounded flex items-center justify-center">
+                                  <Play className="h-5 w-5 text-gray-400" />
                                 </div>
                                 <div>
-                                  <div className="font-medium text-gray-900">
-                                    {userItem.fullName}
-                                  </div>
-                                  <div className="text-sm text-gray-500">
-                                    @{userItem.username}
-                                  </div>
+                                  <p className="font-medium text-gray-900 truncate max-w-[200px]">{video.title}</p>
+                                  <p className="text-sm text-gray-500">YouTube ID: {video.youtubeId}</p>
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="text-gray-600">
-                                {userItem.email}
+                              <div className="flex flex-wrap gap-1">
+                                {video.categories?.map((category, index) => (
+                                  <Badge key={index} variant="secondary" className="text-xs max-w-[100px] truncate">
+                                    {category.name}
+                                    {category.isPrimary && "*"}
+                                  </Badge>
+                                ))}
                               </div>
                             </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-1">
+                                <Eye className="h-4 w-4 text-gray-400" />
+                                <span className="text-sm text-gray-600">{video.views}</span>
+                              </div>
+                            </TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => {
+                                    setEditingVideo(video);
+                                    setShowEditVideo(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  onClick={() => deleteVideoMutation.mutate(video.id)}
+                                  disabled={deleteVideoMutation.isPending}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === "categories" && (
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Category Management</h2>
+                      <p className="text-sm text-gray-600">Organize your content with categories</p>
+                    </div>
+                    <Button onClick={() => setShowAddCategory(true)} className="w-full sm:w-auto">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Add Category
+                    </Button>
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                    {categories.map((category) => (
+                      <Card key={category.id} className="hover:shadow-md transition-shadow">
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold text-gray-900 mb-2">{category.name}</h3>
+                          <p className="text-sm text-gray-600 mb-4">{category.description}</p>
+                          <div className="flex space-x-2">
+                            <Button size="sm" variant="outline" onClick={() => {
+                              setEditingCategory(category);
+                              setShowEditCategory(true);
+                            }}>
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
+                            </Button>
+                            <Button size="sm" variant="destructive" onClick={() => deleteCategoryMutation.mutate(category.id)}>
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === "users" && (
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-semibold text-gray-900">User Management</h2>
+                      <p className="text-sm text-gray-600">Manage user accounts and permissions</p>
+                    </div>
+                    <Button onClick={() => setShowInviteUser(true)} className="w-full sm:w-auto">
+                      <UserPlus className="h-4 w-4 mr-2" />
+                      Invite User
+                    </Button>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>User</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {users.map((userItem) => (
+                          <TableRow key={userItem.id}>
+                            <TableCell>
+                              <div className="font-medium">{userItem.fullName}</div>
+                              <div className="text-sm text-gray-500">@{userItem.username}</div>
+                            </TableCell>
+                            <TableCell>{userItem.email}</TableCell>
                             <TableCell>
                               <Badge variant={userItem.isVerified ? "default" : "secondary"}>
                                 {userItem.isVerified ? "Verified" : "Unverified"}
                               </Badge>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <Switch
-                                  checked={userItem.isAdmin}
-                                  onCheckedChange={(checked) => handleAdminToggle(userItem.id, checked)}
-                                  disabled={updateUserAdminMutation.isPending || userItem.id === user?.id}
-                                />
-                                <div className="flex items-center space-x-1">
-                                  {userItem.isAdmin ? (
-                                    <>
-                                      <Shield className="h-4 w-4 text-blue-600" />
-                                      <span className="text-xs text-blue-600 font-medium">Admin</span>
-                                    </>
-                                  ) : (
-                                    <span className="text-xs text-gray-600">Student</span>
-                                  )}
-                                </div>
-                              </div>
-                            </TableCell>
-                            <TableCell>
                               <div className="flex space-x-2">
-                                <Link href={`/admin/student/${userItem.id}`}>
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    title="View student analytics"
-                                  >
-                                    <Eye className="h-4 w-4" />
-                                  </Button>
-                                </Link>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => handleAssignCategory(userItem)}
-                                  disabled={userItem.isAdmin}
-                                  title={userItem.isAdmin ? "Admins have access to all categories" : "Manage category access"}
-                                  className="relative"
-                                >
+                                <Button size="sm" variant="outline" onClick={() => handleAssignCategory(userItem)}>
                                   <UserCheck className="h-4 w-4" />
-                                  {!userItem.isAdmin && (
-                                    <span className="sr-only">Assign Categories</span>
-                                  )}
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  variant="outline"
-                                  onClick={() => {
-                                    setResetPasswordUser(userItem);
-                                    setShowResetPassword(true);
-                                  }}
-                                  title="Reset Password"
-                                >
+                                <Button size="sm" variant="outline" onClick={() => {
+                                  setResetPasswordUser(userItem);
+                                  setShowResetPassword(true);
+                                }}>
                                   <KeyRound className="h-4 w-4" />
                                 </Button>
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleDeleteUser(userItem.id)}
-                                  disabled={deleteUserMutation.isPending || userItem.id === user?.id}
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-600" />
-                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="public-users" className="mt-6">
-            {/* Public Users Management */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Public Users (Landing Page Registrations)</CardTitle>
-                <p className="text-sm text-gray-600">
-                  Users who registered directly from the landing page. These users can only access "Other" category videos.
-                </p>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Full Name</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Registration Date</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {publicUsersLoading ? (
+              )}
+              
+              {activeTab === "public-users" && (
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Public Users</h2>
+                    <p className="text-sm text-gray-600">Users who registered through the landing page</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
                         <TableRow>
-                          <TableCell colSpan={5} className="text-center py-8">
-                            Loading public users...
-                          </TableCell>
+                          <TableHead>Name</TableHead>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Registered</TableHead>
+                          <TableHead>Actions</TableHead>
                         </TableRow>
-                      ) : publicUsers.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center text-gray-500 py-8">
-                            No public users registered yet
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        publicUsers.map((publicUser: any) => (
+                      </TableHeader>
+                      <TableBody>
+                        {publicUsers.map((publicUser) => (
                           <TableRow key={publicUser.id}>
+                            <TableCell>{publicUser.fullName}</TableCell>
+                            <TableCell>{publicUser.email}</TableCell>
+                            <TableCell>{new Date(publicUser.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <Mail className="h-4 w-4 text-gray-400" />
-                                <span>{publicUser.email}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <span className="font-medium">{publicUser.fullName}</span>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={publicUser.isVerified ? "default" : "secondary"}>
-                                {publicUser.isVerified ? "Verified" : "Unverified"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {new Date(publicUser.createdAt).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              <div className="flex space-x-2">
-                                {publicUser.isVerified && (
-                                  <Button
-                                    size="sm"
-                                    variant="default"
-                                    onClick={() => handleConvertToStudent(publicUser)}
-                                    disabled={convertToStudentMutation.isPending}
-                                    title="Convert to student with full access"
-                                  >
-                                    <UserCheck className="h-4 w-4 mr-1" />
-                                    <span className="hidden sm:inline">Convert to Student</span>
-                                  </Button>
-                                )}
-                                {!publicUser.isVerified && (
-                                  <Button
-                                    size="sm"
-                                    variant="outline"
-                                    onClick={() => handleResendVerification(publicUser.email)}
-                                    disabled={resendVerificationMutation.isPending}
-                                    title="Resend verification email"
-                                  >
-                                    <Mail className="h-4 w-4 text-blue-600" />
-                                  </Button>
-                                )}
-                                <Button
-                                  size="sm"
-                                  variant="ghost"
-                                  onClick={() => handleDeletePublicUser(publicUser.id)}
-                                  disabled={deletePublicUserMutation.isPending}
-                                  title="Delete user"
-                                >
-                                  <Trash2 className="h-4 w-4 text-red-600" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="invitations" className="mt-6">
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-4 mb-6">
-              <Button onClick={() => setShowInviteUser(true)}>
-                <UserPlus className="h-4 w-4 mr-2" />
-                Invite New User
-              </Button>
-            </div>
-
-            {/* Invitations Table */}
-            <Card>
-              <CardHeader>
-                <CardTitle>Pending Invitations</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      <TableRow>
-                        <TableHead>Email</TableHead>
-                        <TableHead>Role</TableHead>
-                        <TableHead>Invited Date</TableHead>
-                        <TableHead>Status</TableHead>
-                        <TableHead>Actions</TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {invitations.length === 0 ? (
-                        <TableRow>
-                          <TableCell colSpan={5} className="text-center text-gray-500 py-8">
-                            No pending invitations
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        invitations.map((invitation) => (
-                          <TableRow key={invitation.id}>
-                            <TableCell>
-                              <div className="flex items-center space-x-2">
-                                <Mail className="h-4 w-4 text-gray-400" />
-                                <span>{invitation.email}</span>
-                              </div>
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={invitation.role === 'admin' ? 'destructive' : 'default'}>
-                                {invitation.role}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              {new Date(invitation.createdAt).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell>
-                              <Badge variant={
-                                invitation.acceptedAt ? "default" : 
-                                new Date(invitation.expiresAt) < new Date() ? "destructive" : 
-                                "secondary"
-                              }>
-                                {invitation.acceptedAt ? "Accepted" : 
-                                 new Date(invitation.expiresAt) < new Date() ? "Expired" : 
-                                 "Pending"}
-                              </Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleDeleteInvitation(invitation.id)}
-                                disabled={deleteInvitationMutation.isPending}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-600" />
+                              <Button size="sm" variant="outline">
+                                Convert to Student
                               </Button>
                             </TableCell>
                           </TableRow>
-                        ))
-                      )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-
-          <TabsContent value="settings" className="mt-6">
-            {/* Action Buttons */}
-            <div className="flex flex-wrap gap-4 mb-6">
-              <Button onClick={() => setShowAppSettings(true)}>
-                <Palette className="h-4 w-4 mr-2" />
-                Customize App
-              </Button>
-            </div>
-
-            {/* Settings Overview */}
-            <Card>
-              <CardHeader>
-                <CardTitle>App Configuration</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="space-y-4">
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div>
-                      <h3 className="text-lg font-medium mb-2">Branding</h3>
-                      <p className="text-sm text-gray-600 mb-4">Customize your app's appearance and branding</p>
-                      <Button onClick={() => setShowAppSettings(true)}>
-                        Edit Branding
-                      </Button>
-                    </div>
-                    <div>
-                      <h3 className="text-lg font-medium mb-2">User Management</h3>
-                      <p className="text-sm text-gray-600 mb-4">Control user access through email invitations</p>
-                      <Button onClick={() => setShowInviteUser(true)}>
-                        Invite Users
-                      </Button>
-                    </div>
+                        ))}
+                      </TableBody>
+                    </Table>
                   </div>
                 </div>
-              </CardContent>
-            </Card>
-          </TabsContent>
-        </Tabs>
+              )}
+              
+              {activeTab === "invitations" && (
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Invitations</h2>
+                    <p className="text-sm text-gray-600">Manage pending user invitations</p>
+                  </div>
+                  <div className="overflow-x-auto">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead>Email</TableHead>
+                          <TableHead>Invited By</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {invitations.map((invitation) => (
+                          <TableRow key={invitation.id}>
+                            <TableCell>{invitation.email}</TableCell>
+                            <TableCell>{invitation.invitedBy}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">Pending</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Button size="sm" variant="outline">
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+              
+              {activeTab === "settings" && (
+                <div>
+                  <div className="mb-6">
+                    <h2 className="text-lg sm:text-xl font-semibold text-gray-900">App Settings</h2>
+                    <p className="text-sm text-gray-600">Configure your application settings</p>
+                  </div>
+                  <Button onClick={() => setShowAppSettings(true)}>
+                    <Palette className="h-4 w-4 mr-2" />
+                    Open Settings
+                  </Button>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
       </div>
 
-      {showAddVideo && (
-        <AddVideoModal
-          isOpen={showAddVideo}
-          onClose={() => setShowAddVideo(false)}
-        />
-      )}
+      {/* Modal Components */}
+      <AddVideoModal 
+        isOpen={showAddVideo}
+        onClose={() => setShowAddVideo(false)}
+      />
       
-      <EditVideoModal
+      <EditVideoModal 
         video={editingVideo}
         isOpen={showEditVideo}
-        onClose={handleCloseEditVideo}
+        onClose={() => setShowEditVideo(false)}
       />
-
-      <InviteUserModal
+      
+      <InviteUserModal 
         isOpen={showInviteUser}
         onClose={() => setShowInviteUser(false)}
       />
-
-      <AppSettingsModal
+      
+      <AppSettingsModal 
         isOpen={showAppSettings}
         onClose={() => setShowAppSettings(false)}
       />
-
-      <AddCategoryModal
+      
+      <AddCategoryModal 
         isOpen={showAddCategory}
         onClose={() => setShowAddCategory(false)}
       />
-
-      <EditCategoryModal
+      
+      <EditCategoryModal 
         category={editingCategory}
         isOpen={showEditCategory}
-        onClose={handleCloseEditCategory}
+        onClose={() => setShowEditCategory(false)}
       />
-
+      
       <AssignCategoryModal
         user={selectedUser}
         isOpen={showAssignCategory}
         onClose={handleCloseAssignCategory}
       />
-
+      
       <ResetPasswordModal
-        open={showResetPassword}
-        onClose={() => setShowResetPassword(false)}
         user={resetPasswordUser}
+        isOpen={showResetPassword}
+        onClose={() => setShowResetPassword(false)}
       />
     </div>
   );

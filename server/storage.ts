@@ -238,14 +238,19 @@ export class DatabaseStorage implements IStorage {
       return await db.select().from(categories).orderBy(categories.name);
     }
 
-    // Check if user is a public user (only has access to "Other" category)
+    // Check if user is a public user (only has access to "Other" and "Public Library" categories)
     const publicUser = await this.getPublicUser(userId);
     if (publicUser) {
-      // Public users can only access "Other" category
-      return await db.select().from(categories).where(eq(categories.slug, 'other')).orderBy(categories.name);
+      // Public users can access "Other" and "Public Library" categories
+      return await db.select().from(categories).where(
+        or(
+          eq(categories.slug, 'other'),
+          eq(categories.slug, 'public-library')
+        )
+      ).orderBy(categories.name);
     }
 
-    // Regular admin user - return assigned categories PLUS "Other" category
+    // Regular admin user - return assigned categories PLUS "Other" and "Public Library" categories
     const userCategories = await db
       .select({ category: categories })
       .from(categories)
@@ -253,21 +258,24 @@ export class DatabaseStorage implements IStorage {
       .where(eq(userCategoryAccess.userId, userId))
       .orderBy(categories.name);
     
-    // Get the "Other" category
-    const otherCategory = await db
+    // Get the "Other" and "Public Library" categories
+    const publicCategories = await db
       .select()
       .from(categories)
-      .where(eq(categories.slug, 'other'))
-      .limit(1);
+      .where(
+        or(
+          eq(categories.slug, 'other'),
+          eq(categories.slug, 'public-library')
+        )
+      );
     
     const assignedCategories = userCategories.map(row => row.category);
     
-    // Add "Other" category if it exists and isn't already in assigned categories
-    if (otherCategory.length > 0) {
-      const otherCat = otherCategory[0];
-      const alreadyAssigned = assignedCategories.some(cat => cat.id === otherCat.id);
+    // Add public categories if they exist and aren't already in assigned categories
+    for (const publicCat of publicCategories) {
+      const alreadyAssigned = assignedCategories.some(cat => cat.id === publicCat.id);
       if (!alreadyAssigned) {
-        assignedCategories.push(otherCat);
+        assignedCategories.push(publicCat);
       }
     }
     

@@ -229,6 +229,11 @@ VideoLearn Pro is a modern web application designed for video-based learning man
 - January 16, 2025: Implemented dynamic search functionality with real-time filtering, debounced API calls, and instant local search feedback
 - January 16, 2025: Enhanced search UX with loading indicators, clear button, result counters, and keyboard shortcuts (Enter/Escape)
 - January 16, 2025: Added convert public users to students feature with automatic credential generation and email delivery
+- January 16, 2025: Created "Public Library" category accessible to all users including public accounts without authentication
+- January 16, 2025: Improved category assignment UX with clear checkbox selection interface showing current assignments
+- January 16, 2025: Fixed admin dashboard mobile view with responsive left-side menu navigation using Sheet component
+- January 16, 2025: Enhanced mobile responsiveness with collapsible sidebar and improved table layouts for all screen sizes
+- January 16, 2025: Updated storage layer to make "Public Library" category accessible to public users alongside "Other" category
 
 ## User Preferences
 
