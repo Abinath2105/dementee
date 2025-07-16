@@ -8,7 +8,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
 import { Switch } from "@/components/ui/switch";
-import { X, Eye, EyeOff, Save } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
+import { X, Eye, EyeOff, Save, Star } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 import { queryClient } from "@/lib/queryClient";
 import type { Category, VideoWithCategory } from "@shared/schema";
@@ -24,7 +25,8 @@ export function EditVideoModal({ video, isOpen, onClose }: EditVideoModalProps) 
   
   // Form fields
   const [title, setTitle] = useState("");
-  const [categoryId, setCategoryId] = useState("");
+  const [selectedCategoryIds, setSelectedCategoryIds] = useState<number[]>([]);
+  const [primaryCategoryId, setPrimaryCategoryId] = useState<number | null>(null);
   const [description, setDescription] = useState("");
   const [tags, setTags] = useState<string[]>([]);
   const [tagInput, setTagInput] = useState("");
@@ -35,10 +37,19 @@ export function EditVideoModal({ video, isOpen, onClose }: EditVideoModalProps) 
   useEffect(() => {
     if (video) {
       setTitle(video.title || "");
-      setCategoryId(video.categoryId ? video.categoryId.toString() : "0");
       setDescription(video.description || "");
       setTags(video.tags || []);
       setIsPublic(video.isPublic);
+      
+      // Set up categories
+      if (video.categories && video.categories.length > 0) {
+        const categoryIds = video.categories.map(cat => cat.id);
+        setSelectedCategoryIds(categoryIds);
+        setPrimaryCategoryId(video.categoryId);
+      } else {
+        setSelectedCategoryIds([]);
+        setPrimaryCategoryId(null);
+      }
     }
   }, [video]);
 
@@ -78,6 +89,36 @@ export function EditVideoModal({ video, isOpen, onClose }: EditVideoModalProps) 
     },
   });
 
+  const updateCategoriesMutation = useMutation({
+    mutationFn: async ({ categoryIds, primaryCategoryId }: { categoryIds: number[], primaryCategoryId: number }) => {
+      const response = await fetch(`/api/videos/${video?.id}/categories`, {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ categoryIds, primaryCategoryId }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to update video categories");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/videos"] });
+      toast({
+        title: "Categories updated",
+        description: "Video categories have been updated successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Failed to update categories",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const addTag = (tag: string) => {
     const trimmedTag = tag.trim();
     if (trimmedTag && !tags.includes(trimmedTag)) {
@@ -108,7 +149,30 @@ export function EditVideoModal({ video, isOpen, onClose }: EditVideoModalProps) 
     }
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleCategoryToggle = (categoryId: number, checked: boolean) => {
+    if (checked) {
+      setSelectedCategoryIds(prev => [...prev, categoryId]);
+      // If this is the first category selected, make it primary
+      if (selectedCategoryIds.length === 0) {
+        setPrimaryCategoryId(categoryId);
+      }
+    } else {
+      setSelectedCategoryIds(prev => prev.filter(id => id !== categoryId));
+      // If removing the primary category, set a new primary or null
+      if (primaryCategoryId === categoryId) {
+        const remaining = selectedCategoryIds.filter(id => id !== categoryId);
+        setPrimaryCategoryId(remaining.length > 0 ? remaining[0] : null);
+      }
+    }
+  };
+
+  const handlePrimaryChange = (categoryId: number) => {
+    if (selectedCategoryIds.includes(categoryId)) {
+      setPrimaryCategoryId(categoryId);
+    }
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!title.trim()) {
@@ -120,24 +184,63 @@ export function EditVideoModal({ video, isOpen, onClose }: EditVideoModalProps) 
       return;
     }
 
+    if (selectedCategoryIds.length === 0) {
+      toast({
+        title: "Category required",
+        description: "Please select at least one category",
+        variant: "destructive",
+      });
+      return;
+    }
+
+    if (!primaryCategoryId) {
+      toast({
+        title: "Primary category required",
+        description: "Please select a primary category",
+        variant: "destructive",
+      });
+      return;
+    }
+
     const videoData = {
       title: title.trim(),
-      categoryId: categoryId && categoryId !== "0" ? parseInt(categoryId) : null,
+      categoryId: primaryCategoryId,
       description: description.trim() || null,
       tags: tags.length > 0 ? tags : [],
       isPublic,
     };
 
-    updateVideoMutation.mutate(videoData);
+    try {
+      // Update basic video info first
+      await updateVideoMutation.mutateAsync(videoData);
+      
+      // Then update categories
+      await updateCategoriesMutation.mutateAsync({
+        categoryIds: selectedCategoryIds,
+        primaryCategoryId: primaryCategoryId,
+      });
+    } catch (error) {
+      // Error handling is done in the mutation callbacks
+      console.error('Update failed:', error);
+    }
   };
 
   const handleClose = () => {
     if (video) {
       setTitle(video.title || "");
-      setCategoryId(video.categoryId ? video.categoryId.toString() : "0");
       setDescription(video.description || "");
       setTags(video.tags || []);
       setIsPublic(video.isPublic);
+      
+      // Reset categories
+      if (video.categories && video.categories.length > 0) {
+        const categoryIds = video.categories.map(cat => cat.id);
+        setSelectedCategoryIds(categoryIds);
+        setPrimaryCategoryId(video.categoryId);
+      } else {
+        setSelectedCategoryIds([]);
+        setPrimaryCategoryId(null);
+      }
     }
     setTagInput("");
     onClose();
@@ -165,21 +268,54 @@ export function EditVideoModal({ video, isOpen, onClose }: EditVideoModalProps) 
           </div>
 
           <div>
-            <Label htmlFor="category">Category</Label>
-            <Select value={categoryId} onValueChange={setCategoryId}>
-              <SelectTrigger>
-                <SelectValue placeholder="Select a category (optional)" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="0">No category</SelectItem>
-                {categories.map((category) => (
-                  <SelectItem key={category.id} value={category.id.toString()}>
-                    {category.name}
-                    {category.mentorName && ` (${category.mentorName})`}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+            <Label>Categories</Label>
+            <p className="text-sm text-gray-600 mb-3">Select categories for this video. The primary category (marked with *) will be used for organization.</p>
+            <div className="space-y-3 max-h-48 overflow-y-auto border rounded-md p-3">
+              {categories.map((category) => (
+                <div key={category.id} className="flex items-center justify-between space-x-3">
+                  <div className="flex items-center space-x-2">
+                    <Checkbox
+                      id={`category-${category.id}`}
+                      checked={selectedCategoryIds.includes(category.id)}
+                      onCheckedChange={(checked) => handleCategoryToggle(category.id, checked as boolean)}
+                    />
+                    <Label
+                      htmlFor={`category-${category.id}`}
+                      className="text-sm font-medium cursor-pointer"
+                    >
+                      {category.name}
+                      {category.mentorName && (
+                        <span className="text-gray-500 text-xs ml-1">({category.mentorName})</span>
+                      )}
+                    </Label>
+                  </div>
+                  {selectedCategoryIds.includes(category.id) && (
+                    <Button
+                      type="button"
+                      size="sm"
+                      variant={primaryCategoryId === category.id ? "default" : "outline"}
+                      onClick={() => handlePrimaryChange(category.id)}
+                      className="text-xs px-2 py-1 h-6"
+                    >
+                      <Star className="h-3 w-3 mr-1" />
+                      {primaryCategoryId === category.id ? "Primary" : "Set Primary"}
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
+            {selectedCategoryIds.length > 0 && (
+              <div className="mt-2">
+                <p className="text-xs text-gray-600">
+                  Selected: {selectedCategoryIds.length} categories
+                  {primaryCategoryId && (
+                    <span className="ml-2">
+                      • Primary: {categories.find(c => c.id === primaryCategoryId)?.name}
+                    </span>
+                  )}
+                </p>
+              </div>
+            )}
           </div>
 
           <div>

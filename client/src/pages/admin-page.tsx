@@ -556,19 +556,29 @@ export default function AdminPage() {
                           </div>
                         </TableCell>
                         <TableCell>
-                          {video.category ? (
-                            <div className="max-w-[150px]">
-                              <Badge 
-                                variant="outline" 
-                                className="truncate block"
-                                title={video.category.name}
-                              >
-                                {video.category.name}
-                              </Badge>
-                            </div>
-                          ) : (
-                            <span className="text-gray-400">Uncategorized</span>
-                          )}
+                          <div className="flex flex-wrap gap-1 max-w-48">
+                            {video.categories && video.categories.length > 0 ? (
+                              video.categories.map((category) => (
+                                <Badge 
+                                  key={category.id} 
+                                  variant={video.categoryId === category.id ? "default" : "secondary"}
+                                  className="text-xs"
+                                >
+                                  <span 
+                                    className="truncate max-w-20" 
+                                    title={category.name}
+                                  >
+                                    {category.name}
+                                  </span>
+                                  {video.categoryId === category.id && (
+                                    <span className="ml-1 text-xs opacity-75">*</span>
+                                  )}
+                                </Badge>
+                              ))
+                            ) : (
+                              <Badge variant="secondary">No Category</Badge>
+                            )}
+                          </div>
                         </TableCell>
                         <TableCell>
                           <div className="flex items-center space-x-2">

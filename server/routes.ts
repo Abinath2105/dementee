@@ -227,6 +227,79 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Video category management endpoints
+  app.get("/api/videos/:id/categories", async (req, res) => {
+    try {
+      const videoId = parseInt(req.params.id);
+      const categories = await storage.getVideoCategories(videoId);
+      res.json(categories);
+    } catch (error) {
+      console.error('Get video categories error:', error);
+      res.status(500).json({ message: "Failed to fetch video categories" });
+    }
+  });
+
+  app.put("/api/videos/:id/categories", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const videoId = parseInt(req.params.id);
+      const { categoryIds, primaryCategoryId } = req.body;
+
+      if (!Array.isArray(categoryIds) || !primaryCategoryId) {
+        return res.status(400).json({ message: "categoryIds array and primaryCategoryId are required" });
+      }
+
+      if (!categoryIds.includes(primaryCategoryId)) {
+        return res.status(400).json({ message: "Primary category must be included in categoryIds" });
+      }
+
+      await storage.updateVideoCategories(videoId, categoryIds, primaryCategoryId);
+      const updatedCategories = await storage.getVideoCategories(videoId);
+      res.json(updatedCategories);
+    } catch (error) {
+      console.error('Update video categories error:', error);
+      res.status(500).json({ message: "Failed to update video categories" });
+    }
+  });
+
+  app.post("/api/videos/:videoId/categories/:categoryId", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const videoId = parseInt(req.params.videoId);
+      const categoryId = parseInt(req.params.categoryId);
+      const { isPrimary = false } = req.body;
+
+      const videoCategory = await storage.assignVideoToCategory(videoId, categoryId, isPrimary);
+      res.status(201).json(videoCategory);
+    } catch (error) {
+      console.error('Assign video to category error:', error);
+      res.status(500).json({ message: "Failed to assign video to category" });
+    }
+  });
+
+  app.delete("/api/videos/:videoId/categories/:categoryId", async (req, res) => {
+    try {
+      if (!req.isAuthenticated() || !req.user?.isAdmin) {
+        return res.status(403).json({ message: "Admin access required" });
+      }
+
+      const videoId = parseInt(req.params.videoId);
+      const categoryId = parseInt(req.params.categoryId);
+
+      await storage.removeVideoFromCategory(videoId, categoryId);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error('Remove video from category error:', error);
+      res.status(500).json({ message: "Failed to remove video from category" });
+    }
+  });
+
   app.delete("/api/videos/:id", async (req, res) => {
     try {
       if (!req.isAuthenticated() || !req.user?.isAdmin) {

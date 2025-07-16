@@ -57,13 +57,24 @@ export const videos = pgTable("videos", {
   youtubeId: text("youtube_id").notNull(),
   thumbnailUrl: text("thumbnail_url"),
   duration: text("duration"),
-  categoryId: integer("category_id").references(() => categories.id),
+  categoryId: integer("category_id").references(() => categories.id), // Keep for backward compatibility, will be primary category
   tags: jsonb("tags").$type<string[]>().default([]),
   views: integer("views").default(0).notNull(),
   isPublic: boolean("is_public").default(true).notNull(),
   createdAt: timestamp("created_at").defaultNow().notNull(),
   updatedAt: timestamp("updated_at").defaultNow().notNull(),
 });
+
+// Junction table for many-to-many video-category relationship
+export const videoCategories = pgTable("video_categories", {
+  id: serial("id").primaryKey(),
+  videoId: integer("video_id").references(() => videos.id).notNull(),
+  categoryId: integer("category_id").references(() => categories.id).notNull(),
+  isPrimary: boolean("is_primary").default(false).notNull(), // Mark which is the primary category
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueVideoCategory: unique().on(table.videoId, table.categoryId),
+}));
 
 export const videoViews = pgTable("video_views", {
   id: serial("id").primaryKey(),
@@ -231,6 +242,7 @@ export const usersRelations = relations(users, ({ many, one }) => ({
 export const categoriesRelations = relations(categories, ({ many }) => ({
   videos: many(videos),
   userAccess: many(userCategoryAccess, { relationName: "userAccess" }),
+  videoCategories: many(videoCategories),
 }));
 
 export const userCategoryAccessRelations = relations(userCategoryAccess, ({ one }) => ({
@@ -253,12 +265,24 @@ export const videosRelations = relations(videos, ({ one, many }) => ({
     fields: [videos.categoryId],
     references: [categories.id],
   }),
+  videoCategories: many(videoCategories),
   views: many(videoViews),
   completions: many(videoCompletions),
   bookmarks: many(videoBookmarks),
   watchHistory: many(watchHistory),
   ratings: many(videoRatings),
   comments: many(videoComments),
+}));
+
+export const videoCategoriesRelations = relations(videoCategories, ({ one }) => ({
+  video: one(videos, {
+    fields: [videoCategories.videoId],
+    references: [videos.id],
+  }),
+  category: one(categories, {
+    fields: [videoCategories.categoryId],
+    references: [categories.id],
+  }),
 }));
 
 export const videoViewsRelations = relations(videoViews, ({ one }) => ({
@@ -418,6 +442,12 @@ export const insertCategorySchema = createInsertSchema(categories).pick({
   backgroundColor: true,
 });
 
+export const insertVideoCategorySchema = createInsertSchema(videoCategories).pick({
+  videoId: true,
+  categoryId: true,
+  isPrimary: true,
+});
+
 export const insertVideoSchema = createInsertSchema(videos).pick({
   title: true,
   description: true,
@@ -519,9 +549,13 @@ export type InsertVideoRating = z.infer<typeof insertVideoRatingSchema>;
 export type VideoComment = typeof videoComments.$inferSelect;
 export type InsertVideoComment = z.infer<typeof insertVideoCommentSchema>;
 
+export type VideoCategory = typeof videoCategories.$inferSelect;
+export type InsertVideoCategory = z.infer<typeof insertVideoCategorySchema>;
+
 // Extended types for API responses
 export type VideoWithCategory = Video & {
-  category: Category | null;
+  category: Category | null; // Primary category for backward compatibility
+  categories: Category[]; // All categories this video belongs to
   viewCount: number;
   isCompleted?: boolean;
   isBookmarked?: boolean;

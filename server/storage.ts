@@ -1,4 +1,4 @@
-import { users, publicUsers, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, videoCompletions, videoBookmarks, watchHistory, userSessions, videoRatings, videoComments, type User, type InsertUser, type PublicUser, type InsertPublicUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess, type VideoCompletion, type InsertVideoCompletion, type VideoBookmark, type InsertVideoBookmark, type WatchHistory, type InsertWatchHistory, type UserSession, type InsertUserSession, type VideoRating, type InsertVideoRating, type VideoComment, type InsertVideoComment, type UserLearningStats } from "@shared/schema";
+import { users, publicUsers, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, videoCompletions, videoBookmarks, watchHistory, userSessions, videoRatings, videoComments, videoCategories, type User, type InsertUser, type PublicUser, type InsertPublicUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess, type VideoCompletion, type InsertVideoCompletion, type VideoBookmark, type InsertVideoBookmark, type WatchHistory, type InsertWatchHistory, type UserSession, type InsertUserSession, type VideoRating, type InsertVideoRating, type VideoComment, type InsertVideoComment, type UserLearningStats, type VideoCategory, type InsertVideoCategory } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or, ilike, isNotNull } from "drizzle-orm";
 import session from "express-session";
@@ -60,6 +60,12 @@ export interface IStorage {
   updateVideo(id: number, video: Partial<InsertVideo>): Promise<Video>;
   deleteVideo(id: number): Promise<void>;
   incrementVideoViews(videoId: number, userId?: number, ipAddress?: string): Promise<void>;
+  
+  // Video category management
+  assignVideoToCategory(videoId: number, categoryId: number, isPrimary?: boolean): Promise<VideoCategory>;
+  removeVideoFromCategory(videoId: number, categoryId: number): Promise<void>;
+  getVideoCategories(videoId: number): Promise<Category[]>;
+  updateVideoCategories(videoId: number, categoryIds: number[], primaryCategoryId: number): Promise<void>;
 
   // Video completion tracking
   markVideoComplete(userId: number, videoId: number, watchTime: number): Promise<VideoCompletion>;
@@ -291,7 +297,7 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getVideos(search?: string, categoryId?: number, userId?: number): Promise<VideoWithCategory[]> {
-    // Get basic video data with category info
+    // Get basic video data with primary category info
     let baseQuery = db
       .select({
         id: videos.id,
@@ -388,16 +394,25 @@ export class DatabaseStorage implements IStorage {
 
     const baseResult = await baseQuery.orderBy(desc(videos.createdAt));
     
-    // Add basic stats for now - will enhance with rating/comment data later
-    return baseResult.map(video => ({
-      ...video,
-      viewCount: 0,
-      isCompleted: false,
-      averageRating: 4.5, // Mock data for now
-      totalRatings: 10, // Mock data for now
-      userRating: undefined,
-      commentsCount: 3, // Mock data for now
-    }));
+    // Enhance videos with all categories they belong to
+    const enhancedVideos = await Promise.all(
+      baseResult.map(async (video) => {
+        const allCategories = await this.getVideoCategories(video.id);
+        
+        return {
+          ...video,
+          categories: allCategories,
+          viewCount: 0,
+          isCompleted: false,
+          averageRating: 4.5,
+          totalRatings: 10,
+          userRating: undefined,
+          commentsCount: 3,
+        };
+      })
+    );
+
+    return enhancedVideos;
   }
 
   async getVideo(id: number): Promise<VideoWithCategory | undefined> {
@@ -426,8 +441,12 @@ export class DatabaseStorage implements IStorage {
 
     if (!result) return undefined;
 
+    // Get all categories for this video
+    const allCategories = await this.getVideoCategories(id);
+
     return {
       ...result,
+      categories: allCategories,
       viewCount: result.viewCount || 0,
     };
   }
@@ -451,6 +470,7 @@ export class DatabaseStorage implements IStorage {
 
   async deleteVideo(id: number): Promise<void> {
     // Delete all related records first to avoid foreign key constraint violations
+    await db.delete(videoCategories).where(eq(videoCategories.videoId, id));
     await db.delete(videoBookmarks).where(eq(videoBookmarks.videoId, id));
     await db.delete(videoCompletions).where(eq(videoCompletions.videoId, id));
     await db.delete(videoViews).where(eq(videoViews.videoId, id));
@@ -538,6 +558,63 @@ export class DatabaseStorage implements IStorage {
         views: sql`${videos.views} + 1`,
       })
       .where(eq(videos.id, videoId));
+  }
+
+  // Video category management methods
+  async assignVideoToCategory(videoId: number, categoryId: number, isPrimary = false): Promise<VideoCategory> {
+    const [videoCategory] = await db
+      .insert(videoCategories)
+      .values({
+        videoId,
+        categoryId,
+        isPrimary,
+      })
+      .returning();
+    return videoCategory;
+  }
+
+  async removeVideoFromCategory(videoId: number, categoryId: number): Promise<void> {
+    await db
+      .delete(videoCategories)
+      .where(and(
+        eq(videoCategories.videoId, videoId),
+        eq(videoCategories.categoryId, categoryId)
+      ));
+  }
+
+  async getVideoCategories(videoId: number): Promise<Category[]> {
+    const result = await db
+      .select({
+        category: categories,
+      })
+      .from(videoCategories)
+      .innerJoin(categories, eq(videoCategories.categoryId, categories.id))
+      .where(eq(videoCategories.videoId, videoId))
+      .orderBy(desc(videoCategories.isPrimary), categories.name);
+
+    return result.map(row => row.category);
+  }
+
+  async updateVideoCategories(videoId: number, categoryIds: number[], primaryCategoryId: number): Promise<void> {
+    // Remove all existing category assignments for this video
+    await db.delete(videoCategories).where(eq(videoCategories.videoId, videoId));
+
+    // Update the primary category in the videos table for backward compatibility
+    await db
+      .update(videos)
+      .set({ categoryId: primaryCategoryId })
+      .where(eq(videos.id, videoId));
+
+    // Add new category assignments
+    if (categoryIds.length > 0) {
+      const assignments = categoryIds.map(categoryId => ({
+        videoId,
+        categoryId,
+        isPrimary: categoryId === primaryCategoryId,
+      }));
+
+      await db.insert(videoCategories).values(assignments);
+    }
   }
 
   async setUserPassword(userId: number, password: string): Promise<User> {
