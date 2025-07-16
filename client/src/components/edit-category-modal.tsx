@@ -139,10 +139,7 @@ export function EditCategoryModal({ category, isOpen, onClose }: EditCategoryMod
         title: "Success",
         description: "Category updated successfully",
       });
-      form.reset();
-      setUploadedImageUrl("");
-      setUploadedBackgroundImageUrl("");
-      setBackgroundColor("#f3f4f6");
+      // Don't reset the form values, keep the updated data
       onClose();
     },
     onError: (error: Error) => {

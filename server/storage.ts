@@ -902,16 +902,23 @@ export class DatabaseStorage implements IStorage {
   }
 
   async getCategoryProgress(userId: number, categoryId: number): Promise<{ completed: number; total: number }> {
+    // Count total videos in this category through the junction table
     const totalVideos = await db
-      .select({ count: sql<number>`COUNT(*)::int` })
+      .select({ count: sql<number>`COUNT(DISTINCT ${videos.id})::int` })
       .from(videos)
-      .where(eq(videos.categoryId, categoryId));
+      .innerJoin(videoCategories, eq(videos.id, videoCategories.videoId))
+      .where(eq(videoCategories.categoryId, categoryId));
 
+    // Count completed videos in this category through the junction table  
     const completedVideos = await db
-      .select({ count: sql<number>`COUNT(*)::int` })
+      .select({ count: sql<number>`COUNT(DISTINCT ${videos.id})::int` })
       .from(videos)
+      .innerJoin(videoCategories, eq(videos.id, videoCategories.videoId))
       .innerJoin(videoCompletions, eq(videos.id, videoCompletions.videoId))
-      .where(and(eq(videos.categoryId, categoryId), eq(videoCompletions.userId, userId)));
+      .where(and(
+        eq(videoCategories.categoryId, categoryId), 
+        eq(videoCompletions.userId, userId)
+      ));
 
     return {
       total: totalVideos[0]?.count || 0,
