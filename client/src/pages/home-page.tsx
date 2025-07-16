@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, useLocation } from "wouter";
@@ -6,18 +6,38 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Play, Search, Settings, LogOut } from "lucide-react";
+import { Play, Search, Settings, LogOut, X } from "lucide-react";
 import { VideoCard } from "@/components/video-card";
 import { BannerCarousel } from "@/components/banner-carousel";
 import { CategoryGrid } from "@/components/category-grid";
 import { VideoCompletionBadge } from "@/components/video-completion-badge";
 import type { VideoWithCategory, Category, AppSettings } from "@shared/schema";
 
+// Custom hook for debounced search
+function useDebounced(value: string, delay: number) {
+  const [debouncedValue, setDebouncedValue] = useState(value);
+
+  useEffect(() => {
+    const handler = setTimeout(() => {
+      setDebouncedValue(value);
+    }, delay);
+
+    return () => {
+      clearTimeout(handler);
+    };
+  }, [value, delay]);
+
+  return debouncedValue;
+}
+
 export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
   const [, setLocation] = useLocation();
+  
+  // Debounce search query to prevent excessive API calls
+  const debouncedSearchQuery = useDebounced(searchQuery, 300);
 
   const { data: appSettings } = useQuery<AppSettings>({
     queryKey: ["/api/settings"],
@@ -28,10 +48,10 @@ export default function HomePage() {
   });
 
   const { data: videos = [], isLoading } = useQuery<VideoWithCategory[]>({
-    queryKey: ["/api/videos", searchQuery, selectedCategory],
+    queryKey: ["/api/videos", debouncedSearchQuery, selectedCategory],
     queryFn: async () => {
       const params = new URLSearchParams();
-      if (searchQuery) params.append("search", searchQuery);
+      if (debouncedSearchQuery) params.append("search", debouncedSearchQuery);
       if (selectedCategory && selectedCategory !== "all") params.append("categoryId", selectedCategory);
       
       const response = await fetch(`/api/videos?${params}`);
@@ -40,13 +60,30 @@ export default function HomePage() {
     },
   });
 
+  // Filtered videos for instant local search feedback
+  const filteredVideos = useMemo(() => {
+    if (!searchQuery || searchQuery === debouncedSearchQuery) {
+      return videos;
+    }
+    
+    // Show instant local filtering while waiting for debounced API call
+    const query = searchQuery.toLowerCase();
+    return videos.filter(video => 
+      video.title.toLowerCase().includes(query) ||
+      video.description?.toLowerCase().includes(query) ||
+      video.tags?.some((tag: string) => tag.toLowerCase().includes(query))
+    );
+  }, [videos, searchQuery, debouncedSearchQuery]);
+
   const handleSearch = () => {
-    // Search is handled automatically via query key changes
-    // This function triggers a manual search when the button is clicked
+    // Trim whitespace and trigger immediate search
     if (searchQuery.trim()) {
-      // Force a re-query by updating the search query state
       setSearchQuery(searchQuery.trim());
     }
+  };
+
+  const clearSearch = () => {
+    setSearchQuery("");
   };
 
   // Apply custom CSS variables for theming
@@ -129,27 +166,61 @@ export default function HomePage() {
           <h1 className="text-2xl sm:text-3xl lg:text-4xl font-bold mb-2 sm:mb-4 text-gray-900">Video Library</h1>
           <p className="text-sm sm:text-base lg:text-lg mb-4 sm:mb-6 lg:mb-8 text-gray-600">Find and watch educational videos</p>
           
-          {/* Search Bar - Mobile Responsive */}
+          {/* Search Bar - Mobile Responsive with Dynamic Features */}
           <div className="max-w-2xl mx-auto relative mb-4 sm:mb-6">
-            <Input
-              type="text"
-              placeholder="Search videos..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              onKeyDown={(e) => {
-                if (e.key === 'Enter') {
-                  handleSearch();
-                }
-              }}
-              className="w-full pr-12 sm:pr-16 text-gray-900 h-10 sm:h-12 text-sm sm:text-base"
-            />
-            <Button 
-              onClick={handleSearch}
-              className="absolute right-1 top-1 h-8 sm:h-10 w-8 sm:w-auto px-2 sm:px-3"
-              size="sm"
-            >
-              <Search className="h-4 w-4" />
-            </Button>
+            <div className="relative">
+              <Input
+                type="text"
+                placeholder="Search videos... (real-time search)"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter') {
+                    handleSearch();
+                  }
+                  if (e.key === 'Escape') {
+                    clearSearch();
+                  }
+                }}
+                className="w-full pr-20 sm:pr-24 text-gray-900 h-10 sm:h-12 text-sm sm:text-base"
+              />
+              
+              {/* Search Status Indicator */}
+              {searchQuery && debouncedSearchQuery !== searchQuery && (
+                <div className="absolute right-16 sm:right-20 top-1/2 transform -translate-y-1/2">
+                  <div className="animate-spin rounded-full h-4 w-4 border-2 border-blue-500 border-t-transparent"></div>
+                </div>
+              )}
+              
+              {/* Clear Search Button */}
+              {searchQuery && (
+                <Button 
+                  onClick={clearSearch}
+                  variant="ghost"
+                  className="absolute right-10 sm:right-12 top-1/2 transform -translate-y-1/2 h-6 w-6 p-0 hover:bg-gray-100"
+                  size="sm"
+                >
+                  <X className="h-3 w-3" />
+                </Button>
+              )}
+              
+              {/* Search Button */}
+              <Button 
+                onClick={handleSearch}
+                className="absolute right-1 top-1 h-8 sm:h-10 w-8 sm:w-auto px-2 sm:px-3"
+                size="sm"
+              >
+                <Search className="h-4 w-4" />
+              </Button>
+            </div>
+            
+            {/* Search Results Counter */}
+            {searchQuery && (
+              <div className="text-xs sm:text-sm text-gray-500 mt-2 text-center">
+                {isLoading ? "Searching..." : `${filteredVideos.length} video${filteredVideos.length !== 1 ? 's' : ''} found`}
+                {searchQuery !== debouncedSearchQuery && " (refining...)"}
+              </div>
+            )}
           </div>
         </div>
       </div>
@@ -201,7 +272,10 @@ export default function HomePage() {
             }
           </h2>
           <div className="text-secondary text-sm sm:text-base">
-            <span>{videos.length}</span> videos available
+            <span>{filteredVideos.length}</span> videos available
+            {searchQuery && filteredVideos.length !== videos.length && (
+              <span className="text-gray-400"> (filtered from {videos.length})</span>
+            )}
           </div>
         </div>
 
@@ -218,7 +292,7 @@ export default function HomePage() {
               </div>
             ))}
           </div>
-        ) : videos.length === 0 ? (
+        ) : filteredVideos.length === 0 ? (
           <div className="text-center py-12 sm:py-16">
             <Play className="h-12 w-12 sm:h-16 sm:w-16 text-gray-300 mx-auto mb-4" />
             <h3 className="text-lg sm:text-xl font-semibold text-gray-900 mb-2">No videos found</h3>
@@ -231,7 +305,7 @@ export default function HomePage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-            {videos.map((video) => (
+            {filteredVideos.map((video) => (
               <VideoCard
                 key={video.id}
                 video={video}
