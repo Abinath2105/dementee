@@ -1,6 +1,6 @@
 import { users, publicUsers, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, videoCompletions, videoBookmarks, watchHistory, userSessions, videoRatings, videoComments, videoCategories, type User, type InsertUser, type PublicUser, type InsertPublicUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess, type VideoCompletion, type InsertVideoCompletion, type VideoBookmark, type InsertVideoBookmark, type WatchHistory, type InsertWatchHistory, type UserSession, type InsertUserSession, type VideoRating, type InsertVideoRating, type VideoComment, type InsertVideoComment, type UserLearningStats, type VideoCategory, type InsertVideoCategory } from "@shared/schema";
 import { db } from "./db";
-import { eq, desc, sql, and, or, ilike, isNotNull } from "drizzle-orm";
+import { eq, desc, sql, and, or, ilike, isNotNull, inArray } from "drizzle-orm";
 import session from "express-session";
 import connectPg from "connect-pg-simple";
 import { pool } from "./db";
@@ -330,7 +330,19 @@ export class DatabaseStorage implements IStorage {
     }
 
     if (categoryId) {
-      conditions.push(eq(videos.categoryId, categoryId));
+      // Filter by videos that have this category either as primary or secondary
+      const videosInCategory = await db
+        .select({ videoId: videoCategories.videoId })
+        .from(videoCategories)
+        .where(eq(videoCategories.categoryId, categoryId));
+      
+      if (videosInCategory.length > 0) {
+        const videoIds = videosInCategory.map(v => v.videoId);
+        conditions.push(inArray(videos.id, videoIds));
+      } else {
+        // No videos in this category
+        conditions.push(sql`FALSE`);
+      }
     }
 
     // Add category access control for non-admin users
@@ -347,7 +359,17 @@ export class DatabaseStorage implements IStorage {
           .limit(1);
         
         if (otherCategory.length > 0) {
-          conditions.push(eq(videos.categoryId, otherCategory[0].id));
+          const otherCategoryVideos = await db
+            .select({ videoId: videoCategories.videoId })
+            .from(videoCategories)
+            .where(eq(videoCategories.categoryId, otherCategory[0].id));
+          
+          if (otherCategoryVideos.length > 0) {
+            const otherVideoIds = otherCategoryVideos.map(v => v.videoId);
+            conditions.push(inArray(videos.id, otherVideoIds));
+          } else {
+            conditions.push(sql`FALSE`);
+          }
         } else {
           // If no "Other" category exists, show no videos
           conditions.push(sql`FALSE`);
@@ -371,15 +393,33 @@ export class DatabaseStorage implements IStorage {
           allowedCategoryIds.push(otherCategory[0].id);
         }
         
-        // Only show videos from allowed categories
+        // Only show videos from allowed categories (including secondary categories)
         if (allowedCategoryIds.length > 0) {
-          conditions.push(
-            or(...allowedCategoryIds.map(id => eq(videos.categoryId, id)))
-          );
+          const allowedVideos = await db
+            .select({ videoId: videoCategories.videoId })
+            .from(videoCategories)
+            .where(inArray(videoCategories.categoryId, allowedCategoryIds));
+          
+          if (allowedVideos.length > 0) {
+            const allowedVideoIds = allowedVideos.map(v => v.videoId);
+            conditions.push(inArray(videos.id, allowedVideoIds));
+          } else {
+            conditions.push(sql`FALSE`);
+          }
         } else {
           // If no categories assigned, only show "Other" category videos
           if (otherCategory.length > 0) {
-            conditions.push(eq(videos.categoryId, otherCategory[0].id));
+            const otherCategoryVideos = await db
+              .select({ videoId: videoCategories.videoId })
+              .from(videoCategories)
+              .where(eq(videoCategories.categoryId, otherCategory[0].id));
+            
+            if (otherCategoryVideos.length > 0) {
+              const otherVideoIds = otherCategoryVideos.map(v => v.videoId);
+              conditions.push(inArray(videos.id, otherVideoIds));
+            } else {
+              conditions.push(sql`FALSE`);
+            }
           } else {
             // If no "Other" category exists, show no videos
             conditions.push(sql`FALSE`);
