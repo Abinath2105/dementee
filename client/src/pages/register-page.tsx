@@ -99,10 +99,10 @@ export function RegisterPage() {
             
             <div className="space-y-3">
               <Button
-                onClick={() => navigate("/")}
+                onClick={() => navigate("/verify")}
                 className="w-full bg-gradient-to-r from-blue-600 to-purple-600 hover:from-blue-700 hover:to-purple-700 text-white"
               >
-                Return to Home
+                Enter Verification Code
               </Button>
               <Button
                 onClick={() => navigate("/")}

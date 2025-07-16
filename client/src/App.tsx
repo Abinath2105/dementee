@@ -16,6 +16,7 @@ import { StudentDashboard } from "@/pages/student-dashboard";
 import { StudentDetail } from "@/pages/student-detail";
 import { LandingPage } from "@/pages/landing-page";
 import { RegisterPage } from "@/pages/register-page";
+import { VerifyPage } from "@/pages/verify-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -23,6 +24,7 @@ function Router() {
     <Switch>
       <Route path="/" component={LandingPage} />
       <Route path="/register" component={RegisterPage} />
+      <Route path="/verify" component={VerifyPage} />
       <Route path="/login" component={LandingPage} />
       <ProtectedRoute path="/home" component={HomePage} />
       <ProtectedRoute path="/admin" component={AdminPage} />

@@ -292,6 +292,57 @@ export function setupAuth(app: Express) {
     try {
       const { email } = req.body;
 
+      if (!email) {
+        return res.status(400).json({ message: "Email is required" });
+      }
+
+      // Check if user exists (either admin or public user)
+      const user = await storage.getUserByEmail(email);
+      const publicUser = await storage.getPublicUserByEmail(email);
+
+      if (!user && !publicUser) {
+        return res.status(404).json({ message: "User not found" });
+      }
+
+      // Check if already verified
+      if ((user && user.isVerified) || (publicUser && publicUser.isVerified)) {
+        return res.status(400).json({ message: "Email already verified" });
+      }
+
+      // Generate new OTP
+      const otp = generateOtp();
+      const expiresAt = new Date(Date.now() + 10 * 60 * 1000); // 10 minutes
+
+      await storage.createOtp({
+        email,
+        code: otp,
+        expiresAt,
+      });
+
+      try {
+        await sendOtpEmail(email, otp);
+        res.json({ 
+          message: "Verification code sent to your email",
+          email 
+        });
+      } catch (emailError) {
+        console.error('Email sending failed, providing OTP in response for testing:', emailError);
+        res.json({ 
+          message: `Email service unavailable - use this verification code: ${otp}`,
+          email,
+          testOtp: otp // Temporary for testing
+        });
+      }
+    } catch (error) {
+      console.error('Resend OTP error:', error);
+      res.status(500).json({ message: "Failed to resend verification code" });
+    }
+  });
+
+  app.post("/api/resend-otp", async (req, res) => {
+    try {
+      const { email } = req.body;
+
       const user = await storage.getUserByEmail(email);
       const publicUser = await storage.getPublicUserByEmail(email);
 

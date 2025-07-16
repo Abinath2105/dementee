@@ -282,6 +282,36 @@ export default function AdminPage() {
     }
   };
 
+  const resendVerificationMutation = useMutation({
+    mutationFn: async (email: string) => {
+      const response = await fetch("/api/resend-otp", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ email }),
+      });
+      if (!response.ok) throw new Error("Failed to resend verification email");
+      return response.json();
+    },
+    onSuccess: (data) => {
+      toast({
+        title: "Verification email sent",
+        description: data.message,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleResendVerification = (email: string) => {
+    resendVerificationMutation.mutate(email);
+  };
+
   const handleEditVideo = (video: VideoWithCategory) => {
     setEditingVideo(video);
     setShowEditVideo(true);
@@ -885,14 +915,28 @@ export default function AdminPage() {
                               {new Date(publicUser.createdAt).toLocaleDateString()}
                             </TableCell>
                             <TableCell>
-                              <Button
-                                size="sm"
-                                variant="ghost"
-                                onClick={() => handleDeletePublicUser(publicUser.id)}
-                                disabled={deletePublicUserMutation.isPending}
-                              >
-                                <Trash2 className="h-4 w-4 text-red-600" />
-                              </Button>
+                              <div className="flex space-x-2">
+                                {!publicUser.isVerified && (
+                                  <Button
+                                    size="sm"
+                                    variant="outline"
+                                    onClick={() => handleResendVerification(publicUser.email)}
+                                    disabled={resendVerificationMutation.isPending}
+                                    title="Resend verification email"
+                                  >
+                                    <Mail className="h-4 w-4 text-blue-600" />
+                                  </Button>
+                                )}
+                                <Button
+                                  size="sm"
+                                  variant="ghost"
+                                  onClick={() => handleDeletePublicUser(publicUser.id)}
+                                  disabled={deletePublicUserMutation.isPending}
+                                  title="Delete user"
+                                >
+                                  <Trash2 className="h-4 w-4 text-red-600" />
+                                </Button>
+                              </div>
                             </TableCell>
                           </TableRow>
                         ))
