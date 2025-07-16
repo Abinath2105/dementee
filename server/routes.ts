@@ -798,6 +798,96 @@ export function registerRoutes(app: Express): Server {
   });
 
   // Convert public user to student with full access (admin only)
+  // Convert public user to student endpoint (admin only)
+  app.post("/api/admin/public-users/:id/convert", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const publicUserId = parseInt(req.params.id);
+      
+      // Get the public user first
+      const publicUser = await storage.getPublicUser(publicUserId);
+      if (!publicUser) {
+        return res.status(404).json({ message: "Public user not found" });
+      }
+      
+      // Check if a regular user with this email already exists
+      const existingUser = await storage.getUserByEmail(publicUser.email);
+      if (existingUser) {
+        return res.status(400).json({ message: "A student user with this email already exists" });
+      }
+
+      // Generate a random password
+      const crypto = await import("crypto");
+      const tempPassword = crypto.randomBytes(8).toString('hex');
+      
+      // Hash the password
+      const { hashPassword } = await import("./auth");
+      const hashedPassword = await hashPassword(tempPassword);
+
+      // Create student user with same credentials
+      const newUser = await storage.createUser({
+        username: publicUser.email.split('@')[0], // Use email prefix as username
+        email: publicUser.email,
+        password: hashedPassword,
+        fullName: publicUser.fullName,
+        role: 'student',
+        isAdmin: false,
+        isVerified: true, // They already verified as public user
+        invitedBy: req.user.id,
+      });
+
+      // Delete the public user record
+      await storage.deletePublicUser(publicUserId);
+
+      // Send credentials via email
+      try {
+        const { sendEmail } = await import("./services/email");
+        const appSettings = await storage.getAppSettings();
+        
+        await sendEmail({
+          to: publicUser.email,
+          subject: `Welcome to ${appSettings.appName} - Your Student Account`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #3b82f6;">Welcome to ${appSettings.appName}!</h2>
+              <p>Your account has been upgraded to a full student account with access to all course categories.</p>
+              
+              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Your Login Credentials:</h3>
+                <p><strong>Email:</strong> ${publicUser.email}</p>
+                <p><strong>Password:</strong> ${tempPassword}</p>
+              </div>
+              
+              <p>Please log in and change your password in your profile settings.</p>
+              <p><a href="${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app` : 'http://localhost:5000'}" style="color: #3b82f6;">Access your account here</a></p>
+              
+              <p>Best regards,<br>The ${appSettings.appName} Team</p>
+            </div>
+          `,
+        });
+      } catch (emailError) {
+        console.error("Failed to send credentials email:", emailError);
+        // Continue with success response even if email fails
+      }
+
+      res.json({ 
+        message: "Public user successfully converted to student",
+        user: {
+          id: newUser.id,
+          email: newUser.email,
+          fullName: newUser.fullName,
+          username: newUser.username,
+        }
+      });
+    } catch (error) {
+      console.error("Convert public user to student error:", error);
+      res.status(500).json({ message: "Failed to convert public user to student" });
+    }
+  });
+
   app.post("/api/admin/convert-public-to-student", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
       return res.status(403).json({ message: "Admin access required" });

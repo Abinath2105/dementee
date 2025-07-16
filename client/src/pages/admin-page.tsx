@@ -138,6 +138,36 @@ export default function AdminPage() {
     },
   });
 
+  const convertPublicUserMutation = useMutation({
+    mutationFn: async (publicUserId: number) => {
+      const response = await fetch(`/api/admin/public-users/${publicUserId}/convert`, {
+        method: "POST",
+        credentials: "include",
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to convert public user");
+      }
+      return response.json();
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/public-users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({
+        title: "Success",
+        description: "Public user converted to student successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const deleteUserMutation = useMutation({
     mutationFn: async (userId: number) => {
       const response = await fetch(`/api/admin/users/${userId}`, {
@@ -758,8 +788,13 @@ export default function AdminPage() {
                             <TableCell>{publicUser.email}</TableCell>
                             <TableCell>{new Date(publicUser.createdAt).toLocaleDateString()}</TableCell>
                             <TableCell>
-                              <Button size="sm" variant="outline">
-                                Convert to Student
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => convertPublicUserMutation.mutate(publicUser.id)}
+                                disabled={convertPublicUserMutation.isPending}
+                              >
+                                {convertPublicUserMutation.isPending ? "Converting..." : "Convert to Student"}
                               </Button>
                             </TableCell>
                           </TableRow>
