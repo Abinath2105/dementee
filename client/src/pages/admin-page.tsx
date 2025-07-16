@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, UserPlus, Mail, Palette, KeyRound, Menu, X, FolderOpen } from "lucide-react";
+import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, UserPlus, Mail, Palette, KeyRound, Menu, X, FolderOpen, Bell, Calendar, FileText } from "lucide-react";
 import { AddVideoModal } from "@/components/add-video-modal";
 import { EditVideoModal } from "@/components/edit-video-modal";
 import { InviteUserModal } from "@/components/invite-user-modal";
@@ -19,6 +19,9 @@ import { EditCategoryModal } from "@/components/edit-category-modal";
 import { AssignCategoryModal } from "@/components/assign-category-modal";
 import { ResetPasswordModal } from "@/components/reset-password-modal";
 import { CategoryCard } from "@/components/category-card";
+import BroadcastNotificationModal from "@/components/broadcast-notification-modal";
+import EventModal from "@/components/event-modal";
+import BlogPostModal from "@/components/blog-post-modal";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { VideoWithCategory, AdminStats, User, Category, UserInvitation } from "@shared/schema";
@@ -39,6 +42,15 @@ export default function AdminPage() {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // New feature states
+  const [showBroadcastNotification, setShowBroadcastNotification] = useState(false);
+  const [editingNotification, setEditingNotification] = useState<any>(null);
+  const [showEvent, setShowEvent] = useState(false);
+  const [editingEvent, setEditingEvent] = useState<any>(null);
+  const [showBlogPost, setShowBlogPost] = useState(false);
+  const [editingBlogPost, setEditingBlogPost] = useState<any>(null);
+  
   const { toast } = useToast();
 
   // Redirect if not admin
@@ -72,6 +84,19 @@ export default function AdminPage() {
 
   const { data: appSettings } = useQuery({
     queryKey: ["/api/settings"],
+  });
+
+  // New feature queries
+  const { data: notifications = [] } = useQuery({
+    queryKey: ["/api/admin/notifications"],
+  });
+
+  const { data: events = [] } = useQuery({
+    queryKey: ["/api/admin/events"],
+  });
+
+  const { data: blogPosts = [] } = useQuery({
+    queryKey: ["/api/admin/blog"],
   });
 
   const deleteCategoryMutation = useMutation({
@@ -196,6 +221,79 @@ export default function AdminPage() {
     },
   });
 
+  // New feature delete mutations
+  const deleteNotificationMutation = useMutation({
+    mutationFn: async (notificationId: number) => {
+      const response = await fetch(`/api/admin/notifications/${notificationId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to delete notification");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications"] });
+      toast({
+        title: "Notification deleted",
+        description: "Broadcast notification deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteEventMutation = useMutation({
+    mutationFn: async (eventId: number) => {
+      const response = await fetch(`/api/admin/events/${eventId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to delete event");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
+      toast({
+        title: "Event deleted",
+        description: "Event deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
+  const deleteBlogPostMutation = useMutation({
+    mutationFn: async (postId: number) => {
+      const response = await fetch(`/api/admin/blog/${postId}`, {
+        method: "DELETE",
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to delete blog post");
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/blog"] });
+      toast({
+        title: "Blog post deleted",
+        description: "Blog post deleted successfully",
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
 
 
   const updateVideoVisibilityMutation = useMutation({
@@ -244,6 +342,79 @@ export default function AdminPage() {
   const handleDeleteCategory = (categoryId: number) => {
     if (confirm("Are you sure you want to delete this category? All videos in this category will be uncategorized.")) {
       deleteCategoryMutation.mutate(categoryId);
+    }
+  };
+
+  // New feature handlers
+  const handleDeleteNotification = async (notificationId: number) => {
+    if (confirm("Are you sure you want to delete this notification?")) {
+      try {
+        const response = await fetch(`/api/admin/notifications/${notificationId}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error("Failed to delete notification");
+        
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications"] });
+        toast({
+          title: "Success",
+          description: "Notification deleted successfully",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to delete notification",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleDeleteEvent = async (eventId: number) => {
+    if (confirm("Are you sure you want to delete this event?")) {
+      try {
+        const response = await fetch(`/api/admin/events/${eventId}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error("Failed to delete event");
+        
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
+        toast({
+          title: "Success",
+          description: "Event deleted successfully",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to delete event",
+          variant: "destructive",
+        });
+      }
+    }
+  };
+
+  const handleDeleteBlogPost = async (postId: number) => {
+    if (confirm("Are you sure you want to delete this blog post?")) {
+      try {
+        const response = await fetch(`/api/admin/blog/${postId}`, {
+          method: "DELETE",
+          credentials: "include",
+        });
+        if (!response.ok) throw new Error("Failed to delete blog post");
+        
+        queryClient.invalidateQueries({ queryKey: ["/api/admin/blog"] });
+        toast({
+          title: "Success",
+          description: "Blog post deleted successfully",
+        });
+      } catch (error) {
+        toast({
+          title: "Error",
+          description: error instanceof Error ? error.message : "Failed to delete blog post",
+          variant: "destructive",
+        });
+      }
     }
   };
 
@@ -414,12 +585,17 @@ export default function AdminPage() {
     setShowAssignCategory(false);
   };
 
+
+
   const sidebarItems = [
     { id: "videos", label: "Videos", icon: Video },
     { id: "categories", label: "Categories", icon: Play },
     { id: "users", label: "Users", icon: Users },
     { id: "public-users", label: "Public Users", icon: UserPlus },
     { id: "invitations", label: "Invitations", icon: Mail },
+    { id: "notifications", label: "Notifications", icon: Bell },
+    { id: "events", label: "Events", icon: Calendar },
+    { id: "blog", label: "Blog Posts", icon: FileText },
     { id: "settings", label: "Settings", icon: Palette },
   ];
 
@@ -871,6 +1047,217 @@ export default function AdminPage() {
                   </div>
                 </div>
               )}
+
+              {/* Notifications Tab */}
+              {activeTab === "notifications" && (
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Broadcast Notifications</h2>
+                      <p className="text-sm text-gray-600">Send notifications to users and manage communication</p>
+                    </div>
+                    <Button onClick={() => setShowBroadcastNotification(true)} className="w-full sm:w-auto">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Notification
+                    </Button>
+                  </div>
+                  
+                  <div className="overflow-x-auto -mx-6 px-6">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[200px]">Title</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Target</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {notifications.map((notification: any) => (
+                          <TableRow key={notification.id}>
+                            <TableCell className="font-medium">{notification.title}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{notification.type}</Badge>
+                            </TableCell>
+                            <TableCell>{notification.targetAudience}</TableCell>
+                            <TableCell>
+                              <Badge variant={notification.isActive ? "default" : "secondary"}>
+                                {notification.isActive ? "Active" : "Inactive"}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{new Date(notification.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingNotification(notification);
+                                    setShowBroadcastNotification(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteNotification(notification.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              {/* Events Tab */}
+              {activeTab === "events" && (
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Events Management</h2>
+                      <p className="text-sm text-gray-600">Create and manage events, webinars, and workshops</p>
+                    </div>
+                    <Button onClick={() => setShowEvent(true)} className="w-full sm:w-auto">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Event
+                    </Button>
+                  </div>
+                  
+                  <div className="overflow-x-auto -mx-6 px-6">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[200px]">Title</TableHead>
+                          <TableHead>Type</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Start Date</TableHead>
+                          <TableHead>Participants</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {events.map((event: any) => (
+                          <TableRow key={event.id}>
+                            <TableCell className="font-medium">{event.title}</TableCell>
+                            <TableCell>
+                              <Badge variant="secondary">{event.type}</Badge>
+                            </TableCell>
+                            <TableCell>
+                              <Badge variant={event.status === 'active' ? "default" : "secondary"}>
+                                {event.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{new Date(event.startDate).toLocaleDateString()}</TableCell>
+                            <TableCell>{event.currentParticipants}/{event.maxParticipants}</TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingEvent(event);
+                                    setShowEvent(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteEvent(event.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
+
+              {/* Blog Posts Tab */}
+              {activeTab === "blog" && (
+                <div>
+                  <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
+                    <div>
+                      <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Blog Management</h2>
+                      <p className="text-sm text-gray-600">Create and manage blog posts and articles</p>
+                    </div>
+                    <Button onClick={() => setShowBlogPost(true)} className="w-full sm:w-auto">
+                      <Plus className="h-4 w-4 mr-2" />
+                      Create Post
+                    </Button>
+                  </div>
+                  
+                  <div className="overflow-x-auto -mx-6 px-6">
+                    <Table>
+                      <TableHeader>
+                        <TableRow>
+                          <TableHead className="min-w-[200px]">Title</TableHead>
+                          <TableHead>Author</TableHead>
+                          <TableHead>Status</TableHead>
+                          <TableHead>Views</TableHead>
+                          <TableHead>Featured</TableHead>
+                          <TableHead>Created</TableHead>
+                          <TableHead>Actions</TableHead>
+                        </TableRow>
+                      </TableHeader>
+                      <TableBody>
+                        {blogPosts.map((post: any) => (
+                          <TableRow key={post.id}>
+                            <TableCell className="font-medium">{post.title}</TableCell>
+                            <TableCell>{post.author}</TableCell>
+                            <TableCell>
+                              <Badge variant={post.status === 'published' ? "default" : "secondary"}>
+                                {post.status}
+                              </Badge>
+                            </TableCell>
+                            <TableCell>{post.viewCount || 0}</TableCell>
+                            <TableCell>
+                              {post.isFeatured && (
+                                <Badge variant="outline">Featured</Badge>
+                              )}
+                            </TableCell>
+                            <TableCell>{new Date(post.createdAt).toLocaleDateString()}</TableCell>
+                            <TableCell>
+                              <div className="flex space-x-2">
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => {
+                                    setEditingBlogPost(post);
+                                    setShowBlogPost(true);
+                                  }}
+                                >
+                                  <Edit className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteBlogPost(post.id)}
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ))}
+                      </TableBody>
+                    </Table>
+                  </div>
+                </div>
+              )}
               
               {activeTab === "settings" && (
                 <div>
@@ -932,6 +1319,37 @@ export default function AdminPage() {
         user={resetPasswordUser}
         isOpen={showResetPassword}
         onClose={() => setShowResetPassword(false)}
+      />
+      
+      {/* New feature modals */}
+      <BroadcastNotificationModal
+        isOpen={showBroadcastNotification}
+        onClose={() => {
+          setShowBroadcastNotification(false);
+          setEditingNotification(null);
+        }}
+        notification={editingNotification}
+        mode={editingNotification ? 'edit' : 'create'}
+      />
+      
+      <EventModal
+        isOpen={showEvent}
+        onClose={() => {
+          setShowEvent(false);
+          setEditingEvent(null);
+        }}
+        event={editingEvent}
+        mode={editingEvent ? 'edit' : 'create'}
+      />
+      
+      <BlogPostModal
+        isOpen={showBlogPost}
+        onClose={() => {
+          setShowBlogPost(false);
+          setEditingBlogPost(null);
+        }}
+        post={editingBlogPost}
+        mode={editingBlogPost ? 'edit' : 'create'}
       />
     </div>
   );

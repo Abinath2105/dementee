@@ -225,6 +225,139 @@ export const userSessions = pgTable("user_sessions", {
   totalWatchTime: integer("total_watch_time").notNull().default(0), // in seconds
 });
 
+// Broadcast notifications table
+export const broadcastNotifications = pgTable("broadcast_notifications", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  message: text("message").notNull(),
+  type: text("type").notNull(), // 'message', 'video_link', 'announcement', 'event'
+  videoId: integer("video_id").references(() => videos.id),
+  videoUrl: text("video_url"),
+  targetAudience: text("target_audience").notNull().default("all"), // 'all', 'students', 'category_specific'
+  categoryId: integer("category_id").references(() => categories.id),
+  isActive: boolean("is_active").default(true).notNull(),
+  priority: text("priority").notNull().default("normal"), // 'low', 'normal', 'high', 'urgent'
+  scheduledFor: timestamp("scheduled_for"),
+  expiresAt: timestamp("expires_at"),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User notification status table
+export const userNotificationStatus = pgTable("user_notification_status", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).notNull(),
+  notificationId: integer("notification_id").references(() => broadcastNotifications.id).notNull(),
+  isRead: boolean("is_read").default(false).notNull(),
+  isClicked: boolean("is_clicked").default(false).notNull(),
+  readAt: timestamp("read_at"),
+  clickedAt: timestamp("clicked_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+}, (table) => ({
+  uniqueUserNotification: unique().on(table.userId, table.notificationId),
+}));
+
+// Events and batches table
+export const events = pgTable("events", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  description: text("description"),
+  type: text("type").notNull(), // 'batch', 'workshop', 'webinar', 'class', 'event'
+  status: text("status").notNull().default("upcoming"), // 'upcoming', 'ongoing', 'completed', 'cancelled'
+  categoryId: integer("category_id").references(() => categories.id),
+  instructorName: text("instructor_name"),
+  instructorEmail: text("instructor_email"),
+  maxParticipants: integer("max_participants"),
+  currentParticipants: integer("current_participants").default(0),
+  price: text("price"),
+  meetingLink: text("meeting_link"),
+  meetingPassword: text("meeting_password"),
+  startDate: timestamp("start_date").notNull(),
+  endDate: timestamp("end_date"),
+  duration: text("duration"), // e.g., "2 hours", "3 days"
+  location: text("location"), // online, physical address, etc.
+  coverImage: text("cover_image"),
+  isPublic: boolean("is_public").default(true).notNull(),
+  registrationDeadline: timestamp("registration_deadline"),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// Event registrations table
+export const eventRegistrations = pgTable("event_registrations", {
+  id: serial("id").primaryKey(),
+  eventId: integer("event_id").references(() => events.id).notNull(),
+  userId: integer("user_id").references(() => users.id),
+  publicUserId: integer("public_user_id").references(() => publicUsers.id),
+  registrationEmail: text("registration_email").notNull(),
+  fullName: text("full_name").notNull(),
+  phoneNumber: text("phone_number"),
+  status: text("status").notNull().default("registered"), // 'registered', 'confirmed', 'attended', 'cancelled'
+  paymentStatus: text("payment_status").default("pending"), // 'pending', 'completed', 'failed', 'refunded'
+  notes: text("notes"),
+  registeredAt: timestamp("registered_at").defaultNow().notNull(),
+  confirmedAt: timestamp("confirmed_at"),
+  cancelledAt: timestamp("cancelled_at"),
+}, (table) => ({
+  uniqueEventUser: unique().on(table.eventId, table.userId),
+  uniqueEventPublicUser: unique().on(table.eventId, table.publicUserId),
+}));
+
+// Blog posts table
+export const blogPosts = pgTable("blog_posts", {
+  id: serial("id").primaryKey(),
+  title: text("title").notNull(),
+  slug: text("slug").notNull().unique(),
+  content: text("content").notNull(),
+  excerpt: text("excerpt"),
+  coverImage: text("cover_image"),
+  author: text("author").notNull(),
+  authorEmail: text("author_email"),
+  status: text("status").notNull().default("draft"), // 'draft', 'published', 'archived'
+  categoryId: integer("category_id").references(() => categories.id),
+  tags: jsonb("tags").$type<string[]>().default([]),
+  viewCount: integer("view_count").default(0),
+  isPublic: boolean("is_public").default(true).notNull(),
+  isFeatured: boolean("is_featured").default(false).notNull(),
+  publishedAt: timestamp("published_at"),
+  createdBy: integer("created_by").references(() => users.id).notNull(),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
+// User profiles table (extended profile information)
+export const userProfiles = pgTable("user_profiles", {
+  id: serial("id").primaryKey(),
+  userId: integer("user_id").references(() => users.id).unique(),
+  publicUserId: integer("public_user_id").references(() => publicUsers.id).unique(),
+  firstName: text("first_name"),
+  lastName: text("last_name"),
+  phoneNumber: text("phone_number"),
+  dateOfBirth: timestamp("date_of_birth"),
+  gender: text("gender"), // 'male', 'female', 'other', 'prefer_not_to_say'
+  occupation: text("occupation"),
+  company: text("company"),
+  bio: text("bio"),
+  website: text("website"),
+  socialLinks: jsonb("social_links").$type<Record<string, string>>().default({}),
+  address: text("address"),
+  city: text("city"),
+  state: text("state"),
+  country: text("country"),
+  zipCode: text("zip_code"),
+  timezone: text("timezone"),
+  language: text("language").default("en"),
+  marketingOptIn: boolean("marketing_opt_in").default(false),
+  notificationPreferences: jsonb("notification_preferences").$type<Record<string, boolean>>().default({}),
+  profilePicture: text("profile_picture"),
+  coverImage: text("cover_image"),
+  lastLoginAt: timestamp("last_login_at"),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+  updatedAt: timestamp("updated_at").defaultNow().notNull(),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many, one }) => ({
   videoViews: many(videoViews),
@@ -370,6 +503,86 @@ export const userSessionsRelations = relations(userSessions, ({ one }) => ({
   }),
 }));
 
+// New relations for broadcast notifications
+export const broadcastNotificationsRelations = relations(broadcastNotifications, ({ one, many }) => ({
+  createdBy: one(users, {
+    fields: [broadcastNotifications.createdBy],
+    references: [users.id],
+  }),
+  video: one(videos, {
+    fields: [broadcastNotifications.videoId],
+    references: [videos.id],
+  }),
+  category: one(categories, {
+    fields: [broadcastNotifications.categoryId],
+    references: [categories.id],
+  }),
+  userStatuses: many(userNotificationStatus),
+}));
+
+export const userNotificationStatusRelations = relations(userNotificationStatus, ({ one }) => ({
+  user: one(users, {
+    fields: [userNotificationStatus.userId],
+    references: [users.id],
+  }),
+  notification: one(broadcastNotifications, {
+    fields: [userNotificationStatus.notificationId],
+    references: [broadcastNotifications.id],
+  }),
+}));
+
+// Events relations
+export const eventsRelations = relations(events, ({ one, many }) => ({
+  createdBy: one(users, {
+    fields: [events.createdBy],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [events.categoryId],
+    references: [categories.id],
+  }),
+  registrations: many(eventRegistrations),
+}));
+
+export const eventRegistrationsRelations = relations(eventRegistrations, ({ one }) => ({
+  event: one(events, {
+    fields: [eventRegistrations.eventId],
+    references: [events.id],
+  }),
+  user: one(users, {
+    fields: [eventRegistrations.userId],
+    references: [users.id],
+  }),
+  publicUser: one(publicUsers, {
+    fields: [eventRegistrations.publicUserId],
+    references: [publicUsers.id],
+  }),
+}));
+
+// Blog posts relations
+export const blogPostsRelations = relations(blogPosts, ({ one }) => ({
+  createdBy: one(users, {
+    fields: [blogPosts.createdBy],
+    references: [users.id],
+  }),
+  category: one(categories, {
+    fields: [blogPosts.categoryId],
+    references: [categories.id],
+  }),
+}));
+
+// User profiles relations
+export const userProfilesRelations = relations(userProfiles, ({ one }) => ({
+  user: one(users, {
+    fields: [userProfiles.userId],
+    references: [users.id],
+  }),
+  publicUser: one(publicUsers, {
+    fields: [userProfiles.publicUserId],
+    references: [publicUsers.id],
+  }),
+}));
+
 // Insert schemas
 export const insertUserSchema = createInsertSchema(users).pick({
   username: true,
@@ -511,6 +724,108 @@ export const insertVideoCommentSchema = createInsertSchema(videoComments).pick({
   parentId: true,
 });
 
+// New insert schemas
+export const insertBroadcastNotificationSchema = createInsertSchema(broadcastNotifications).pick({
+  title: true,
+  message: true,
+  type: true,
+  videoId: true,
+  videoUrl: true,
+  targetAudience: true,
+  categoryId: true,
+  isActive: true,
+  priority: true,
+  scheduledFor: true,
+  expiresAt: true,
+  createdBy: true,
+});
+
+export const insertUserNotificationStatusSchema = createInsertSchema(userNotificationStatus).pick({
+  userId: true,
+  notificationId: true,
+  isRead: true,
+  isClicked: true,
+  readAt: true,
+  clickedAt: true,
+});
+
+export const insertEventSchema = createInsertSchema(events).pick({
+  title: true,
+  description: true,
+  type: true,
+  status: true,
+  categoryId: true,
+  instructorName: true,
+  instructorEmail: true,
+  maxParticipants: true,
+  price: true,
+  meetingLink: true,
+  meetingPassword: true,
+  startDate: true,
+  endDate: true,
+  duration: true,
+  location: true,
+  coverImage: true,
+  isPublic: true,
+  registrationDeadline: true,
+  createdBy: true,
+});
+
+export const insertEventRegistrationSchema = createInsertSchema(eventRegistrations).pick({
+  eventId: true,
+  userId: true,
+  publicUserId: true,
+  registrationEmail: true,
+  fullName: true,
+  phoneNumber: true,
+  status: true,
+  paymentStatus: true,
+  notes: true,
+});
+
+export const insertBlogPostSchema = createInsertSchema(blogPosts).pick({
+  title: true,
+  slug: true,
+  content: true,
+  excerpt: true,
+  coverImage: true,
+  author: true,
+  authorEmail: true,
+  status: true,
+  categoryId: true,
+  tags: true,
+  isPublic: true,
+  isFeatured: true,
+  publishedAt: true,
+  createdBy: true,
+});
+
+export const insertUserProfileSchema = createInsertSchema(userProfiles).pick({
+  userId: true,
+  publicUserId: true,
+  firstName: true,
+  lastName: true,
+  phoneNumber: true,
+  dateOfBirth: true,
+  gender: true,
+  occupation: true,
+  company: true,
+  bio: true,
+  website: true,
+  socialLinks: true,
+  address: true,
+  city: true,
+  state: true,
+  country: true,
+  zipCode: true,
+  timezone: true,
+  language: true,
+  marketingOptIn: true,
+  notificationPreferences: true,
+  profilePicture: true,
+  coverImage: true,
+});
+
 // Types
 export type User = typeof users.$inferSelect;
 export type InsertUser = z.infer<typeof insertUserSchema>;
@@ -598,3 +913,17 @@ export type AdminStats = {
   }>;
   recentSignups: number;
 };
+
+// New types for the new features
+export type BroadcastNotification = typeof broadcastNotifications.$inferSelect;
+export type InsertBroadcastNotification = z.infer<typeof insertBroadcastNotificationSchema>;
+export type UserNotificationStatus = typeof userNotificationStatus.$inferSelect;
+export type InsertUserNotificationStatus = z.infer<typeof insertUserNotificationStatusSchema>;
+export type Event = typeof events.$inferSelect;
+export type InsertEvent = z.infer<typeof insertEventSchema>;
+export type EventRegistration = typeof eventRegistrations.$inferSelect;
+export type InsertEventRegistration = z.infer<typeof insertEventRegistrationSchema>;
+export type BlogPost = typeof blogPosts.$inferSelect;
+export type InsertBlogPost = z.infer<typeof insertBlogPostSchema>;
+export type UserProfile = typeof userProfiles.$inferSelect;
+export type InsertUserProfile = z.infer<typeof insertUserProfileSchema>;

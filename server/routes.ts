@@ -7,7 +7,7 @@ import express from "express";
 import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { fetchYouTubeVideoInfo } from "./services/youtube";
-import { insertVideoSchema, insertCategorySchema, insertUserInvitationSchema, insertAppSettingsSchema, insertUserCategoryAccessSchema } from "@shared/schema";
+import { insertVideoSchema, insertCategorySchema, insertUserInvitationSchema, insertAppSettingsSchema, insertUserCategoryAccessSchema, insertBroadcastNotificationSchema, insertEventSchema, insertEventRegistrationSchema, insertBlogPostSchema, insertUserProfileSchema } from "@shared/schema";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -1295,6 +1295,424 @@ Message: ${message}
     } catch (error) {
       console.error('Contact form error:', error);
       res.status(500).json({ message: 'Failed to send message' });
+    }
+  });
+
+  // Broadcast Notifications API
+  app.post("/api/admin/notifications", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const validatedData = insertBroadcastNotificationSchema.parse({
+        ...req.body,
+        createdBy: req.user.id
+      });
+      const notification = await storage.createBroadcastNotification(validatedData);
+      res.status(201).json(notification);
+    } catch (error) {
+      console.error("Create notification error:", error);
+      res.status(500).json({ message: "Failed to create notification" });
+    }
+  });
+
+  app.get("/api/notifications", async (req, res) => {
+    try {
+      const userId = req.user?.id;
+      const notifications = await storage.getBroadcastNotifications(userId);
+      res.json(notifications);
+    } catch (error) {
+      console.error("Get notifications error:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.get("/api/admin/notifications", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const notifications = await storage.getBroadcastNotifications();
+      res.json(notifications);
+    } catch (error) {
+      console.error("Get admin notifications error:", error);
+      res.status(500).json({ message: "Failed to fetch notifications" });
+    }
+  });
+
+  app.put("/api/admin/notifications/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertBroadcastNotificationSchema.partial().parse(req.body);
+      const notification = await storage.updateBroadcastNotification(id, validatedData);
+      res.json(notification);
+    } catch (error) {
+      console.error("Update notification error:", error);
+      res.status(500).json({ message: "Failed to update notification" });
+    }
+  });
+
+  app.delete("/api/admin/notifications/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteBroadcastNotification(id);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error("Delete notification error:", error);
+      res.status(500).json({ message: "Failed to delete notification" });
+    }
+  });
+
+  app.post("/api/notifications/:id/read", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      await storage.markNotificationAsRead(req.user.id, id);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error("Mark notification read error:", error);
+      res.status(500).json({ message: "Failed to mark notification as read" });
+    }
+  });
+
+  app.post("/api/notifications/:id/click", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      await storage.markNotificationAsClicked(req.user.id, id);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error("Mark notification clicked error:", error);
+      res.status(500).json({ message: "Failed to mark notification as clicked" });
+    }
+  });
+
+  // Events API
+  app.post("/api/admin/events", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const validatedData = insertEventSchema.parse({
+        ...req.body,
+        createdBy: req.user.id
+      });
+      const event = await storage.createEvent(validatedData);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Create event error:", error);
+      res.status(500).json({ message: "Failed to create event" });
+    }
+  });
+
+  app.get("/api/events", async (req, res) => {
+    try {
+      const isPublic = req.query.public === 'true';
+      const status = req.query.status as string;
+      const events = await storage.getEvents(isPublic, status);
+      res.json(events);
+    } catch (error) {
+      console.error("Get events error:", error);
+      res.status(500).json({ message: "Failed to fetch events" });
+    }
+  });
+
+  app.get("/api/admin/events", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const events = await storage.getEvents();
+      res.json(events);
+    } catch (error) {
+      console.error("Get admin events error:", error);
+      res.status(500).json({ message: "Failed to fetch events" });
+    }
+  });
+
+  app.get("/api/events/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const event = await storage.getEvent(id);
+      if (!event) {
+        return res.status(404).json({ message: "Event not found" });
+      }
+      res.json(event);
+    } catch (error) {
+      console.error("Get event error:", error);
+      res.status(500).json({ message: "Failed to fetch event" });
+    }
+  });
+
+  app.put("/api/admin/events/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertEventSchema.partial().parse(req.body);
+      const event = await storage.updateEvent(id, validatedData);
+      res.json(event);
+    } catch (error) {
+      console.error("Update event error:", error);
+      res.status(500).json({ message: "Failed to update event" });
+    }
+  });
+
+  app.delete("/api/admin/events/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteEvent(id);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error("Delete event error:", error);
+      res.status(500).json({ message: "Failed to delete event" });
+    }
+  });
+
+  app.post("/api/events/:id/register", async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const validatedData = insertEventRegistrationSchema.parse({
+        ...req.body,
+        eventId,
+        userId: req.user?.id,
+        publicUserId: req.user?.publicUserId
+      });
+      const registration = await storage.registerForEvent(validatedData);
+      res.status(201).json(registration);
+    } catch (error) {
+      console.error("Register for event error:", error);
+      res.status(500).json({ message: "Failed to register for event" });
+    }
+  });
+
+  app.get("/api/events/:id/registrations", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const eventId = parseInt(req.params.id);
+      const registrations = await storage.getEventRegistrations(eventId);
+      res.json(registrations);
+    } catch (error) {
+      console.error("Get event registrations error:", error);
+      res.status(500).json({ message: "Failed to fetch event registrations" });
+    }
+  });
+
+  app.get("/api/user/events", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const registrations = await storage.getUserEventRegistrations(req.user.id);
+      res.json(registrations);
+    } catch (error) {
+      console.error("Get user events error:", error);
+      res.status(500).json({ message: "Failed to fetch user events" });
+    }
+  });
+
+  // Blog Posts API
+  app.post("/api/admin/blog", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const validatedData = insertBlogPostSchema.parse({
+        ...req.body,
+        createdBy: req.user.id,
+        author: req.body.author || req.user.fullName,
+        authorEmail: req.body.authorEmail || req.user.email
+      });
+      const post = await storage.createBlogPost(validatedData);
+      res.status(201).json(post);
+    } catch (error) {
+      console.error("Create blog post error:", error);
+      res.status(500).json({ message: "Failed to create blog post" });
+    }
+  });
+
+  app.get("/api/blog", async (req, res) => {
+    try {
+      const status = req.query.status as string;
+      const isPublic = req.query.public === 'true';
+      const isFeatured = req.query.featured === 'true';
+      const posts = await storage.getBlogPosts(status, isPublic, isFeatured);
+      res.json(posts);
+    } catch (error) {
+      console.error("Get blog posts error:", error);
+      res.status(500).json({ message: "Failed to fetch blog posts" });
+    }
+  });
+
+  app.get("/api/admin/blog", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const posts = await storage.getBlogPosts();
+      res.json(posts);
+    } catch (error) {
+      console.error("Get admin blog posts error:", error);
+      res.status(500).json({ message: "Failed to fetch blog posts" });
+    }
+  });
+
+  app.get("/api/blog/:id", async (req, res) => {
+    try {
+      const id = parseInt(req.params.id);
+      const post = await storage.getBlogPost(id);
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      
+      // Increment view count
+      await storage.incrementBlogPostViews(id);
+      
+      res.json(post);
+    } catch (error) {
+      console.error("Get blog post error:", error);
+      res.status(500).json({ message: "Failed to fetch blog post" });
+    }
+  });
+
+  app.get("/api/blog/slug/:slug", async (req, res) => {
+    try {
+      const slug = req.params.slug;
+      const post = await storage.getBlogPostBySlug(slug);
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      
+      // Increment view count
+      await storage.incrementBlogPostViews(post.id);
+      
+      res.json(post);
+    } catch (error) {
+      console.error("Get blog post by slug error:", error);
+      res.status(500).json({ message: "Failed to fetch blog post" });
+    }
+  });
+
+  app.put("/api/admin/blog/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      const validatedData = insertBlogPostSchema.partial().parse(req.body);
+      const post = await storage.updateBlogPost(id, validatedData);
+      res.json(post);
+    } catch (error) {
+      console.error("Update blog post error:", error);
+      res.status(500).json({ message: "Failed to update blog post" });
+    }
+  });
+
+  app.delete("/api/admin/blog/:id", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      await storage.deleteBlogPost(id);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error("Delete blog post error:", error);
+      res.status(500).json({ message: "Failed to delete blog post" });
+    }
+  });
+
+  // User Profile API
+  app.get("/api/user/profile", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const profile = await storage.getUserProfile(req.user.id);
+      res.json(profile);
+    } catch (error) {
+      console.error("Get user profile error:", error);
+      res.status(500).json({ message: "Failed to fetch user profile" });
+    }
+  });
+
+  app.post("/api/user/profile", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const validatedData = insertUserProfileSchema.parse({
+        ...req.body,
+        userId: req.user.id
+      });
+      const profile = await storage.createUserProfile(validatedData);
+      res.status(201).json(profile);
+    } catch (error) {
+      console.error("Create user profile error:", error);
+      res.status(500).json({ message: "Failed to create user profile" });
+    }
+  });
+
+  app.put("/api/user/profile", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const validatedData = insertUserProfileSchema.partial().parse(req.body);
+      const profile = await storage.updateUserProfile(req.user.id, validatedData);
+      res.json(profile);
+    } catch (error) {
+      console.error("Update user profile error:", error);
+      res.status(500).json({ message: "Failed to update user profile" });
+    }
+  });
+
+  app.delete("/api/user/profile", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      await storage.deleteUserProfile(req.user.id);
+      res.sendStatus(204);
+    } catch (error) {
+      console.error("Delete user profile error:", error);
+      res.status(500).json({ message: "Failed to delete user profile" });
     }
   });
 

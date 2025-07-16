@@ -1,4 +1,4 @@
-import { users, publicUsers, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, videoCompletions, videoBookmarks, watchHistory, userSessions, videoRatings, videoComments, videoCategories, type User, type InsertUser, type PublicUser, type InsertPublicUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess, type VideoCompletion, type InsertVideoCompletion, type VideoBookmark, type InsertVideoBookmark, type WatchHistory, type InsertWatchHistory, type UserSession, type InsertUserSession, type VideoRating, type InsertVideoRating, type VideoComment, type InsertVideoComment, type UserLearningStats, type VideoCategory, type InsertVideoCategory } from "@shared/schema";
+import { users, publicUsers, videos, categories, otpCodes, videoViews, appSettings, userInvitations, userCategoryAccess, videoCompletions, videoBookmarks, watchHistory, userSessions, videoRatings, videoComments, videoCategories, broadcastNotifications, userNotificationStatus, events, eventRegistrations, blogPosts, userProfiles, type User, type InsertUser, type PublicUser, type InsertPublicUser, type Video, type InsertVideo, type Category, type InsertCategory, type OtpCode, type InsertOtp, type VideoWithCategory, type AdminStats, type AppSettings, type InsertAppSettings, type UserInvitation, type InsertUserInvitation, type UserCategoryAccess, type InsertUserCategoryAccess, type VideoCompletion, type InsertVideoCompletion, type VideoBookmark, type InsertVideoBookmark, type WatchHistory, type InsertWatchHistory, type UserSession, type InsertUserSession, type VideoRating, type InsertVideoRating, type VideoComment, type InsertVideoComment, type UserLearningStats, type VideoCategory, type InsertVideoCategory, type BroadcastNotification, type InsertBroadcastNotification, type UserNotificationStatus, type InsertUserNotificationStatus, type Event, type InsertEvent, type EventRegistration, type InsertEventRegistration, type BlogPost, type InsertBlogPost, type UserProfile, type InsertUserProfile } from "@shared/schema";
 import { db } from "./db";
 import { eq, desc, sql, and, or, ilike, isNotNull, inArray } from "drizzle-orm";
 import session from "express-session";
@@ -104,6 +104,43 @@ export interface IStorage {
   // Video comment management
   getVideoComments(videoId: number): Promise<any[]>;
   createVideoComment(userId: number, videoId: number, content: string, parentId?: number): Promise<VideoComment>;
+
+  // Broadcast notifications management
+  createBroadcastNotification(notification: InsertBroadcastNotification): Promise<BroadcastNotification>;
+  getBroadcastNotifications(userId?: number): Promise<BroadcastNotification[]>;
+  updateBroadcastNotification(id: number, notification: Partial<InsertBroadcastNotification>): Promise<BroadcastNotification>;
+  deleteBroadcastNotification(id: number): Promise<void>;
+  markNotificationAsRead(userId: number, notificationId: number): Promise<void>;
+  markNotificationAsClicked(userId: number, notificationId: number): Promise<void>;
+  getUserNotificationStatus(userId: number): Promise<UserNotificationStatus[]>;
+
+  // Events management
+  createEvent(event: InsertEvent): Promise<Event>;
+  getEvents(isPublic?: boolean, status?: string): Promise<Event[]>;
+  getEvent(id: number): Promise<Event | undefined>;
+  updateEvent(id: number, event: Partial<InsertEvent>): Promise<Event>;
+  deleteEvent(id: number): Promise<void>;
+  registerForEvent(registration: InsertEventRegistration): Promise<EventRegistration>;
+  getEventRegistrations(eventId: number): Promise<EventRegistration[]>;
+  getUserEventRegistrations(userId: number): Promise<EventRegistration[]>;
+  updateEventRegistration(id: number, registration: Partial<InsertEventRegistration>): Promise<EventRegistration>;
+  cancelEventRegistration(id: number): Promise<void>;
+
+  // Blog posts management
+  createBlogPost(post: InsertBlogPost): Promise<BlogPost>;
+  getBlogPosts(status?: string, isPublic?: boolean, isFeatured?: boolean): Promise<BlogPost[]>;
+  getBlogPost(id: number): Promise<BlogPost | undefined>;
+  getBlogPostBySlug(slug: string): Promise<BlogPost | undefined>;
+  updateBlogPost(id: number, post: Partial<InsertBlogPost>): Promise<BlogPost>;
+  deleteBlogPost(id: number): Promise<void>;
+  incrementBlogPostViews(id: number): Promise<void>;
+
+  // User profiles management
+  createUserProfile(profile: InsertUserProfile): Promise<UserProfile>;
+  getUserProfile(userId: number): Promise<UserProfile | undefined>;
+  getUserProfileByPublicUserId(publicUserId: number): Promise<UserProfile | undefined>;
+  updateUserProfile(userId: number, profile: Partial<InsertUserProfile>): Promise<UserProfile>;
+  deleteUserProfile(userId: number): Promise<void>;
 
   sessionStore: any;
 }
@@ -1197,6 +1234,252 @@ export class DatabaseStorage implements IStorage {
       .values({ userId, videoId, content, parentId })
       .returning();
     return comment;
+  }
+
+  // Broadcast notifications management
+  async createBroadcastNotification(notification: InsertBroadcastNotification): Promise<BroadcastNotification> {
+    const [createdNotification] = await db.insert(broadcastNotifications).values(notification).returning();
+    return createdNotification;
+  }
+
+  async getBroadcastNotifications(userId?: number): Promise<BroadcastNotification[]> {
+    let query = db.select().from(broadcastNotifications);
+    
+    if (userId) {
+      // Get notifications for specific user based on target audience
+      query = query.where(
+        or(
+          eq(broadcastNotifications.targetAudience, 'all'),
+          eq(broadcastNotifications.targetAudience, 'students'),
+          and(
+            eq(broadcastNotifications.targetAudience, 'category_specific'),
+            isNotNull(broadcastNotifications.categoryId)
+          )
+        )
+      );
+    }
+    
+    return await query.orderBy(desc(broadcastNotifications.createdAt));
+  }
+
+  async updateBroadcastNotification(id: number, notification: Partial<InsertBroadcastNotification>): Promise<BroadcastNotification> {
+    const [updated] = await db.update(broadcastNotifications)
+      .set({ ...notification, updatedAt: new Date() })
+      .where(eq(broadcastNotifications.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteBroadcastNotification(id: number): Promise<void> {
+    await db.delete(broadcastNotifications).where(eq(broadcastNotifications.id, id));
+  }
+
+  async markNotificationAsRead(userId: number, notificationId: number): Promise<void> {
+    await db.insert(userNotificationStatus).values({
+      userId,
+      notificationId,
+      isRead: true,
+      readAt: new Date(),
+    }).onConflictDoUpdate({
+      target: [userNotificationStatus.userId, userNotificationStatus.notificationId],
+      set: {
+        isRead: true,
+        readAt: new Date(),
+      },
+    });
+  }
+
+  async markNotificationAsClicked(userId: number, notificationId: number): Promise<void> {
+    await db.insert(userNotificationStatus).values({
+      userId,
+      notificationId,
+      isClicked: true,
+      clickedAt: new Date(),
+    }).onConflictDoUpdate({
+      target: [userNotificationStatus.userId, userNotificationStatus.notificationId],
+      set: {
+        isClicked: true,
+        clickedAt: new Date(),
+      },
+    });
+  }
+
+  async getUserNotificationStatus(userId: number): Promise<UserNotificationStatus[]> {
+    return await db.select().from(userNotificationStatus).where(eq(userNotificationStatus.userId, userId));
+  }
+
+  // Events management
+  async createEvent(event: InsertEvent): Promise<Event> {
+    const [createdEvent] = await db.insert(events).values(event).returning();
+    return createdEvent;
+  }
+
+  async getEvents(isPublic?: boolean, status?: string): Promise<Event[]> {
+    let query = db.select().from(events);
+    
+    if (isPublic !== undefined) {
+      query = query.where(eq(events.isPublic, isPublic));
+    }
+    
+    if (status) {
+      query = query.where(eq(events.status, status));
+    }
+    
+    return await query.orderBy(desc(events.startDate));
+  }
+
+  async getEvent(id: number): Promise<Event | undefined> {
+    const [event] = await db.select().from(events).where(eq(events.id, id));
+    return event || undefined;
+  }
+
+  async updateEvent(id: number, event: Partial<InsertEvent>): Promise<Event> {
+    const [updated] = await db.update(events)
+      .set({ ...event, updatedAt: new Date() })
+      .where(eq(events.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteEvent(id: number): Promise<void> {
+    await db.delete(events).where(eq(events.id, id));
+  }
+
+  async registerForEvent(registration: InsertEventRegistration): Promise<EventRegistration> {
+    const [createdRegistration] = await db.insert(eventRegistrations).values(registration).returning();
+    
+    // Update event participant count
+    await db.update(events)
+      .set({ 
+        currentParticipants: sql`${events.currentParticipants} + 1`
+      })
+      .where(eq(events.id, registration.eventId));
+    
+    return createdRegistration;
+  }
+
+  async getEventRegistrations(eventId: number): Promise<EventRegistration[]> {
+    return await db.select().from(eventRegistrations).where(eq(eventRegistrations.eventId, eventId));
+  }
+
+  async getUserEventRegistrations(userId: number): Promise<EventRegistration[]> {
+    return await db.select().from(eventRegistrations).where(eq(eventRegistrations.userId, userId));
+  }
+
+  async updateEventRegistration(id: number, registration: Partial<InsertEventRegistration>): Promise<EventRegistration> {
+    const [updated] = await db.update(eventRegistrations)
+      .set(registration)
+      .where(eq(eventRegistrations.id, id))
+      .returning();
+    return updated;
+  }
+
+  async cancelEventRegistration(id: number): Promise<void> {
+    const [registration] = await db.select().from(eventRegistrations).where(eq(eventRegistrations.id, id));
+    
+    if (registration) {
+      await db.update(eventRegistrations)
+        .set({ 
+          status: 'cancelled',
+          cancelledAt: new Date()
+        })
+        .where(eq(eventRegistrations.id, id));
+      
+      // Update event participant count
+      await db.update(events)
+        .set({ 
+          currentParticipants: sql`${events.currentParticipants} - 1`
+        })
+        .where(eq(events.id, registration.eventId));
+    }
+  }
+
+  // Blog posts management
+  async createBlogPost(post: InsertBlogPost): Promise<BlogPost> {
+    const [createdPost] = await db.insert(blogPosts).values(post).returning();
+    return createdPost;
+  }
+
+  async getBlogPosts(status?: string, isPublic?: boolean, isFeatured?: boolean): Promise<BlogPost[]> {
+    let query = db.select().from(blogPosts);
+    
+    const conditions = [];
+    
+    if (status) {
+      conditions.push(eq(blogPosts.status, status));
+    }
+    
+    if (isPublic !== undefined) {
+      conditions.push(eq(blogPosts.isPublic, isPublic));
+    }
+    
+    if (isFeatured !== undefined) {
+      conditions.push(eq(blogPosts.isFeatured, isFeatured));
+    }
+    
+    if (conditions.length > 0) {
+      query = query.where(and(...conditions));
+    }
+    
+    return await query.orderBy(desc(blogPosts.createdAt));
+  }
+
+  async getBlogPost(id: number): Promise<BlogPost | undefined> {
+    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.id, id));
+    return post || undefined;
+  }
+
+  async getBlogPostBySlug(slug: string): Promise<BlogPost | undefined> {
+    const [post] = await db.select().from(blogPosts).where(eq(blogPosts.slug, slug));
+    return post || undefined;
+  }
+
+  async updateBlogPost(id: number, post: Partial<InsertBlogPost>): Promise<BlogPost> {
+    const [updated] = await db.update(blogPosts)
+      .set({ ...post, updatedAt: new Date() })
+      .where(eq(blogPosts.id, id))
+      .returning();
+    return updated;
+  }
+
+  async deleteBlogPost(id: number): Promise<void> {
+    await db.delete(blogPosts).where(eq(blogPosts.id, id));
+  }
+
+  async incrementBlogPostViews(id: number): Promise<void> {
+    await db.update(blogPosts)
+      .set({ 
+        viewCount: sql`${blogPosts.viewCount} + 1`
+      })
+      .where(eq(blogPosts.id, id));
+  }
+
+  // User profiles management
+  async createUserProfile(profile: InsertUserProfile): Promise<UserProfile> {
+    const [createdProfile] = await db.insert(userProfiles).values(profile).returning();
+    return createdProfile;
+  }
+
+  async getUserProfile(userId: number): Promise<UserProfile | undefined> {
+    const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.userId, userId));
+    return profile || undefined;
+  }
+
+  async getUserProfileByPublicUserId(publicUserId: number): Promise<UserProfile | undefined> {
+    const [profile] = await db.select().from(userProfiles).where(eq(userProfiles.publicUserId, publicUserId));
+    return profile || undefined;
+  }
+
+  async updateUserProfile(userId: number, profile: Partial<InsertUserProfile>): Promise<UserProfile> {
+    const [updated] = await db.update(userProfiles)
+      .set({ ...profile, updatedAt: new Date() })
+      .where(eq(userProfiles.userId, userId))
+      .returning();
+    return updated;
+  }
+
+  async deleteUserProfile(userId: number): Promise<void> {
+    await db.delete(userProfiles).where(eq(userProfiles.userId, userId));
   }
 }
 
