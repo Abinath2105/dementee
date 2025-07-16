@@ -42,6 +42,11 @@ export default function HomePage() {
 
   const handleSearch = () => {
     // Search is handled automatically via query key changes
+    // This function triggers a manual search when the button is clicked
+    if (searchQuery.trim()) {
+      // Force a re-query by updating the search query state
+      setSearchQuery(searchQuery.trim());
+    }
   };
 
   // Apply custom CSS variables for theming
@@ -131,6 +136,11 @@ export default function HomePage() {
               placeholder="Search videos..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
+              onKeyDown={(e) => {
+                if (e.key === 'Enter') {
+                  handleSearch();
+                }
+              }}
               className="w-full pr-12 sm:pr-16 text-gray-900 h-10 sm:h-12 text-sm sm:text-base"
             />
             <Button 
