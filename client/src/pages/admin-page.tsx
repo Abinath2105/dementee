@@ -308,8 +308,51 @@ export default function AdminPage() {
     },
   });
 
+  const convertToStudentMutation = useMutation({
+    mutationFn: async (publicUser: any) => {
+      const response = await fetch("/api/admin/convert-public-to-student", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ 
+          publicUserId: publicUser.id,
+          email: publicUser.email,
+          fullName: publicUser.fullName 
+        }),
+      });
+      if (!response.ok) {
+        const error = await response.json();
+        throw new Error(error.message || "Failed to convert to student");
+      }
+      return response.json();
+    },
+    onSuccess: (data) => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/public-users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/stats"] });
+      toast({
+        title: "User converted successfully",
+        description: `${data.user.fullName} is now a student with full access. Login credentials sent to their email.`,
+        duration: 8000,
+      });
+    },
+    onError: (error: Error) => {
+      toast({
+        title: "Error",
+        description: error.message,
+        variant: "destructive",
+      });
+    },
+  });
+
   const handleResendVerification = (email: string) => {
     resendVerificationMutation.mutate(email);
+  };
+
+  const handleConvertToStudent = (publicUser: any) => {
+    if (confirm(`Convert ${publicUser.fullName} (${publicUser.email}) to a full student account with category access? They will receive login credentials via email.`)) {
+      convertToStudentMutation.mutate(publicUser);
+    }
   };
 
   const handleEditVideo = (video: VideoWithCategory) => {
@@ -926,6 +969,18 @@ export default function AdminPage() {
                             </TableCell>
                             <TableCell>
                               <div className="flex space-x-2">
+                                {publicUser.isVerified && (
+                                  <Button
+                                    size="sm"
+                                    variant="default"
+                                    onClick={() => handleConvertToStudent(publicUser)}
+                                    disabled={convertToStudentMutation.isPending}
+                                    title="Convert to student with full access"
+                                  >
+                                    <UserCheck className="h-4 w-4 mr-1" />
+                                    <span className="hidden sm:inline">Convert to Student</span>
+                                  </Button>
+                                )}
                                 {!publicUser.isVerified && (
                                   <Button
                                     size="sm"

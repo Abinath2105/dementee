@@ -797,6 +797,97 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // Convert public user to student with full access (admin only)
+  app.post("/api/admin/convert-public-to-student", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const { publicUserId, email, fullName } = req.body;
+      
+      // Get the public user first
+      const publicUser = await storage.getPublicUser(publicUserId);
+      if (!publicUser) {
+        return res.status(404).json({ message: "Public user not found" });
+      }
+      
+      // Check if a regular user with this email already exists
+      const existingUser = await storage.getUserByEmail(email);
+      if (existingUser) {
+        return res.status(400).json({ message: "A student user with this email already exists" });
+      }
+
+      // Generate a random password
+      const crypto = await import("crypto");
+      const tempPassword = crypto.randomBytes(8).toString('hex');
+      
+      // Hash the password
+      const { hashPassword } = await import("./auth");
+      const hashedPassword = await hashPassword(tempPassword);
+
+      // Create student user with same credentials
+      const newUser = await storage.createUser({
+        username: email.split('@')[0], // Use email prefix as username
+        email: email,
+        password: hashedPassword,
+        fullName: fullName,
+        role: 'student',
+        isAdmin: false,
+        isVerified: true, // They already verified as public user
+        invitedBy: req.user.id,
+      });
+
+      // Delete the public user record
+      await storage.deletePublicUser(publicUserId);
+
+      // Send credentials via email
+      try {
+        const { sendEmail } = await import("./services/email");
+        const appSettings = await storage.getAppSettings();
+        
+        await sendEmail({
+          to: email,
+          subject: `Welcome to ${appSettings.appName} - Your Student Account`,
+          html: `
+            <div style="font-family: Arial, sans-serif; max-width: 600px; margin: 0 auto;">
+              <h2 style="color: #3b82f6;">Welcome to ${appSettings.appName}!</h2>
+              <p>Your account has been upgraded to a full student account with access to all course categories.</p>
+              
+              <div style="background-color: #f3f4f6; padding: 20px; border-radius: 8px; margin: 20px 0;">
+                <h3 style="margin-top: 0;">Your Login Credentials:</h3>
+                <p><strong>Email:</strong> ${email}</p>
+                <p><strong>Password:</strong> ${tempPassword}</p>
+              </div>
+              
+              <p>Please log in and change your password in your profile settings.</p>
+              <p><a href="${process.env.REPL_SLUG ? `https://${process.env.REPL_SLUG}-${process.env.REPL_OWNER}.replit.app` : 'http://localhost:5000'}" style="color: #3b82f6;">Access your account here</a></p>
+              
+              <p>Best regards,<br>${appSettings.appName} Team</p>
+            </div>
+          `,
+        });
+      } catch (emailError) {
+        console.error("Failed to send credentials email:", emailError);
+        // Continue anyway - admin can manually share credentials
+      }
+
+      // Return success with user info and credentials for admin
+      const { password, ...safeUser } = newUser;
+      res.json({ 
+        message: "Public user converted to student successfully",
+        user: safeUser,
+        credentials: {
+          email: email,
+          password: tempPassword
+        }
+      });
+    } catch (error) {
+      console.error("Convert public user to student error:", error);
+      res.status(500).json({ message: "Failed to convert public user to student" });
+    }
+  });
+
   app.put("/api/admin/users/:id/admin", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
       return res.status(403).json({ message: "Admin access required" });
