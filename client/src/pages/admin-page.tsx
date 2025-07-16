@@ -601,14 +601,14 @@ export default function AdminPage() {
                   </div>
                   
                   {/* Video Table */}
-                  <div className="overflow-x-auto">
+                  <div className="overflow-x-auto -mx-6 px-6">
                     <Table>
                       <TableHeader>
                         <TableRow>
-                          <TableHead className="min-w-[200px]">Title</TableHead>
-                          <TableHead className="min-w-[150px]">Categories</TableHead>
-                          <TableHead className="min-w-[100px]">Views</TableHead>
-                          <TableHead className="min-w-[100px]">Actions</TableHead>
+                          <TableHead className="min-w-[250px]">Title</TableHead>
+                          <TableHead className="min-w-[200px]">Categories</TableHead>
+                          <TableHead className="min-w-[80px]">Views</TableHead>
+                          <TableHead className="min-w-[120px]">Actions</TableHead>
                         </TableRow>
                       </TableHeader>
                       <TableBody>
@@ -616,19 +616,31 @@ export default function AdminPage() {
                           <TableRow key={video.id}>
                             <TableCell>
                               <div className="flex items-center space-x-3">
-                                <div className="w-16 h-12 bg-gray-100 rounded flex items-center justify-center">
-                                  <Play className="h-5 w-5 text-gray-400" />
-                                </div>
-                                <div>
-                                  <p className="font-medium text-gray-900 truncate max-w-[200px]">{video.title}</p>
-                                  <p className="text-sm text-gray-500">YouTube ID: {video.youtubeId}</p>
+                                <img
+                                  src={video.thumbnailUrl || `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`}
+                                  alt={video.title}
+                                  className="w-16 h-12 object-cover rounded flex-shrink-0"
+                                  onError={(e) => {
+                                    const target = e.target as HTMLImageElement;
+                                    target.src = `https://img.youtube.com/vi/${video.youtubeId}/default.jpg`;
+                                  }}
+                                />
+                                <div className="min-w-0 flex-1">
+                                  <p 
+                                    className="font-medium text-gray-900 truncate cursor-pointer hover:text-blue-600 transition-colors"
+                                    onClick={() => handleEditVideo(video)}
+                                    title="Click to edit video"
+                                  >
+                                    {video.title}
+                                  </p>
+                                  <p className="text-sm text-gray-500 truncate">YouTube ID: {video.youtubeId}</p>
                                 </div>
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex flex-wrap gap-1">
+                              <div className="flex flex-wrap gap-1 max-w-[180px]">
                                 {video.categories?.map((category, index) => (
-                                  <Badge key={index} variant="secondary" className="text-xs max-w-[100px] truncate">
+                                  <Badge key={index} variant="secondary" className="text-xs truncate">
                                     {category.name}
                                     {category.isPrimary && "*"}
                                   </Badge>
@@ -642,7 +654,7 @@ export default function AdminPage() {
                               </div>
                             </TableCell>
                             <TableCell>
-                              <div className="flex items-center space-x-2">
+                              <div className="flex items-center space-x-1">
                                 <Button
                                   variant="outline"
                                   size="sm"
@@ -650,6 +662,7 @@ export default function AdminPage() {
                                     setEditingVideo(video);
                                     setShowEditVideo(true);
                                   }}
+                                  className="h-8 w-8 p-0"
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
@@ -658,6 +671,7 @@ export default function AdminPage() {
                                   size="sm"
                                   onClick={() => deleteVideoMutation.mutate(video.id)}
                                   disabled={deleteVideoMutation.isPending}
+                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:border-red-300"
                                 >
                                   <Trash2 className="h-4 w-4" />
                                 </Button>
