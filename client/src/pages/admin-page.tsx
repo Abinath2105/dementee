@@ -9,7 +9,7 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, UserPlus, Mail, Palette, KeyRound, Menu, X } from "lucide-react";
+import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, UserPlus, Mail, Palette, KeyRound, Menu, X, FolderOpen } from "lucide-react";
 import { AddVideoModal } from "@/components/add-video-modal";
 import { EditVideoModal } from "@/components/edit-video-modal";
 import { InviteUserModal } from "@/components/invite-user-modal";
@@ -699,10 +699,26 @@ export default function AdminPage() {
                   </div>
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
                     {categories.map((category) => (
-                      <Card key={category.id} className="hover:shadow-md transition-shadow">
+                      <Card key={category.id} className="hover:shadow-md transition-shadow overflow-hidden">
+                        {/* Cover Image */}
+                        <div className="relative h-32 bg-gradient-to-br from-blue-500 to-purple-600">
+                          {category.coverImage ? (
+                            <img
+                              src={category.coverImage}
+                              alt={category.name}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full bg-gradient-to-br from-blue-500 to-purple-600 flex items-center justify-center">
+                              <FolderOpen className="h-12 w-12 text-white opacity-80" />
+                            </div>
+                          )}
+                          <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+                        </div>
+                        
                         <CardContent className="p-4">
-                          <h3 className="font-semibold text-gray-900 mb-2">{category.name}</h3>
-                          <p className="text-sm text-gray-600 mb-4">{category.description}</p>
+                          <h3 className="font-semibold text-gray-900 mb-2 text-lg">{category.name}</h3>
+                          <p className="text-sm text-gray-600 mb-4 line-clamp-2">{category.description}</p>
                           <div className="flex space-x-2">
                             <Button size="sm" variant="outline" onClick={() => {
                               setEditingCategory(category);
