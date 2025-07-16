@@ -194,7 +194,8 @@ export function setupAuth(app: Express) {
 
   app.post("/api/register", async (req, res, next) => {
     try {
-      const { email, username, password, fullName } = req.body;
+      const { username, password, fullName } = req.body;
+      const email = username; // Frontend sends email as username
 
       // Check if user already exists in either table
       const existingUser = await storage.getUserByEmail(email);
