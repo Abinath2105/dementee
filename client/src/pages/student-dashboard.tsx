@@ -73,6 +73,28 @@ export function StudentDashboard() {
     },
   });
 
+  // Fetch upcoming events
+  const { data: events = [] } = useQuery({
+    queryKey: ["/api/events"],
+    queryFn: async () => {
+      const response = await fetch("/api/events");
+      if (!response.ok) throw new Error("Failed to fetch events");
+      return response.json();
+    },
+  });
+
+  // Fetch user notifications
+  const { data: notifications = [] } = useQuery({
+    queryKey: ["/api/user/notifications"],
+    queryFn: async () => {
+      const response = await fetch("/api/user/notifications", {
+        credentials: "include",
+      });
+      if (!response.ok) throw new Error("Failed to fetch notifications");
+      return response.json();
+    },
+  });
+
   const formatDuration = (seconds: number): string => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -180,10 +202,12 @@ export function StudentDashboard() {
 
         {/* Main Content */}
         <Tabs defaultValue="progress" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-4">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="progress">Progress</TabsTrigger>
+            <TabsTrigger value="events">Events</TabsTrigger>
+            <TabsTrigger value="notifications">Notifications</TabsTrigger>
             <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>
-            <TabsTrigger value="history">Watch History</TabsTrigger>
+            <TabsTrigger value="history">History</TabsTrigger>
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
           </TabsList>
 
@@ -212,6 +236,129 @@ export function StudentDashboard() {
                     </div>
                   ))}
                 </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="events" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <Calendar className="h-5 w-5" />
+                  Upcoming Events
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {events.length === 0 ? (
+                  <div className="text-center py-8">
+                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No upcoming events</p>
+                    <p className="text-sm text-gray-400 mt-2">Check back later for workshops and training sessions</p>
+                  </div>
+                ) : (
+                  <div className="space-y-4">
+                    {events.map((event: any) => (
+                      <div key={event.id} className="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-semibold text-lg">{event.title}</h3>
+                            <p className="text-gray-600 mt-1">{event.description}</p>
+                            <div className="flex items-center gap-4 mt-3 text-sm text-gray-500">
+                              <div className="flex items-center gap-1">
+                                <Calendar className="w-4 h-4" />
+                                {new Date(event.startDate).toLocaleDateString()}
+                              </div>
+                              <div className="flex items-center gap-1">
+                                <Clock className="w-4 h-4" />
+                                {new Date(event.startDate).toLocaleTimeString()}
+                              </div>
+                            </div>
+                            {event.location && (
+                              <p className="text-sm text-gray-500 mt-1">📍 {event.location}</p>
+                            )}
+                          </div>
+                          <div className="text-right">
+                            <Badge variant={event.status === 'upcoming' ? 'default' : 'secondary'}>
+                              {event.status}
+                            </Badge>
+                            {event.registrationRequired && (
+                              <Button size="sm" className="mt-2 w-full">
+                                Register
+                              </Button>
+                            )}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </TabsContent>
+
+          <TabsContent value="notifications" className="space-y-6">
+            <Card>
+              <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                  <span className="relative">
+                    <span className="w-5 h-5 text-blue-600">🔔</span>
+                    {notifications.filter((n: any) => !n.isRead).length > 0 && (
+                      <span className="absolute -top-1 -right-1 w-3 h-3 bg-red-500 rounded-full text-xs"></span>
+                    )}
+                  </span>
+                  Notifications
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                {notifications.length === 0 ? (
+                  <div className="text-center py-8">
+                    <div className="text-4xl mb-4">🔔</div>
+                    <p className="text-gray-500">No notifications yet</p>
+                    <p className="text-sm text-gray-400 mt-2">We'll notify you about important updates</p>
+                  </div>
+                ) : (
+                  <div className="space-y-3">
+                    {notifications.map((notification: any) => (
+                      <div 
+                        key={notification.id} 
+                        className={`border rounded-lg p-4 transition-colors cursor-pointer ${
+                          notification.isRead 
+                            ? 'bg-white hover:bg-gray-50' 
+                            : 'bg-blue-50 border-blue-200 hover:bg-blue-100'
+                        }`}
+                      >
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-1">
+                              <h4 className={`font-medium ${notification.isRead ? 'text-gray-700' : 'text-gray-900'}`}>
+                                {notification.title}
+                              </h4>
+                              {!notification.isRead && (
+                                <div className="w-2 h-2 bg-blue-600 rounded-full"></div>
+                              )}
+                            </div>
+                            <p className={`text-sm ${notification.isRead ? 'text-gray-500' : 'text-gray-700'}`}>
+                              {notification.message}
+                            </p>
+                            {notification.linkUrl && (
+                              <p className="text-xs text-blue-600 mt-2 font-medium">
+                                Click to open link
+                              </p>
+                            )}
+                            <p className="text-xs text-gray-400 mt-2">
+                              {new Date(notification.createdAt).toLocaleDateString()} at {new Date(notification.createdAt).toLocaleTimeString()}
+                            </p>
+                          </div>
+                          <div className="flex items-center gap-2">
+                            {notification.type === 'video' && <Video className="w-4 h-4 text-purple-600" />}
+                            {notification.type === 'link' && <span className="w-4 h-4 text-blue-600">🔗</span>}
+                            {notification.type === 'message' && <span className="w-4 h-4 text-green-600">💬</span>}
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                )}
               </CardContent>
             </Card>
           </TabsContent>

@@ -26,7 +26,8 @@ import {
   Zap,
   Clock,
   Award,
-  Mail
+  Mail,
+  Eye
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -64,6 +65,18 @@ export function LandingPage() {
   // Fetch some featured videos
   const { data: featuredVideos } = useQuery({
     queryKey: ["/api/videos"],
+  });
+
+  // Fetch active events for landing page display
+  const { data: events = [] } = useQuery({
+    queryKey: ["/api/events"],
+    queryFn: () => fetch("/api/events").then(res => res.json()),
+  });
+
+  // Fetch published blog posts for landing page
+  const { data: blogPosts = [] } = useQuery({
+    queryKey: ["/api/blog"],
+    queryFn: () => fetch("/api/blog").then(res => res.json()),
   });
 
   const form = useForm<LoginForm>({
@@ -493,6 +506,147 @@ export function LandingPage() {
           </div>
         </div>
       </section>
+
+      {/* Upcoming Events Section */}
+      {events && events.length > 0 && (
+        <section id="events" className="py-20 bg-gray-50">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                Upcoming Events & Workshops
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Join our live sessions, workshops, and webinars to enhance your learning experience
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {events.slice(0, 6).map((event: any) => (
+                <Card key={event.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                  <div className="aspect-video bg-gradient-to-br from-green-500 to-blue-600 relative">
+                    {event.imageUrl ? (
+                      <img 
+                        src={event.imageUrl} 
+                        alt={event.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <GraduationCap className="h-16 w-16 text-white/80" />
+                      </div>
+                    )}
+                    <div className="absolute top-4 left-4">
+                      <Badge className="bg-white/90 text-gray-900">
+                        {event.type}
+                      </Badge>
+                    </div>
+                    <div className="absolute bottom-4 left-4">
+                      <Badge className="bg-black/70 text-white">
+                        {new Date(event.startDate).toLocaleDateString()}
+                      </Badge>
+                    </div>
+                  </div>
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2">{event.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">
+                      {event.description}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <div className="flex items-center">
+                          <Clock className="h-4 w-4 mr-1" />
+                          <span>{new Date(event.startDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                        </div>
+                        <div className="flex items-center">
+                          <Users className="h-4 w-4 mr-1" />
+                          <span>{event.currentParticipants}/{event.maxParticipants}</span>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => navigate("/register")}
+                      >
+                        Register
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
+
+      {/* Latest Blog Posts Section */}
+      {blogPosts && blogPosts.length > 0 && (
+        <section id="blog" className="py-20 bg-white">
+          <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div className="text-center mb-16">
+              <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
+                Latest Articles & Insights
+              </h2>
+              <p className="text-xl text-gray-600 max-w-3xl mx-auto">
+                Stay updated with the latest trends, tips, and insights from our experts
+              </p>
+            </div>
+            
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {blogPosts.slice(0, 3).map((post: any) => (
+                <Card key={post.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                  <div className="aspect-video bg-gradient-to-br from-purple-500 to-pink-600 relative">
+                    {post.imageUrl ? (
+                      <img 
+                        src={post.imageUrl} 
+                        alt={post.title}
+                        className="w-full h-full object-cover"
+                      />
+                    ) : (
+                      <div className="w-full h-full flex items-center justify-center">
+                        <BookOpen className="h-16 w-16 text-white/80" />
+                      </div>
+                    )}
+                    {post.isFeatured && (
+                      <div className="absolute top-4 left-4">
+                        <Badge className="bg-yellow-500 text-white">
+                          Featured
+                        </Badge>
+                      </div>
+                    )}
+                    <div className="absolute bottom-4 left-4">
+                      <Badge className="bg-black/70 text-white">
+                        {new Date(post.createdAt).toLocaleDateString()}
+                      </Badge>
+                    </div>
+                  </div>
+                  <CardContent className="p-6">
+                    <h3 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">{post.title}</h3>
+                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                      {post.excerpt || post.content?.substring(0, 120) + '...'}
+                    </p>
+                    <div className="flex items-center justify-between">
+                      <div className="flex items-center space-x-4 text-sm text-gray-500">
+                        <span>By {post.author}</span>
+                        <div className="flex items-center">
+                          <Eye className="h-4 w-4 mr-1" />
+                          <span>{post.viewCount || 0}</span>
+                        </div>
+                      </div>
+                      <Button 
+                        size="sm" 
+                        variant="outline"
+                        onClick={() => window.open(`/blog/${post.slug}`, '_blank')}
+                      >
+                        Read More
+                      </Button>
+                    </div>
+                  </CardContent>
+                </Card>
+              ))}
+            </div>
+          </div>
+        </section>
+      )}
 
       {/* About Us Section */}
       <section id="about" className="py-20 bg-white">

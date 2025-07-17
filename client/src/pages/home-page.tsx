@@ -6,11 +6,12 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Play, Search, Settings, LogOut, X } from "lucide-react";
+import { Play, Search, Settings, LogOut, X, User } from "lucide-react";
 import { VideoCard } from "@/components/video-card";
 import { BannerCarousel } from "@/components/banner-carousel";
 import { CategoryGrid } from "@/components/category-grid";
 import { VideoCompletionBadge } from "@/components/video-completion-badge";
+import { NotificationBell } from "@/components/notification-bell";
 import type { VideoWithCategory, Category, AppSettings } from "@shared/schema";
 
 // Custom hook for debounced search
@@ -107,6 +108,15 @@ export default function HomePage() {
               </div>
             </div>
             <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+              <Link href="/profile">
+                <Button variant="outline" size="sm" className="hidden sm:flex">
+                  <User className="h-4 w-4 mr-2" />
+                  Profile
+                </Button>
+                <Button variant="outline" size="sm" className="sm:hidden">
+                  <User className="h-4 w-4" />
+                </Button>
+              </Link>
               {!user?.isAdmin && (
                 <Link href="/dashboard">
                   <Button variant="outline" size="sm" className="hidden sm:flex">
@@ -126,6 +136,7 @@ export default function HomePage() {
                   </Button>
                 </Link>
               )}
+              <NotificationBell />
               <Button 
                 variant="ghost" 
                 size="sm" 

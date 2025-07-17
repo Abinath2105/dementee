@@ -110,7 +110,9 @@ export interface IStorage {
   getBroadcastNotifications(userId?: number): Promise<BroadcastNotification[]>;
   updateBroadcastNotification(id: number, notification: Partial<InsertBroadcastNotification>): Promise<BroadcastNotification>;
   deleteBroadcastNotification(id: number): Promise<void>;
+  getUserNotifications(userId: number): Promise<any[]>;
   markNotificationAsRead(userId: number, notificationId: number): Promise<void>;
+  markAllNotificationsAsRead(userId: number): Promise<void>;
   markNotificationAsClicked(userId: number, notificationId: number): Promise<void>;
   getUserNotificationStatus(userId: number): Promise<UserNotificationStatus[]>;
 
@@ -1272,6 +1274,70 @@ export class DatabaseStorage implements IStorage {
 
   async deleteBroadcastNotification(id: number): Promise<void> {
     await db.delete(broadcastNotifications).where(eq(broadcastNotifications.id, id));
+  }
+
+  async getUserNotifications(userId: number): Promise<any[]> {
+    const notifications = await db
+      .select()
+      .from(broadcastNotifications)
+      .where(
+        or(
+          eq(broadcastNotifications.targetAudience, 'all'),
+          eq(broadcastNotifications.targetAudience, 'students')
+        )
+      )
+      .orderBy(desc(broadcastNotifications.createdAt));
+
+    // Get read status for each notification
+    const notificationsWithStatus = await Promise.all(
+      notifications.map(async (notification) => {
+        const [status] = await db
+          .select()
+          .from(userNotificationStatus)
+          .where(
+            and(
+              eq(userNotificationStatus.userId, userId),
+              eq(userNotificationStatus.notificationId, notification.id)
+            )
+          );
+
+        return {
+          ...notification,
+          isRead: status?.isRead || false,
+        };
+      })
+    );
+
+    return notificationsWithStatus;
+  }
+
+  async markAllNotificationsAsRead(userId: number): Promise<void> {
+    const unreadNotifications = await db
+      .select({ id: broadcastNotifications.id })
+      .from(broadcastNotifications)
+      .leftJoin(
+        userNotificationStatus,
+        and(
+          eq(userNotificationStatus.notificationId, broadcastNotifications.id),
+          eq(userNotificationStatus.userId, userId)
+        )
+      )
+      .where(
+        and(
+          or(
+            eq(broadcastNotifications.targetAudience, 'all'),
+            eq(broadcastNotifications.targetAudience, 'students')
+          ),
+          or(
+            sql`${userNotificationStatus.isRead} IS NULL`,
+            eq(userNotificationStatus.isRead, false)
+          )
+        )
+      );
+
+    for (const notification of unreadNotifications) {
+      await this.markNotificationAsRead(userId, notification.id);
+    }
   }
 
   async markNotificationAsRead(userId: number, notificationId: number): Promise<void> {
