@@ -76,12 +76,14 @@ export function LandingPage() {
 
   // Fetch active events for landing page display
   const { data: events = [] } = useQuery({
-    queryKey: ["/api/events"],
+    queryKey: ["/api/events", "public"],
+    queryFn: () => fetch("/api/events?public=true&status=active").then(res => res.json()),
   });
 
   // Fetch blog posts for news section
   const { data: blogPosts = [] } = useQuery({
-    queryKey: ["/api/blog"],
+    queryKey: ["/api/blog", "published"],
+    queryFn: () => fetch("/api/blog?status=published&public=true").then(res => res.json()),
   });
 
   const form = useForm<LoginForm>({

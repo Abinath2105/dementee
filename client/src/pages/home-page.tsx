@@ -64,11 +64,13 @@ export default function HomePage() {
   });
 
   const { data: events = [] } = useQuery({
-    queryKey: ["/api/events"],
+    queryKey: ["/api/events", "authenticated"],
+    queryFn: () => fetch("/api/events?public=true&status=active").then(res => res.json()),
   });
 
   const { data: blogPosts = [] } = useQuery({
-    queryKey: ["/api/blog"],
+    queryKey: ["/api/blog", "authenticated"],
+    queryFn: () => fetch("/api/blog?status=published&public=true").then(res => res.json()),
   });
 
   // Filtered videos for instant local search feedback
