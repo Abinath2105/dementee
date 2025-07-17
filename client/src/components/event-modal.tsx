@@ -9,7 +9,7 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Switch } from '@/components/ui/switch';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { Calendar, Clock, Users, Video, MapPin, DollarSign } from 'lucide-react';
+import { Calendar, Clock, Users, Video, MapPin, DollarSign, Upload, ImageIcon } from 'lucide-react';
 
 interface EventModalProps {
   isOpen: boolean;
@@ -39,6 +39,9 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
     isPublic: true,
     registrationDeadline: '',
   });
+
+  const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
+  const [imagePreview, setImagePreview] = useState<string>('');
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -132,7 +135,7 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
     },
   });
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     if (!formData.title || !formData.startDate || !formData.endDate) {
@@ -144,12 +147,43 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
       return;
     }
 
+    let coverImageUrl = formData.coverImage;
+
+    // Upload cover image if a new file is selected
+    if (coverImageFile) {
+      try {
+        const uploadFormData = new FormData();
+        uploadFormData.append('coverImage', coverImageFile);
+        
+        const uploadResponse = await fetch('/api/upload', {
+          method: 'POST',
+          body: uploadFormData,
+          credentials: 'include',
+        });
+        
+        if (uploadResponse.ok) {
+          const uploadResult = await uploadResponse.json();
+          coverImageUrl = uploadResult.url || uploadResult.coverImage;
+        } else {
+          throw new Error('Image upload failed');
+        }
+      } catch (error) {
+        toast({
+          title: 'Error',
+          description: 'Failed to upload cover image',
+          variant: 'destructive',
+        });
+        return;
+      }
+    }
+
     const submitData = {
       ...formData,
+      coverImage: coverImageUrl,
       categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
       maxParticipants: parseInt(formData.maxParticipants.toString()),
-      price: parseFloat(formData.price.toString()),
-      duration: parseInt(formData.duration.toString()),
+      price: formData.price.toString(), // Keep as string per schema
+      duration: formData.duration.toString(), // Keep as string per schema
       startDate: new Date(formData.startDate).toISOString(),
       endDate: new Date(formData.endDate).toISOString(),
       registrationDeadline: formData.registrationDeadline ? new Date(formData.registrationDeadline).toISOString() : null,
@@ -167,6 +201,20 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
       ...prev,
       [field]: value,
     }));
+  };
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      setCoverImageFile(file);
+      
+      // Create preview
+      const reader = new FileReader();
+      reader.onload = (event) => {
+        setImagePreview(event.target?.result as string);
+      };
+      reader.readAsDataURL(file);
+    }
   };
 
   return (
@@ -380,13 +428,50 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="coverImage">Cover Image URL</Label>
-              <Input
-                id="coverImage"
-                value={formData.coverImage}
-                onChange={(e) => handleChange('coverImage', e.target.value)}
-                placeholder="https://..."
-              />
+              <Label htmlFor="coverImage">Cover Image</Label>
+              <div className="flex flex-col gap-2">
+                <div className="flex items-center gap-2">
+                  <Input
+                    id="coverImage"
+                    type="file"
+                    accept="image/*"
+                    onChange={handleImageUpload}
+                    className="hidden"
+                  />
+                  <Button
+                    type="button"
+                    variant="outline"
+                    onClick={() => document.getElementById('coverImage')?.click()}
+                    className="flex items-center gap-2"
+                  >
+                    <Upload className="h-4 w-4" />
+                    Upload Image
+                  </Button>
+                  {(imagePreview || formData.coverImage) && (
+                    <Button
+                      type="button"
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => {
+                        setCoverImageFile(null);
+                        setImagePreview('');
+                        handleChange('coverImage', '');
+                      }}
+                    >
+                      Remove
+                    </Button>
+                  )}
+                </div>
+                {(imagePreview || formData.coverImage) && (
+                  <div className="relative w-32 h-20 rounded-md overflow-hidden border">
+                    <img
+                      src={imagePreview || formData.coverImage}
+                      alt="Cover preview"
+                      className="w-full h-full object-cover"
+                    />
+                  </div>
+                )}
+              </div>
             </div>
           </div>
 

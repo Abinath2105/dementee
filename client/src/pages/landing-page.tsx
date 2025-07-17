@@ -1,4 +1,5 @@
 import { useState } from "react";
+import EventApplicationModal from '@/components/event-application-modal';
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -51,6 +52,8 @@ export function LandingPage() {
   const [, navigate] = useLocation();
   const [isLoading, setIsLoading] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [applicationModalOpen, setApplicationModalOpen] = useState(false);
+  const [selectedEvent, setSelectedEvent] = useState<any>(null);
 
   // Fetch app settings for dynamic content
   const { data: settings } = useQuery({
@@ -564,10 +567,13 @@ export function LandingPage() {
                       </div>
                       <Button 
                         size="sm" 
-                        variant="outline"
-                        onClick={() => navigate("/register")}
+                        className="bg-blue-600 hover:bg-blue-700 text-white"
+                        onClick={() => {
+                          setSelectedEvent(event);
+                          setApplicationModalOpen(true);
+                        }}
                       >
-                        Register
+                        Apply Now
                       </Button>
                     </div>
                   </CardContent>
@@ -1068,6 +1074,16 @@ export function LandingPage() {
           </div>
         </div>
       </footer>
+      
+      {/* Event Application Modal */}
+      <EventApplicationModal
+        isOpen={applicationModalOpen}
+        onClose={() => {
+          setApplicationModalOpen(false);
+          setSelectedEvent(null);
+        }}
+        event={selectedEvent}
+      />
     </div>
   );
 }

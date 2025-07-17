@@ -1589,6 +1589,28 @@ Message: ${message}
     }
   });
 
+  // Event application endpoint
+  app.post("/api/events/:id/apply", async (req, res) => {
+    try {
+      const eventId = parseInt(req.params.id);
+      const applicationData = {
+        ...req.body,
+        eventId,
+        userId: req.user?.id || null,
+        publicUserId: req.user?.publicUserId || null,
+        registrationEmail: req.body.email,
+        status: 'pending',
+        paymentStatus: 'pending'
+      };
+      
+      const registration = await storage.registerForEvent(applicationData);
+      res.status(201).json(registration);
+    } catch (error) {
+      console.error("Apply for event error:", error);
+      res.status(500).json({ message: "Failed to submit application" });
+    }
+  });
+
   app.get("/api/events/:id/registrations", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
       return res.status(403).json({ message: "Admin access required" });
