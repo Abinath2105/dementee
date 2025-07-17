@@ -36,6 +36,8 @@ function generateOtp(): string {
 
 async function createTestUser() {
   try {
+    console.log("Setting up default users and configuration...");
+    
     // Check if test user already exists
     const existingUser = await storage.getUserByEmail("test@example.com");
     if (existingUser) {
@@ -77,13 +79,22 @@ async function createTestUser() {
     console.log("Admin User: admin@example.com / admin123");
     console.log("==============================\n");
 
-    // Create default categories
-    await createDefaultCategories();
+    // Create default categories (don't fail server startup if this fails)
+    try {
+      await createDefaultCategories();
+    } catch (error) {
+      console.warn("Warning: Failed to create default categories:", error instanceof Error ? error.message : 'Unknown error');
+    }
 
-    // Test email connection
-    await testEmailConnection();
+    // Test email connection (don't fail server startup if this fails)
+    try {
+      await testEmailConnection();
+    } catch (error) {
+      console.warn("Warning: Email connection test failed:", error instanceof Error ? error.message : 'Unknown error');
+    }
   } catch (error) {
-    console.error("Failed to create test users:", error);
+    console.error("Warning: Failed to create test users:", error instanceof Error ? error.message : 'Unknown error');
+    console.error("This may affect authentication functionality, but server will continue starting...");
   }
 }
 

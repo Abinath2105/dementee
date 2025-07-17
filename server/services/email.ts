@@ -27,14 +27,22 @@ const transporter = nodemailer.createTransport({
   rateLimit: 14 // 14 emails per second max (Gmail limit)
 });
 
-// Test email configuration
+// Test email configuration with graceful handling
 export async function testEmailConnection(): Promise<boolean> {
+  if (!isSmtpConfigured()) {
+    console.warn('⚠️  SMTP not configured - email features will be disabled');
+    console.warn('   Set SMTP_USER and SMTP_PASS environment variables to enable email functionality');
+    return false;
+  }
+
   try {
+    console.log('Testing email server connection...');
     await transporter.verify();
     console.log('✓ Email server connection successful');
     return true;
   } catch (error) {
-    console.error('✗ Email server connection failed:', error);
+    console.error('✗ Email server connection failed:', error instanceof Error ? error.message : 'Unknown error');
+    console.warn('   Email features will be disabled. Check SMTP credentials and configuration');
     return false;
   }
 }
