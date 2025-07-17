@@ -24,20 +24,16 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
     description: '',
     type: 'webinar',
     status: 'active',
-    categoryId: '',
     instructorName: '',
     instructorEmail: '',
     maxParticipants: 100,
     price: 0,
     meetingLink: '',
-    meetingPassword: '',
     startDate: '',
     endDate: '',
-    duration: 60,
     location: '',
     coverImage: '',
     isPublic: true,
-    registrationDeadline: '',
   });
 
   const [coverImageFile, setCoverImageFile] = useState<File | null>(null);
@@ -46,10 +42,7 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
   const { toast } = useToast();
   const queryClient = useQueryClient();
 
-  const { data: categories = [] } = useQuery({
-    queryKey: ['/api/categories'],
-    enabled: isOpen,
-  });
+  // Removed category selection as requested
 
   useEffect(() => {
     if (event && mode === 'edit') {
@@ -58,20 +51,16 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
         description: event.description || '',
         type: event.type || 'webinar',
         status: event.status || 'active',
-        categoryId: event.categoryId ? event.categoryId.toString() : '',
         instructorName: event.instructorName || '',
         instructorEmail: event.instructorEmail || '',
         maxParticipants: event.maxParticipants || 100,
         price: event.price || 0,
         meetingLink: event.meetingLink || '',
-        meetingPassword: event.meetingPassword || '',
         startDate: event.startDate ? new Date(event.startDate).toISOString().slice(0, 16) : '',
         endDate: event.endDate ? new Date(event.endDate).toISOString().slice(0, 16) : '',
-        duration: event.duration || 60,
         location: event.location || '',
         coverImage: event.coverImage || '',
         isPublic: event.isPublic !== undefined ? event.isPublic : true,
-        registrationDeadline: event.registrationDeadline ? new Date(event.registrationDeadline).toISOString().slice(0, 16) : '',
       });
     } else if (mode === 'create') {
       setFormData({
@@ -180,13 +169,10 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
     const submitData = {
       ...formData,
       coverImage: coverImageUrl,
-      categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
       maxParticipants: parseInt(formData.maxParticipants.toString()),
       price: formData.price.toString(), // Keep as string per schema
-      duration: formData.duration.toString(), // Keep as string per schema
       startDate: new Date(formData.startDate).toISOString(),
       endDate: new Date(formData.endDate).toISOString(),
-      registrationDeadline: formData.registrationDeadline ? new Date(formData.registrationDeadline).toISOString() : null,
     };
 
     if (mode === 'create') {
@@ -285,19 +271,17 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="categoryId">Category</Label>
-              <Select value={formData.categoryId} onValueChange={(value) => handleChange('categoryId', value)}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Select category" />
-                </SelectTrigger>
-                <SelectContent>
-                  {categories.map((category: any) => (
-                    <SelectItem key={category.id} value={category.id.toString()}>
-                      {category.name}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              <Label htmlFor="isPublic">Event Access</Label>
+              <div className="flex items-center space-x-2">
+                <Switch
+                  id="isPublic"
+                  checked={formData.isPublic}
+                  onCheckedChange={(checked) => handleChange('isPublic', checked)}
+                />
+                <Label htmlFor="isPublic" className="text-sm">
+                  {formData.isPublic ? 'Open to all logged-in users' : 'Restricted access'}
+                </Label>
+              </div>
             </div>
 
             <div className="space-y-2">
@@ -335,29 +319,16 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
             </div>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="price">Price ($)</Label>
-              <Input
-                id="price"
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) => handleChange('price', e.target.value)}
-                min="0"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="duration">Duration (minutes)</Label>
-              <Input
-                id="duration"
-                type="number"
-                value={formData.duration}
-                onChange={(e) => handleChange('duration', e.target.value)}
-                min="1"
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="price">Price ($)</Label>
+            <Input
+              id="price"
+              type="number"
+              step="0.01"
+              value={formData.price}
+              onChange={(e) => handleChange('price', e.target.value)}
+              min="0"
+            />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -384,16 +355,6 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
             </div>
           </div>
 
-          <div className="space-y-2">
-            <Label htmlFor="registrationDeadline">Registration Deadline</Label>
-            <Input
-              id="registrationDeadline"
-              type="datetime-local"
-              value={formData.registrationDeadline}
-              onChange={(e) => handleChange('registrationDeadline', e.target.value)}
-            />
-          </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="meetingLink">Meeting Link</Label>
@@ -401,22 +362,10 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
                 id="meetingLink"
                 value={formData.meetingLink}
                 onChange={(e) => handleChange('meetingLink', e.target.value)}
-                placeholder="https://zoom.us/j/..."
+                placeholder="https://zoom.us/j/... (no password needed)"
               />
             </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="meetingPassword">Meeting Password</Label>
-              <Input
-                id="meetingPassword"
-                value={formData.meetingPassword}
-                onChange={(e) => handleChange('meetingPassword', e.target.value)}
-                placeholder="Enter meeting password"
-              />
-            </div>
-          </div>
-
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label htmlFor="location">Location</Label>
               <Input
@@ -426,8 +375,9 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
                 placeholder="Enter event location"
               />
             </div>
+          </div>
 
-            <div className="space-y-2">
+          <div className="space-y-2">
               <Label htmlFor="coverImage">Cover Image</Label>
               <div className="flex flex-col gap-2">
                 <div className="flex items-center gap-2">
@@ -473,30 +423,29 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
                 )}
               </div>
             </div>
-          </div>
 
-          <div className="flex items-center space-x-2">
-            <Switch
-              id="isPublic"
-              checked={formData.isPublic}
-              onCheckedChange={(checked) => handleChange('isPublic', checked)}
-            />
-            <Label htmlFor="isPublic">Public Event</Label>
-          </div>
+            <div className="flex items-center space-x-2">
+              <Switch
+                id="isPublic"
+                checked={formData.isPublic}
+                onCheckedChange={(checked) => handleChange('isPublic', checked)}
+              />
+              <Label htmlFor="isPublic">Public Event</Label>
+            </div>
 
-          <DialogFooter className="gap-2">
-            <Button type="button" variant="outline" onClick={onClose}>
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={createMutation.isPending || updateMutation.isPending}
-            >
-              {(createMutation.isPending || updateMutation.isPending) ? 'Saving...' : 
-               mode === 'create' ? 'Create Event' : 'Update Event'}
-            </Button>
-          </DialogFooter>
-        </form>
+            <DialogFooter className="gap-2">
+              <Button type="button" variant="outline" onClick={onClose}>
+                Cancel
+              </Button>
+              <Button
+                type="submit"
+                disabled={createMutation.isPending || updateMutation.isPending}
+              >
+                {(createMutation.isPending || updateMutation.isPending) ? 'Saving...' : 
+                  mode === 'create' ? 'Create Event' : 'Update Event'}
+              </Button>
+            </DialogFooter>
+          </form>
       </DialogContent>
     </Dialog>
   );
