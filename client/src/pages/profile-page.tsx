@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -30,17 +30,22 @@ import {
 } from "lucide-react";
 
 const profileSchema = z.object({
-  fullName: z.string().min(1, "Full name is required"),
-  email: z.string().email("Invalid email address"),
-  phone: z.string().optional(),
+  firstName: z.string().min(1, "First name is required"),
+  lastName: z.string().min(1, "Last name is required"),
+  phoneNumber: z.string().optional(),
   bio: z.string().optional(),
-  location: z.string().optional(),
+  address: z.string().optional(),
+  city: z.string().optional(),
+  state: z.string().optional(),
+  country: z.string().optional(),
+  zipCode: z.string().optional(),
   dateOfBirth: z.string().optional(),
-  profession: z.string().optional(),
+  gender: z.string().optional(),
+  occupation: z.string().optional(),
   company: z.string().optional(),
   website: z.string().url().optional().or(z.literal("")),
-  linkedin: z.string().optional(),
-  twitter: z.string().optional(),
+  timezone: z.string().optional(),
+  language: z.string().optional(),
 });
 
 type ProfileForm = z.infer<typeof profileSchema>;
@@ -65,17 +70,22 @@ export default function ProfilePage() {
   const form = useForm<ProfileForm>({
     resolver: zodResolver(profileSchema),
     defaultValues: {
-      fullName: profile?.fullName || user?.fullName || "",
-      email: profile?.email || user?.email || "",
-      phone: profile?.phone || "",
+      firstName: profile?.firstName || "",
+      lastName: profile?.lastName || "",
+      phoneNumber: profile?.phoneNumber || "",
       bio: profile?.bio || "",
-      location: profile?.location || "",
+      address: profile?.address || "",
+      city: profile?.city || "",
+      state: profile?.state || "",
+      country: profile?.country || "",
+      zipCode: profile?.zipCode || "",
       dateOfBirth: profile?.dateOfBirth || "",
-      profession: profile?.profession || "",
+      gender: profile?.gender || "",
+      occupation: profile?.occupation || "",
       company: profile?.company || "",
       website: profile?.website || "",
-      linkedin: profile?.linkedin || "",
-      twitter: profile?.twitter || "",
+      timezone: profile?.timezone || "",
+      language: profile?.language || "en",
     },
   });
 
@@ -83,17 +93,22 @@ export default function ProfilePage() {
   useEffect(() => {
     if (profile) {
       form.reset({
-        fullName: profile.fullName || user?.fullName || "",
-        email: profile.email || user?.email || "",
-        phone: profile.phone || "",
+        firstName: profile.firstName || "",
+        lastName: profile.lastName || "",
+        phoneNumber: profile.phoneNumber || "",
         bio: profile.bio || "",
-        location: profile.location || "",
+        address: profile.address || "",
+        city: profile.city || "",
+        state: profile.state || "",
+        country: profile.country || "",
+        zipCode: profile.zipCode || "",
         dateOfBirth: profile.dateOfBirth || "",
-        profession: profile.profession || "",
+        gender: profile.gender || "",
+        occupation: profile.occupation || "",
         company: profile.company || "",
         website: profile.website || "",
-        linkedin: profile.linkedin || "",
-        twitter: profile.twitter || "",
+        timezone: profile.timezone || "",
+        language: profile.language || "en",
       });
     }
   }, [profile, user, form]);
@@ -164,8 +179,8 @@ export default function ProfilePage() {
                     <Camera className="w-4 h-4" />
                   </Button>
                 </div>
-                <CardTitle className="mt-4">{profile?.fullName || user?.fullName || "User"}</CardTitle>
-                <CardDescription>{profile?.profession || "Student"}</CardDescription>
+                <CardTitle className="mt-4">{(profile?.firstName && profile?.lastName) ? `${profile.firstName} ${profile.lastName}` : user?.fullName || "User"}</CardTitle>
+                <CardDescription>{profile?.occupation || "Student"}</CardDescription>
                 {profile?.company && (
                   <p className="text-sm text-gray-600">{profile.company}</p>
                 )}
@@ -183,18 +198,18 @@ export default function ProfilePage() {
                   <div className="space-y-2 text-sm">
                     <div className="flex items-center text-gray-600">
                       <Mail className="w-4 h-4 mr-2" />
-                      {profile?.email || user?.email}
+                      {user?.email}
                     </div>
-                    {profile?.phone && (
+                    {profile?.phoneNumber && (
                       <div className="flex items-center text-gray-600">
                         <Phone className="w-4 h-4 mr-2" />
-                        {profile.phone}
+                        {profile.phoneNumber}
                       </div>
                     )}
-                    {profile?.location && (
+                    {(profile?.city || profile?.state || profile?.country) && (
                       <div className="flex items-center text-gray-600">
                         <MapPin className="w-4 h-4 mr-2" />
-                        {profile.location}
+                        {[profile?.city, profile?.state, profile?.country].filter(Boolean).join(", ")}
                       </div>
                     )}
                     {profile?.dateOfBirth && (
@@ -276,10 +291,10 @@ export default function ProfilePage() {
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                       <FormField
                         control={form.control}
-                        name="fullName"
+                        name="firstName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Full Name</FormLabel>
+                            <FormLabel>First Name</FormLabel>
                             <FormControl>
                               <Input {...field} disabled={!isEditing} />
                             </FormControl>
@@ -290,12 +305,12 @@ export default function ProfilePage() {
 
                       <FormField
                         control={form.control}
-                        name="email"
+                        name="lastName"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Email Address</FormLabel>
+                            <FormLabel>Last Name</FormLabel>
                             <FormControl>
-                              <Input {...field} type="email" disabled={!isEditing} />
+                              <Input {...field} disabled={!isEditing} />
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -304,7 +319,7 @@ export default function ProfilePage() {
 
                       <FormField
                         control={form.control}
-                        name="phone"
+                        name="phoneNumber"
                         render={({ field }) => (
                           <FormItem>
                             <FormLabel>Phone Number</FormLabel>
@@ -332,10 +347,10 @@ export default function ProfilePage() {
 
                       <FormField
                         control={form.control}
-                        name="profession"
+                        name="occupation"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Profession</FormLabel>
+                            <FormLabel>Occupation</FormLabel>
                             <FormControl>
                               <Input {...field} disabled={!isEditing} />
                             </FormControl>
@@ -360,10 +375,52 @@ export default function ProfilePage() {
 
                       <FormField
                         control={form.control}
-                        name="location"
+                        name="city"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Location</FormLabel>
+                            <FormLabel>City</FormLabel>
+                            <FormControl>
+                              <Input {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="state"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>State</FormLabel>
+                            <FormControl>
+                              <Input {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="country"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Country</FormLabel>
+                            <FormControl>
+                              <Input {...field} disabled={!isEditing} />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+
+                      <FormField
+                        control={form.control}
+                        name="zipCode"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>ZIP Code</FormLabel>
                             <FormControl>
                               <Input {...field} disabled={!isEditing} />
                             </FormControl>
@@ -388,12 +445,34 @@ export default function ProfilePage() {
 
                       <FormField
                         control={form.control}
-                        name="linkedin"
+                        name="timezone"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>LinkedIn</FormLabel>
+                            <FormLabel>Timezone</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={!isEditing} />
+                              <Input {...field} disabled={!isEditing} placeholder="e.g., America/New_York" />
+                            </FormControl>
+                            <FormMessage />
+                          </FormItem>
+                        )}
+                      />
+                    </div>
+
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                      <FormField
+                        control={form.control}
+                        name="gender"
+                        render={({ field }) => (
+                          <FormItem>
+                            <FormLabel>Gender</FormLabel>
+                            <FormControl>
+                              <select {...field} disabled={!isEditing} className="w-full p-2 border rounded-md">
+                                <option value="">Select gender</option>
+                                <option value="male">Male</option>
+                                <option value="female">Female</option>
+                                <option value="other">Other</option>
+                                <option value="prefer_not_to_say">Prefer not to say</option>
+                              </select>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
@@ -402,18 +481,43 @@ export default function ProfilePage() {
 
                       <FormField
                         control={form.control}
-                        name="twitter"
+                        name="language"
                         render={({ field }) => (
                           <FormItem>
-                            <FormLabel>Twitter</FormLabel>
+                            <FormLabel>Language</FormLabel>
                             <FormControl>
-                              <Input {...field} disabled={!isEditing} />
+                              <select {...field} disabled={!isEditing} className="w-full p-2 border rounded-md">
+                                <option value="en">English</option>
+                                <option value="es">Spanish</option>
+                                <option value="fr">French</option>
+                                <option value="de">German</option>
+                                <option value="it">Italian</option>
+                                <option value="pt">Portuguese</option>
+                                <option value="ru">Russian</option>
+                                <option value="zh">Chinese</option>
+                                <option value="ja">Japanese</option>
+                                <option value="ko">Korean</option>
+                              </select>
                             </FormControl>
                             <FormMessage />
                           </FormItem>
                         )}
                       />
                     </div>
+
+                    <FormField
+                      control={form.control}
+                      name="address"
+                      render={({ field }) => (
+                        <FormItem>
+                          <FormLabel>Address</FormLabel>
+                          <FormControl>
+                            <Input {...field} disabled={!isEditing} />
+                          </FormControl>
+                          <FormMessage />
+                        </FormItem>
+                      )}
+                    />
 
                     <FormField
                       control={form.control}
