@@ -1316,6 +1316,26 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
+  // General upload route for event cover images, etc. (admin only)
+  app.post("/api/upload", upload.single('coverImage'), async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      if (!req.file) {
+        return res.status(400).json({ message: "No file uploaded" });
+      }
+
+      const fileUrl = `/uploads/${req.file.filename}`;
+      console.log('Cover image uploaded successfully:', fileUrl);
+      res.json({ url: fileUrl, coverImage: fileUrl });
+    } catch (error) {
+      console.error("Upload error:", error);
+      res.status(500).json({ message: "Failed to upload file" });
+    }
+  });
+
   // Image upload route for category covers (admin only)
   app.post("/api/upload/image", upload.single('image'), async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
