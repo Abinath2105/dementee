@@ -1316,10 +1316,10 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // General upload route for event cover images - accessible to all authenticated users
+  // General upload route for event cover images - admin only
   app.post("/api/upload", upload.single('coverImage'), async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Authentication required" });
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
     }
 
     try {
@@ -1507,10 +1507,10 @@ Message: ${message}
     }
   });
 
-  // Events API - accessible to all authenticated users
+  // Events API - only admins can create events
   app.post("/api/events", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Authentication required" });
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
     }
 
     try {
@@ -1568,8 +1568,8 @@ Message: ${message}
   });
 
   app.put("/api/events/:id", async (req, res) => {
-    if (!req.isAuthenticated()) {
-      return res.status(401).json({ message: "Authentication required" });
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
     }
 
     try {
