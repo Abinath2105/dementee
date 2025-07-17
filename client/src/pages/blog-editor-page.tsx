@@ -138,8 +138,8 @@ export default function BlogEditorPage() {
     const submitData = {
       ...formData,
       slug: formData.slug || generateSlug(formData.title),
-      categoryId: formData.categoryId ? parseInt(formData.categoryId) : null,
-      publishedAt: formData.publishedAt ? new Date(formData.publishedAt).toISOString() : null,
+      categoryId: formData.categoryId && formData.categoryId !== 'none' ? parseInt(formData.categoryId) : null,
+      publishedAt: formData.publishedAt ? new Date(formData.publishedAt).toISOString() : new Date().toISOString(),
     };
 
     if (isEdit) {
@@ -221,12 +221,19 @@ export default function BlogEditorPage() {
   };
 
   const handlePreview = () => {
-    if (formData.slug) {
-      window.open(`/blog/${formData.slug}`, '_blank');
+    const previewSlug = formData.slug || generateSlug(formData.title);
+    if (previewSlug && isEdit) {
+      window.open(`/blog/${previewSlug}`, '_blank');
+    } else if (previewSlug) {
+      // For new posts, show a preview modal or temporary preview
+      toast({
+        title: 'Preview',
+        description: 'Save the post first to get a full preview. Slug will be: ' + previewSlug,
+      });
     } else {
       toast({
         title: 'Error',
-        description: 'Please save the post first to preview',
+        description: 'Please enter a title to generate preview',
         variant: 'destructive',
       });
     }
@@ -428,12 +435,13 @@ export default function BlogEditorPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="categoryId">Category</Label>
+                  <Label htmlFor="categoryId">Category (Optional)</Label>
                   <Select value={formData.categoryId} onValueChange={(value) => handleChange('categoryId', value)}>
                     <SelectTrigger>
-                      <SelectValue placeholder="Select category" />
+                      <SelectValue placeholder="Select category (optional)" />
                     </SelectTrigger>
                     <SelectContent>
+                      <SelectItem value="none">No Category</SelectItem>
                       {categories.map((category: any) => (
                         <SelectItem key={category.id} value={category.id.toString()}>
                           {category.name}
@@ -444,12 +452,13 @@ export default function BlogEditorPage() {
                 </div>
 
                 <div className="space-y-2">
-                  <Label htmlFor="publishedAt">Publish Date</Label>
+                  <Label htmlFor="publishedAt">Publish Date (Auto-set if empty)</Label>
                   <Input
                     id="publishedAt"
                     type="datetime-local"
                     value={formData.publishedAt}
                     onChange={(e) => handleChange('publishedAt', e.target.value)}
+                    placeholder="Will be set to current time if empty"
                   />
                 </div>
               </div>

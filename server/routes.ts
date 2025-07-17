@@ -1750,12 +1750,20 @@ Message: ${message}
       };
 
       // Ensure tags is properly formatted as an array
-      if (blogData.tags && typeof blogData.tags === 'string') {
-        try {
-          blogData.tags = JSON.parse(blogData.tags);
-        } catch {
-          blogData.tags = [blogData.tags];
+      if (blogData.tags) {
+        if (typeof blogData.tags === 'string') {
+          try {
+            blogData.tags = JSON.parse(blogData.tags);
+          } catch {
+            blogData.tags = [blogData.tags];
+          }
         }
+        // Ensure it's an array even if null/undefined
+        if (!Array.isArray(blogData.tags)) {
+          blogData.tags = [];
+        }
+      } else {
+        blogData.tags = [];
       }
 
       const validatedData = insertBlogPostSchema.parse(blogData);
@@ -1895,12 +1903,20 @@ Message: ${message}
       }
       
       // Ensure tags is properly formatted as an array
-      if (blogData.tags && typeof blogData.tags === 'string') {
-        try {
-          blogData.tags = JSON.parse(blogData.tags);
-        } catch {
-          blogData.tags = [blogData.tags];
+      if (blogData.tags) {
+        if (typeof blogData.tags === 'string') {
+          try {
+            blogData.tags = JSON.parse(blogData.tags);
+          } catch {
+            blogData.tags = [blogData.tags];
+          }
         }
+        // Ensure it's an array even if null/undefined
+        if (!Array.isArray(blogData.tags)) {
+          blogData.tags = [];
+        }
+      } else {
+        blogData.tags = [];
       }
       
       const validatedData = insertBlogPostSchema.partial().parse(blogData);
