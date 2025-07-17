@@ -12,6 +12,7 @@ import { TextAlign } from '@tiptap/extension-text-align';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Separator } from '@/components/ui/separator';
+import { useToast } from '@/hooks/use-toast';
 import {
   Bold,
   Italic,
@@ -20,6 +21,7 @@ import {
   Code,
   Link as LinkIcon,
   Image as ImageIcon,
+  Upload,
   List,
   ListOrdered,
   Quote,
@@ -33,7 +35,7 @@ import {
   Undo,
   Redo
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 
 interface RichTextEditorProps {
   content: string;
@@ -47,6 +49,9 @@ export default function RichTextEditor({ content, onChange, placeholder = "Start
   const [showLinkInput, setShowLinkInput] = useState(false);
   const [imageUrl, setImageUrl] = useState('');
   const [showImageInput, setShowImageInput] = useState(false);
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const { toast } = useToast();
 
   const editor = useEditor({
     extensions: [
@@ -117,6 +122,43 @@ export default function RichTextEditor({ content, onChange, placeholder = "Start
       editor.chain().focus().setImage({ src: imageUrl }).run();
       setImageUrl('');
       setShowImageInput(false);
+    }
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('image', file);
+
+      const response = await fetch('/api/upload/image', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      editor.chain().focus().setImage({ src: data.url }).run();
+      
+      toast({
+        title: 'Success',
+        description: 'Image uploaded and inserted successfully',
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
+      toast({
+        title: 'Error',
+        description: 'Failed to upload image',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
     }
   };
 
@@ -259,6 +301,21 @@ export default function RichTextEditor({ content, onChange, placeholder = "Start
           >
             <ImageIcon className="h-4 w-4" />
           </Button>
+          <input
+            ref={fileInputRef}
+            type="file"
+            accept="image/*"
+            onChange={handleImageUpload}
+            className="hidden"
+          />
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={() => fileInputRef.current?.click()}
+            disabled={isUploading}
+          >
+            <Upload className="h-4 w-4" />
+          </Button>
         </div>
 
         <Separator orientation="vertical" className="h-6" />
@@ -321,14 +378,23 @@ export default function RichTextEditor({ content, onChange, placeholder = "Start
       {showImageInput && (
         <div className="flex items-center gap-2 p-3 border-b bg-green-50">
           <Input
-            placeholder="Enter image URL"
+            placeholder="Enter image URL or use upload button"
             value={imageUrl}
             onChange={(e) => setImageUrl(e.target.value)}
             onKeyPress={(e) => e.key === 'Enter' && addImage()}
             className="flex-1"
           />
-          <Button onClick={addImage} size="sm">
-            Add Image
+          <Button onClick={addImage} size="sm" disabled={!imageUrl}>
+            Add URL
+          </Button>
+          <Button 
+            onClick={() => fileInputRef.current?.click()} 
+            variant="outline" 
+            size="sm"
+            disabled={isUploading}
+          >
+            <Upload className="h-4 w-4 mr-2" />
+            {isUploading ? 'Uploading...' : 'Upload'}
           </Button>
           <Button onClick={() => setShowImageInput(false)} variant="ghost" size="sm">
             Cancel

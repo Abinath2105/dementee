@@ -1749,6 +1749,15 @@ Message: ${message}
         publishedAt: req.body.publishedAt ? new Date(req.body.publishedAt) : undefined,
       };
 
+      // Ensure tags is properly formatted as an array
+      if (blogData.tags && typeof blogData.tags === 'string') {
+        try {
+          blogData.tags = JSON.parse(blogData.tags);
+        } catch {
+          blogData.tags = [blogData.tags];
+        }
+      }
+
       const validatedData = insertBlogPostSchema.parse(blogData);
       const post = await storage.createBlogPost(validatedData);
       res.status(201).json(post);
@@ -1883,6 +1892,15 @@ Message: ${message}
       const blogData = { ...req.body };
       if (blogData.publishedAt) {
         blogData.publishedAt = new Date(blogData.publishedAt);
+      }
+      
+      // Ensure tags is properly formatted as an array
+      if (blogData.tags && typeof blogData.tags === 'string') {
+        try {
+          blogData.tags = JSON.parse(blogData.tags);
+        } catch {
+          blogData.tags = [blogData.tags];
+        }
       }
       
       const validatedData = insertBlogPostSchema.partial().parse(blogData);

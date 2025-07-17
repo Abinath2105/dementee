@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
-import { Link, Redirect } from "wouter";
+import { Link, Redirect, useLocation } from "wouter";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -28,6 +28,7 @@ import type { VideoWithCategory, AdminStats, User, Category, UserInvitation } fr
 
 export default function AdminPage() {
   const { user, logoutMutation } = useAuth();
+  const [, navigate] = useLocation();
   const [showAddVideo, setShowAddVideo] = useState(false);
   const [activeTab, setActiveTab] = useState("videos");
   const [editingVideo, setEditingVideo] = useState<VideoWithCategory | null>(null);
@@ -1194,7 +1195,7 @@ export default function AdminPage() {
                       <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Blog Management</h2>
                       <p className="text-sm text-gray-600">Create and manage blog posts and articles</p>
                     </div>
-                    <Button onClick={() => setShowBlogPost(true)} className="w-full sm:w-auto">
+                    <Button onClick={() => navigate('/admin/blog/new')} className="w-full sm:w-auto">
                       <Plus className="h-4 w-4 mr-2" />
                       Create Post
                     </Button>
@@ -1235,10 +1236,7 @@ export default function AdminPage() {
                                 <Button
                                   size="sm"
                                   variant="outline"
-                                  onClick={() => {
-                                    setEditingBlogPost(post);
-                                    setShowBlogPost(true);
-                                  }}
+                                  onClick={() => navigate(`/admin/blog/edit/${post.id}`)}
                                 >
                                   <Edit className="h-4 w-4" />
                                 </Button>
