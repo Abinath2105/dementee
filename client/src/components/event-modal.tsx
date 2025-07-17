@@ -95,10 +95,7 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
   }, [event, mode, isOpen]);
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/admin/events', {
-      method: 'POST',
-      data,
-    }),
+    mutationFn: (data: any) => apiRequest('POST', '/api/admin/events', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/events'] });
       toast({
@@ -117,10 +114,7 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => apiRequest(`/api/admin/events/${event.id}`, {
-      method: 'PUT',
-      data,
-    }),
+    mutationFn: (data: any) => apiRequest('PUT', `/api/admin/events/${event?.id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/events'] });
       toast({

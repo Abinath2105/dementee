@@ -89,10 +89,7 @@ export default function BlogPostModal({ isOpen, onClose, post, mode }: BlogPostM
   };
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/admin/blog', {
-      method: 'POST',
-      data,
-    }),
+    mutationFn: (data: any) => apiRequest('POST', '/api/admin/blog', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/blog'] });
       toast({
@@ -111,10 +108,7 @@ export default function BlogPostModal({ isOpen, onClose, post, mode }: BlogPostM
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => apiRequest(`/api/admin/blog/${post.id}`, {
-      method: 'PUT',
-      data,
-    }),
+    mutationFn: (data: any) => apiRequest('PUT', `/api/admin/blog/${post?.id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/blog'] });
       toast({

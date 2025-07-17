@@ -109,10 +109,7 @@ export default function UserProfileModal({ isOpen, onClose, userId }: UserProfil
   }, [profile, isOpen]);
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/user/profile', {
-      method: 'POST',
-      data,
-    }),
+    mutationFn: (data: any) => apiRequest('POST', '/api/user/profile', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user/profile'] });
       toast({
@@ -131,10 +128,7 @@ export default function UserProfileModal({ isOpen, onClose, userId }: UserProfil
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/user/profile', {
-      method: 'PUT',
-      data,
-    }),
+    mutationFn: (data: any) => apiRequest('PUT', '/api/user/profile', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/user/profile'] });
       toast({

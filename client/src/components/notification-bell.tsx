@@ -30,7 +30,7 @@ export function NotificationBell() {
   // Mark notification as read mutation
   const markAsReadMutation = useMutation({
     mutationFn: (notificationId: number) => {
-      return apiRequest("POST", `/api/user/notifications/${notificationId}/read`, {});
+      return apiRequest("POST", `/api/user/notifications/${notificationId}/read`);
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/notifications"] });
@@ -47,7 +47,7 @@ export function NotificationBell() {
   // Mark all as read mutation
   const markAllAsReadMutation = useMutation({
     mutationFn: () => {
-      return apiRequest("POST", "/api/user/notifications/mark-all-read", {});
+      return apiRequest("POST", "/api/user/notifications/mark-all-read");
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["/api/user/notifications"] });

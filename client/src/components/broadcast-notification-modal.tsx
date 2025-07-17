@@ -79,10 +79,7 @@ export default function BroadcastNotificationModal({ isOpen, onClose, notificati
   }, [notification, mode, isOpen]);
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('/api/admin/notifications', {
-      method: 'POST',
-      data,
-    }),
+    mutationFn: (data: any) => apiRequest('POST', '/api/admin/notifications', data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/notifications'] });
       toast({
@@ -101,10 +98,7 @@ export default function BroadcastNotificationModal({ isOpen, onClose, notificati
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => apiRequest(`/api/admin/notifications/${notification.id}`, {
-      method: 'PUT',
-      data,
-    }),
+    mutationFn: (data: any) => apiRequest('PUT', `/api/admin/notifications/${notification?.id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/notifications'] });
       toast({
