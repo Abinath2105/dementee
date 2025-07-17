@@ -1404,10 +1404,15 @@ Message: ${message}
     }
 
     try {
-      const validatedData = insertBroadcastNotificationSchema.parse({
+      // Convert date strings to Date objects for notifications
+      const notificationData = {
         ...req.body,
-        createdBy: req.user.id
-      });
+        createdBy: req.user.id,
+        scheduledFor: req.body.scheduledFor ? new Date(req.body.scheduledFor) : undefined,
+        expiresAt: req.body.expiresAt ? new Date(req.body.expiresAt) : undefined,
+      };
+
+      const validatedData = insertBroadcastNotificationSchema.parse(notificationData);
       const notification = await storage.createBroadcastNotification(validatedData);
       res.status(201).json(notification);
     } catch (error) {
@@ -1509,10 +1514,16 @@ Message: ${message}
     }
 
     try {
-      const validatedData = insertEventSchema.parse({
+      // Convert date strings to Date objects
+      const eventData = {
         ...req.body,
-        createdBy: req.user.id
-      });
+        createdBy: req.user.id,
+        startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
+        endDate: req.body.endDate ? new Date(req.body.endDate) : undefined,
+        registrationDeadline: req.body.registrationDeadline ? new Date(req.body.registrationDeadline) : undefined,
+      };
+
+      const validatedData = insertEventSchema.parse(eventData);
       const event = await storage.createEvent(validatedData);
       res.status(201).json(event);
     } catch (error) {
@@ -1568,7 +1579,20 @@ Message: ${message}
 
     try {
       const id = parseInt(req.params.id);
-      const validatedData = insertEventSchema.partial().parse(req.body);
+      
+      // Convert date strings to Date objects for update
+      const eventData = { ...req.body };
+      if (eventData.startDate) {
+        eventData.startDate = new Date(eventData.startDate);
+      }
+      if (eventData.endDate) {
+        eventData.endDate = new Date(eventData.endDate);
+      }
+      if (eventData.registrationDeadline) {
+        eventData.registrationDeadline = new Date(eventData.registrationDeadline);
+      }
+      
+      const validatedData = insertEventSchema.partial().parse(eventData);
       const event = await storage.updateEvent(id, validatedData);
       res.json(event);
     } catch (error) {
@@ -1667,12 +1691,16 @@ Message: ${message}
     }
 
     try {
-      const validatedData = insertBlogPostSchema.parse({
+      // Convert publishedAt string to Date object if provided
+      const blogData = {
         ...req.body,
         createdBy: req.user.id,
         author: req.body.author || req.user.fullName,
-        authorEmail: req.body.authorEmail || req.user.email
-      });
+        authorEmail: req.body.authorEmail || req.user.email,
+        publishedAt: req.body.publishedAt ? new Date(req.body.publishedAt) : undefined,
+      };
+
+      const validatedData = insertBlogPostSchema.parse(blogData);
       const post = await storage.createBlogPost(validatedData);
       res.status(201).json(post);
     } catch (error) {
@@ -1751,7 +1779,14 @@ Message: ${message}
 
     try {
       const id = parseInt(req.params.id);
-      const validatedData = insertBlogPostSchema.partial().parse(req.body);
+      
+      // Convert publishedAt string to Date object for update
+      const blogData = { ...req.body };
+      if (blogData.publishedAt) {
+        blogData.publishedAt = new Date(blogData.publishedAt);
+      }
+      
+      const validatedData = insertBlogPostSchema.partial().parse(blogData);
       const post = await storage.updateBlogPost(id, validatedData);
       res.json(post);
     } catch (error) {
