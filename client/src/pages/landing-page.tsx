@@ -8,6 +8,7 @@ import { Input } from "@/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Badge } from "@/components/ui/badge";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useMutation, useQuery } from "@tanstack/react-query";
@@ -28,7 +29,9 @@ import {
   Clock,
   Award,
   Mail,
-  Eye
+  Eye,
+  Calendar,
+  Newspaper
 } from "lucide-react";
 import { apiRequest } from "@/lib/queryClient";
 
@@ -54,6 +57,7 @@ export function LandingPage() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [applicationModalOpen, setApplicationModalOpen] = useState(false);
   const [selectedEvent, setSelectedEvent] = useState<any>(null);
+  const [activeTab, setActiveTab] = useState("events");
 
   // Fetch app settings for dynamic content
   const { data: settings } = useQuery({
@@ -73,13 +77,11 @@ export function LandingPage() {
   // Fetch active events for landing page display
   const { data: events = [] } = useQuery({
     queryKey: ["/api/events"],
-    queryFn: () => fetch("/api/events").then(res => res.json()),
   });
 
-  // Fetch published blog posts for landing page
+  // Fetch blog posts for news section
   const { data: blogPosts = [] } = useQuery({
     queryKey: ["/api/blog"],
-    queryFn: () => fetch("/api/blog").then(res => res.json()),
   });
 
   const form = useForm<LoginForm>({
@@ -215,6 +217,7 @@ export function LandingPage() {
             <div className="hidden md:flex items-center space-x-8">
               <a href="#about" className="text-gray-700 hover:text-blue-600 font-medium">About Us</a>
               <a href="#programs" className="text-gray-700 hover:text-blue-600 font-medium">Our Programs</a>
+              <a href="#events-news" className="text-gray-700 hover:text-blue-600 font-medium">Events & News</a>
               <a href="#jobs" className="text-gray-700 hover:text-blue-600 font-medium">Jobs</a>
               <a href="#contact" className="text-gray-700 hover:text-blue-600 font-medium">Contact</a>
               <Button 
@@ -258,6 +261,13 @@ export function LandingPage() {
                 onClick={() => setMobileMenuOpen(false)}
               >
                 Our Programs
+              </a>
+              <a 
+                href="#events-news" 
+                className="block text-gray-700 hover:text-blue-600 font-medium py-2"
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                Events & News
               </a>
               <a 
                 href="#jobs" 
@@ -584,72 +594,179 @@ export function LandingPage() {
         </section>
       )}
 
-      {/* Latest Blog Posts Section */}
-      {blogPosts && blogPosts.length > 0 && (
-        <section id="blog" className="py-20 bg-white">
+      {/* Events and News Section */}
+      {(events.length > 0 || blogPosts.length > 0) && (
+        <section id="events-news" className="py-20 bg-white">
           <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
             <div className="text-center mb-16">
               <h2 className="text-3xl lg:text-4xl font-bold text-gray-900 mb-4">
-                Latest Articles & Insights
+                Events and News
               </h2>
               <p className="text-xl text-gray-600 max-w-3xl mx-auto">
-                Stay updated with the latest trends, tips, and insights from our experts
+                Stay updated with our upcoming events and latest news
               </p>
             </div>
             
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
-              {blogPosts.slice(0, 3).map((post: any) => (
-                <Card key={post.id} className="hover:shadow-lg transition-shadow overflow-hidden">
-                  <div className="aspect-video bg-gradient-to-br from-purple-500 to-pink-600 relative">
-                    {post.imageUrl ? (
-                      <img 
-                        src={post.imageUrl} 
-                        alt={post.title}
-                        className="w-full h-full object-cover"
-                      />
-                    ) : (
-                      <div className="w-full h-full flex items-center justify-center">
-                        <BookOpen className="h-16 w-16 text-white/80" />
-                      </div>
-                    )}
-                    {post.isFeatured && (
-                      <div className="absolute top-4 left-4">
-                        <Badge className="bg-yellow-500 text-white">
-                          Featured
-                        </Badge>
-                      </div>
-                    )}
-                    <div className="absolute bottom-4 left-4">
-                      <Badge className="bg-black/70 text-white">
-                        {new Date(post.createdAt).toLocaleDateString()}
-                      </Badge>
-                    </div>
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-8 max-w-md mx-auto">
+                <TabsTrigger value="events" className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Events ({events.length})
+                </TabsTrigger>
+                <TabsTrigger value="news" className="flex items-center gap-2">
+                  <Newspaper className="h-4 w-4" />
+                  News ({blogPosts.length})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="events" className="mt-0">
+                {events.length > 0 ? (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {events.slice(0, 6).map((event: any) => (
+                      <Card key={event.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                        {event.coverImage && (
+                          <div className="aspect-video bg-gradient-to-br from-blue-500 to-purple-600 relative">
+                            <img 
+                              src={event.coverImage} 
+                              alt={event.title}
+                              className="w-full h-full object-cover"
+                            />
+                            <div className="absolute top-4 left-4">
+                              <Badge className="bg-blue-600 text-white">
+                                {event.type}
+                              </Badge>
+                            </div>
+                            {event.isPublic && (
+                              <div className="absolute top-4 right-4">
+                                <Badge className="bg-green-600 text-white">
+                                  Open to All
+                                </Badge>
+                              </div>
+                            )}
+                            <div className="absolute bottom-4 left-4">
+                              <Badge className="bg-black/70 text-white">
+                                {new Date(event.startDate).toLocaleDateString()}
+                              </Badge>
+                            </div>
+                          </div>
+                        )}
+                        <CardContent className="p-6">
+                          <h3 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">{event.title}</h3>
+                          <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                            {event.description}
+                          </p>
+                          <div className="space-y-2 text-sm text-gray-500 mb-4">
+                            <div className="flex items-center gap-2">
+                              <Calendar className="h-4 w-4" />
+                              <span>{new Date(event.startDate).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <Clock className="h-4 w-4" />
+                              <span>{new Date(event.startDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            </div>
+                            {event.location && (
+                              <div className="flex items-center gap-2">
+                                <Target className="h-4 w-4" />
+                                <span>{event.location}</span>
+                              </div>
+                            )}
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <div className="text-sm text-gray-500">
+                              <span>By {event.instructorName || 'Admin'}</span>
+                            </div>
+                            {event.meetingLink && (
+                              <Button 
+                                size="sm" 
+                                variant="outline"
+                                onClick={() => window.open(event.meetingLink, '_blank')}
+                              >
+                                Join Event
+                              </Button>
+                            )}
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
                   </div>
-                  <CardContent className="p-6">
-                    <h3 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">{post.title}</h3>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-3">
-                      {post.excerpt || post.content?.substring(0, 120) + '...'}
-                    </p>
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center space-x-4 text-sm text-gray-500">
-                        <span>By {post.author}</span>
-                        <div className="flex items-center">
-                          <Eye className="h-4 w-4 mr-1" />
-                          <span>{post.viewCount || 0}</span>
+                ) : (
+                  <div className="text-center py-12">
+                    <Calendar className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-500 mb-2">No Upcoming Events</h3>
+                    <p className="text-gray-400">Check back soon for exciting events and workshops!</p>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="news" className="mt-0">
+                {blogPosts.length > 0 ? (
+                  <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-8">
+                    {blogPosts.slice(0, 6).map((post: any) => (
+                      <Card key={post.id} className="hover:shadow-lg transition-shadow overflow-hidden">
+                        <div className="aspect-video bg-gradient-to-br from-purple-500 to-pink-600 relative">
+                          {post.featuredImage ? (
+                            <img 
+                              src={post.featuredImage} 
+                              alt={post.title}
+                              className="w-full h-full object-cover"
+                            />
+                          ) : (
+                            <div className="w-full h-full flex items-center justify-center">
+                              <BookOpen className="h-16 w-16 text-white/80" />
+                            </div>
+                          )}
+                          <div className="absolute top-4 left-4">
+                            <Badge className="bg-purple-600 text-white">
+                              {post.status}
+                            </Badge>
+                          </div>
+                          {post.tags && post.tags.length > 0 && (
+                            <div className="absolute top-4 right-4">
+                              <Badge className="bg-gray-700 text-white">
+                                {post.tags[0]}
+                              </Badge>
+                            </div>
+                          )}
+                          <div className="absolute bottom-4 left-4">
+                            <Badge className="bg-black/70 text-white">
+                              {new Date(post.publishedAt || post.createdAt).toLocaleDateString()}
+                            </Badge>
+                          </div>
                         </div>
-                      </div>
-                      <Button 
-                        size="sm" 
-                        variant="outline"
-                        onClick={() => window.open(`/blog/${post.slug}`, '_blank')}
-                      >
-                        Read More
-                      </Button>
-                    </div>
-                  </CardContent>
-                </Card>
-              ))}
-            </div>
+                        <CardContent className="p-6">
+                          <h3 className="text-xl font-semibold text-gray-900 mb-2 line-clamp-2">{post.title}</h3>
+                          <p className="text-gray-600 text-sm mb-4 line-clamp-3">
+                            {post.excerpt || post.content?.substring(0, 120) + '...'}
+                          </p>
+                          <div className="flex items-center justify-between">
+                            <div className="flex items-center space-x-4 text-sm text-gray-500">
+                              <span>By {post.authorName || 'Admin'}</span>
+                              <div className="flex items-center">
+                                <Eye className="h-4 w-4 mr-1" />
+                                <span>{post.viewCount || 0}</span>
+                              </div>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => window.open(`/blog/${post.slug}`, '_blank')}
+                            >
+                              Read More
+                            </Button>
+                          </div>
+                        </CardContent>
+                      </Card>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Newspaper className="h-16 w-16 text-gray-400 mx-auto mb-4" />
+                    <h3 className="text-xl font-semibold text-gray-500 mb-2">No News Articles</h3>
+                    <p className="text-gray-400">Stay tuned for the latest updates and insights!</p>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
         </section>
       )}

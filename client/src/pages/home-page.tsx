@@ -6,7 +6,8 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Play, Search, Settings, LogOut, X, User } from "lucide-react";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Play, Search, Settings, LogOut, X, User, Calendar, Newspaper } from "lucide-react";
 import { VideoCard } from "@/components/video-card";
 import { BannerCarousel } from "@/components/banner-carousel";
 import { CategoryGrid } from "@/components/category-grid";
@@ -35,6 +36,7 @@ export default function HomePage() {
   const { user, logoutMutation } = useAuth();
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
+  const [activeTab, setActiveTab] = useState("events");
   const [, setLocation] = useLocation();
   
   // Debounce search query to prevent excessive API calls
@@ -63,6 +65,10 @@ export default function HomePage() {
 
   const { data: events = [] } = useQuery({
     queryKey: ["/api/events"],
+  });
+
+  const { data: blogPosts = [] } = useQuery({
+    queryKey: ["/api/blog"],
   });
 
   // Filtered videos for instant local search feedback
@@ -277,70 +283,143 @@ export default function HomePage() {
         </div>
       )}
 
-      {/* Events Section */}
-      {events.length > 0 && (
+      {/* Events and News Section */}
+      {(events.length > 0 || blogPosts.length > 0) && (
         <div className="bg-white py-6 sm:py-8 lg:py-12 border-b border-gray-200">
           <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Upcoming Events</h2>
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-              {events.map((event: any) => (
-                <div key={event.id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-                  {event.coverImage && (
-                    <div className="w-full h-48 overflow-hidden">
-                      <img
-                        src={event.coverImage}
-                        alt={event.title}
-                        className="w-full h-full object-cover"
-                      />
-                    </div>
-                  )}
-                  <div className="p-4 sm:p-6">
-                    <div className="flex items-center gap-2 mb-2">
-                      <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
-                        {event.type}
-                      </span>
-                      {event.isPublic && (
-                        <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
-                          Open to All
-                        </span>
-                      )}
-                    </div>
-                    <h3 className="text-lg font-semibold text-gray-900 mb-2">{event.title}</h3>
-                    <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
-                    
-                    <div className="space-y-2 text-sm text-gray-500">
-                      <div className="flex items-center gap-2">
-                        <span>📅</span>
-                        <span>{new Date(event.startDate).toLocaleDateString()}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
-                        <span>🕐</span>
-                        <span>{new Date(event.startDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
-                      </div>
-                      {event.location && (
-                        <div className="flex items-center gap-2">
-                          <span>📍</span>
-                          <span>{event.location}</span>
+            <h2 className="text-2xl sm:text-3xl font-bold text-gray-900 mb-6 sm:mb-8">Events and News</h2>
+            
+            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+              <TabsList className="grid w-full grid-cols-2 mb-6">
+                <TabsTrigger value="events" className="flex items-center gap-2">
+                  <Calendar className="h-4 w-4" />
+                  Events ({events.length})
+                </TabsTrigger>
+                <TabsTrigger value="news" className="flex items-center gap-2">
+                  <Newspaper className="h-4 w-4" />
+                  News ({blogPosts.length})
+                </TabsTrigger>
+              </TabsList>
+              
+              <TabsContent value="events" className="mt-0">
+                {events.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {events.map((event: any) => (
+                      <div key={event.id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+                        {event.coverImage && (
+                          <div className="w-full h-48 overflow-hidden">
+                            <img
+                              src={event.coverImage}
+                              alt={event.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="p-4 sm:p-6">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="px-2 py-1 bg-blue-100 text-blue-800 text-xs font-medium rounded-full">
+                              {event.type}
+                            </span>
+                            {event.isPublic && (
+                              <span className="px-2 py-1 bg-green-100 text-green-800 text-xs font-medium rounded-full">
+                                Open to All
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{event.title}</h3>
+                          <p className="text-gray-600 text-sm mb-4 line-clamp-2">{event.description}</p>
+                          
+                          <div className="space-y-2 text-sm text-gray-500">
+                            <div className="flex items-center gap-2">
+                              <span>📅</span>
+                              <span>{new Date(event.startDate).toLocaleDateString()}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span>🕐</span>
+                              <span>{new Date(event.startDate).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}</span>
+                            </div>
+                            {event.location && (
+                              <div className="flex items-center gap-2">
+                                <span>📍</span>
+                                <span>{event.location}</span>
+                              </div>
+                            )}
+                            {event.meetingLink && (
+                              <div className="flex items-center gap-2">
+                                <span>🔗</span>
+                                <a 
+                                  href={event.meetingLink} 
+                                  target="_blank" 
+                                  rel="noopener noreferrer"
+                                  className="text-blue-600 hover:text-blue-800 underline truncate"
+                                >
+                                  Join Meeting
+                                </a>
+                              </div>
+                            )}
+                          </div>
                         </div>
-                      )}
-                      {event.meetingLink && (
-                        <div className="flex items-center gap-2">
-                          <span>🔗</span>
-                          <a 
-                            href={event.meetingLink} 
-                            target="_blank" 
-                            rel="noopener noreferrer"
-                            className="text-blue-600 hover:text-blue-800 underline truncate"
-                          >
-                            Join Meeting
-                          </a>
-                        </div>
-                      )}
-                    </div>
+                      </div>
+                    ))}
                   </div>
-                </div>
-              ))}
-            </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Calendar className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No upcoming events at the moment.</p>
+                  </div>
+                )}
+              </TabsContent>
+              
+              <TabsContent value="news" className="mt-0">
+                {blogPosts.length > 0 ? (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                    {blogPosts.map((post: any) => (
+                      <div key={post.id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
+                        {post.featuredImage && (
+                          <div className="w-full h-48 overflow-hidden">
+                            <img
+                              src={post.featuredImage}
+                              alt={post.title}
+                              className="w-full h-full object-cover"
+                            />
+                          </div>
+                        )}
+                        <div className="p-4 sm:p-6">
+                          <div className="flex items-center gap-2 mb-2">
+                            <span className="px-2 py-1 bg-purple-100 text-purple-800 text-xs font-medium rounded-full">
+                              {post.status}
+                            </span>
+                            {post.tags && post.tags.length > 0 && (
+                              <span className="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-medium rounded-full">
+                                {post.tags[0]}
+                              </span>
+                            )}
+                          </div>
+                          <h3 className="text-lg font-semibold text-gray-900 mb-2">{post.title}</h3>
+                          <p className="text-gray-600 text-sm mb-4 line-clamp-3">{post.excerpt || post.content?.substring(0, 150) + '...'}</p>
+                          
+                          <div className="flex items-center justify-between text-sm text-gray-500">
+                            <div className="flex items-center gap-2">
+                              <span>📝</span>
+                              <span>By {post.authorName || 'Admin'}</span>
+                            </div>
+                            <div className="flex items-center gap-2">
+                              <span>📅</span>
+                              <span>{new Date(post.publishedAt || post.createdAt).toLocaleDateString()}</span>
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                ) : (
+                  <div className="text-center py-12">
+                    <Newspaper className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                    <p className="text-gray-500">No news articles available yet.</p>
+                  </div>
+                )}
+              </TabsContent>
+            </Tabs>
           </div>
         </div>
       )}
