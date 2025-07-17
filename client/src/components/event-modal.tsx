@@ -68,27 +68,24 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
         description: '',
         type: 'webinar',
         status: 'active',
-        categoryId: '',
         instructorName: '',
         instructorEmail: '',
         maxParticipants: 100,
         price: 0,
         meetingLink: '',
-        meetingPassword: '',
         startDate: '',
         endDate: '',
-        duration: 60,
         location: '',
         coverImage: '',
         isPublic: true,
-        registrationDeadline: '',
       });
     }
   }, [event, mode, isOpen]);
 
   const createMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('POST', '/api/admin/events', data),
+    mutationFn: (data: any) => apiRequest('POST', '/api/events', data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/events'] });
       toast({
         title: 'Success',
@@ -106,8 +103,9 @@ export default function EventModal({ isOpen, onClose, event, mode }: EventModalP
   });
 
   const updateMutation = useMutation({
-    mutationFn: (data: any) => apiRequest('PUT', `/api/admin/events/${event?.id}`, data),
+    mutationFn: (data: any) => apiRequest('PUT', `/api/events/${event?.id}`, data),
     onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/events'] });
       queryClient.invalidateQueries({ queryKey: ['/api/admin/events'] });
       toast({
         title: 'Success',

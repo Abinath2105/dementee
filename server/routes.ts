@@ -1316,10 +1316,10 @@ export function registerRoutes(app: Express): Server {
     }
   });
 
-  // General upload route for event cover images, etc. (admin only)
+  // General upload route for event cover images - accessible to all authenticated users
   app.post("/api/upload", upload.single('coverImage'), async (req, res) => {
-    if (!req.isAuthenticated() || !req.user?.isAdmin) {
-      return res.status(403).json({ message: "Admin access required" });
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
     }
 
     try {
@@ -1507,7 +1507,31 @@ Message: ${message}
     }
   });
 
-  // Events API
+  // Events API - accessible to all authenticated users
+  app.post("/api/events", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      // Convert date strings to Date objects
+      const eventData = {
+        ...req.body,
+        createdBy: req.user.id,
+        startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
+        endDate: req.body.endDate ? new Date(req.body.endDate) : undefined,
+      };
+
+      const validatedData = insertEventSchema.parse(eventData);
+      const event = await storage.createEvent(validatedData);
+      res.status(201).json(event);
+    } catch (error) {
+      console.error("Create event error:", error);
+      res.status(500).json({ message: "Failed to create event" });
+    }
+  });
+
+  // Admin Events API
   app.post("/api/admin/events", async (req, res) => {
     if (!req.isAuthenticated() || !req.user?.isAdmin) {
       return res.status(403).json({ message: "Admin access required" });
@@ -1520,7 +1544,6 @@ Message: ${message}
         createdBy: req.user.id,
         startDate: req.body.startDate ? new Date(req.body.startDate) : undefined,
         endDate: req.body.endDate ? new Date(req.body.endDate) : undefined,
-        registrationDeadline: req.body.registrationDeadline ? new Date(req.body.registrationDeadline) : undefined,
       };
 
       const validatedData = insertEventSchema.parse(eventData);
@@ -1541,6 +1564,32 @@ Message: ${message}
     } catch (error) {
       console.error("Get events error:", error);
       res.status(500).json({ message: "Failed to fetch events" });
+    }
+  });
+
+  app.put("/api/events/:id", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const id = parseInt(req.params.id);
+      
+      // Convert date strings to Date objects for update
+      const eventData = { ...req.body };
+      if (eventData.startDate) {
+        eventData.startDate = new Date(eventData.startDate);
+      }
+      if (eventData.endDate) {
+        eventData.endDate = new Date(eventData.endDate);
+      }
+      
+      const validatedData = insertEventSchema.partial().parse(eventData);
+      const event = await storage.updateEvent(id, validatedData);
+      res.json(event);
+    } catch (error) {
+      console.error("Update event error:", error);
+      res.status(500).json({ message: "Failed to update event" });
     }
   });
 
