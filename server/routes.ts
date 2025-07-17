@@ -1785,7 +1785,7 @@ Message: ${message}
     }
   });
 
-  app.get("/api/blog/:id", async (req, res) => {
+  app.get("/api/blog/id/:id", async (req, res) => {
     try {
       const id = parseInt(req.params.id);
       const post = await storage.getBlogPost(id);
@@ -1803,7 +1803,7 @@ Message: ${message}
     }
   });
 
-  app.get("/api/blog/slug/:slug", async (req, res) => {
+  app.get("/api/blog/:slug", async (req, res) => {
     try {
       const slug = req.params.slug;
       const post = await storage.getBlogPostBySlug(slug);
@@ -1811,13 +1811,63 @@ Message: ${message}
         return res.status(404).json({ message: "Blog post not found" });
       }
       
-      // Increment view count
-      await storage.incrementBlogPostViews(post.id);
-      
       res.json(post);
     } catch (error) {
       console.error("Get blog post by slug error:", error);
       res.status(500).json({ message: "Failed to fetch blog post" });
+    }
+  });
+
+  // Increment blog post view count
+  app.post("/api/blog/:slug/view", async (req, res) => {
+    try {
+      const slug = req.params.slug;
+      const post = await storage.getBlogPostBySlug(slug);
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      
+      await storage.incrementBlogPostViews(post.id);
+      res.json({ success: true });
+    } catch (error) {
+      console.error("Increment blog post views error:", error);
+      res.status(500).json({ message: "Failed to increment views" });
+    }
+  });
+
+  // Bookmark/Unbookmark blog post
+  app.post("/api/blog/:slug/bookmark", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const slug = req.params.slug;
+      const post = await storage.getBlogPostBySlug(slug);
+      if (!post) {
+        return res.status(404).json({ message: "Blog post not found" });
+      }
+      
+      // This would require a bookmarks table - for now just return success
+      res.json({ success: true, bookmarked: true });
+    } catch (error) {
+      console.error("Bookmark blog post error:", error);
+      res.status(500).json({ message: "Failed to bookmark post" });
+    }
+  });
+
+  app.delete("/api/blog/:slug/bookmark", async (req, res) => {
+    if (!req.isAuthenticated()) {
+      return res.status(401).json({ message: "Authentication required" });
+    }
+
+    try {
+      const slug = req.params.slug;
+      // This would require a bookmarks table - for now just return success
+      res.json({ success: true, bookmarked: false });
+    } catch (error) {
+      console.error("Remove bookmark error:", error);
+      res.status(500).json({ message: "Failed to remove bookmark" });
     }
   });
 

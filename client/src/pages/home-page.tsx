@@ -376,11 +376,15 @@ export default function HomePage() {
                 {blogPosts.length > 0 ? (
                   <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
                     {blogPosts.map((post: any) => (
-                      <div key={post.id} className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow">
-                        {post.featuredImage && (
+                      <div 
+                        key={post.id} 
+                        className="bg-white rounded-xl shadow-md border border-gray-200 overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                        onClick={() => window.location.href = `/blog/${post.slug}`}
+                      >
+                        {post.coverImage && (
                           <div className="w-full h-48 overflow-hidden">
                             <img
-                              src={post.featuredImage}
+                              src={post.coverImage}
                               alt={post.title}
                               className="w-full h-full object-cover"
                             />
@@ -403,7 +407,7 @@ export default function HomePage() {
                           <div className="flex items-center justify-between text-sm text-gray-500">
                             <div className="flex items-center gap-2">
                               <span>📝</span>
-                              <span>By {post.authorName || 'Admin'}</span>
+                              <span>By {post.author || 'Admin'}</span>
                             </div>
                             <div className="flex items-center gap-2">
                               <span>📅</span>

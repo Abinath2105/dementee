@@ -706,9 +706,9 @@ export function LandingPage() {
                     {blogPosts.slice(0, 6).map((post: any) => (
                       <Card key={post.id} className="hover:shadow-lg transition-shadow overflow-hidden">
                         <div className="aspect-video bg-gradient-to-br from-purple-500 to-pink-600 relative">
-                          {post.featuredImage ? (
+                          {post.coverImage ? (
                             <img 
-                              src={post.featuredImage} 
+                              src={post.coverImage} 
                               alt={post.title}
                               className="w-full h-full object-cover"
                             />
@@ -742,7 +742,7 @@ export function LandingPage() {
                           </p>
                           <div className="flex items-center justify-between">
                             <div className="flex items-center space-x-4 text-sm text-gray-500">
-                              <span>By {post.authorName || 'Admin'}</span>
+                              <span>By {post.author || 'Admin'}</span>
                               <div className="flex items-center">
                                 <Eye className="h-4 w-4 mr-1" />
                                 <span>{post.viewCount || 0}</span>
@@ -751,7 +751,7 @@ export function LandingPage() {
                             <Button 
                               size="sm" 
                               variant="outline"
-                              onClick={() => window.open(`/blog/${post.slug}`, '_blank')}
+                              onClick={() => window.location.href = `/blog/${post.slug}`}
                             >
                               Read More
                             </Button>

@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
@@ -10,7 +10,8 @@ import { Switch } from '@/components/ui/switch';
 import { Badge } from '@/components/ui/badge';
 import { useToast } from '@/hooks/use-toast';
 import { apiRequest } from '@/lib/queryClient';
-import { FileText, Tag, Calendar, User, X } from 'lucide-react';
+import { FileText, Tag, Calendar, User, X, Upload, Image } from 'lucide-react';
+import RichTextEditor from '@/components/rich-text-editor';
 
 interface BlogPostModalProps {
   isOpen: boolean;
@@ -36,6 +37,8 @@ export default function BlogPostModal({ isOpen, onClose, post, mode }: BlogPostM
     publishedAt: '',
   });
   const [tagInput, setTagInput] = useState('');
+  const [isUploading, setIsUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   const { toast } = useToast();
   const queryClient = useQueryClient();
@@ -187,6 +190,42 @@ export default function BlogPostModal({ isOpen, onClose, post, mode }: BlogPostM
     }));
   };
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+
+    setIsUploading(true);
+    try {
+      const formDataUpload = new FormData();
+      formDataUpload.append('coverImage', file);
+
+      const response = await fetch('/api/upload', {
+        method: 'POST',
+        body: formDataUpload,
+      });
+
+      if (!response.ok) {
+        throw new Error('Upload failed');
+      }
+
+      const data = await response.json();
+      handleChange('coverImage', data.filePath);
+      
+      toast({
+        title: 'Success',
+        description: 'Image uploaded successfully',
+      });
+    } catch (error) {
+      toast({
+        title: 'Error',
+        description: 'Failed to upload image',
+        variant: 'destructive',
+      });
+    } finally {
+      setIsUploading(false);
+    }
+  };
+
   return (
     <Dialog open={isOpen} onOpenChange={onClose}>
       <DialogContent className="max-w-4xl max-h-[80vh] overflow-y-auto">
@@ -233,14 +272,50 @@ export default function BlogPostModal({ isOpen, onClose, post, mode }: BlogPostM
           </div>
 
           <div className="space-y-2">
+            <Label htmlFor="coverImage">Cover Image</Label>
+            <div className="flex gap-2">
+              <Input
+                id="coverImage"
+                value={formData.coverImage}
+                onChange={(e) => handleChange('coverImage', e.target.value)}
+                placeholder="Enter image URL or upload"
+                className="flex-1"
+              />
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept="image/*"
+                onChange={handleImageUpload}
+                className="hidden"
+              />
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => fileInputRef.current?.click()}
+                disabled={isUploading}
+              >
+                <Upload className="h-4 w-4 mr-2" />
+                {isUploading ? 'Uploading...' : 'Upload'}
+              </Button>
+            </div>
+            {formData.coverImage && (
+              <div className="mt-2">
+                <img
+                  src={formData.coverImage}
+                  alt="Cover preview"
+                  className="w-full max-w-md h-32 object-cover rounded-lg border"
+                />
+              </div>
+            )}
+          </div>
+
+          <div className="space-y-2">
             <Label htmlFor="content">Content *</Label>
-            <Textarea
-              id="content"
-              value={formData.content}
-              onChange={(e) => handleChange('content', e.target.value)}
-              placeholder="Enter blog post content (supports Markdown)"
-              rows={10}
-              required
+            <RichTextEditor
+              content={formData.content}
+              onChange={(content) => handleChange('content', content)}
+              placeholder="Start writing your blog post..."
+              className="min-h-[400px]"
             />
           </div>
 

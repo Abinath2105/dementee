@@ -18,6 +18,7 @@ import { LandingPage } from "@/pages/landing-page";
 import { RegisterPage } from "@/pages/register-page";
 import { VerifyPage } from "@/pages/verify-page";
 import ProfilePage from "@/pages/profile-page";
+import BlogPostPage from "@/pages/blog-post-page";
 import NotFound from "@/pages/not-found";
 
 function Router() {
@@ -34,6 +35,7 @@ function Router() {
       <ProtectedRoute path="/admin/student/:id" component={StudentDetail} />
       <ProtectedRoute path="/category/:slug" component={CategoryPage} />
       <ProtectedRoute path="/video/:videoId" component={VideoPage} />
+      <Route path="/blog/:slug" component={BlogPostPage} />
       <Route path="/auth" component={LandingPage} />
       <Route path="/admin/login" component={AdminLogin} />
       <Route path="/invite/:token" component={InvitationPage} />
