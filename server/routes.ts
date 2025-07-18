@@ -8,6 +8,7 @@ import { storage } from "./storage";
 import { setupAuth } from "./auth";
 import { fetchYouTubeVideoInfo } from "./services/youtube";
 import { insertVideoSchema, insertCategorySchema, insertUserInvitationSchema, insertAppSettingsSchema, insertUserCategoryAccessSchema, insertBroadcastNotificationSchema, insertEventSchema, insertEventRegistrationSchema, insertBlogPostSchema, insertUserProfileSchema } from "@shared/schema";
+import { extractDeviceInfo, getLocationFromIP } from "./utils/device-detection.js";
 
 export function registerRoutes(app: Express): Server {
   setupAuth(app);
@@ -481,17 +482,25 @@ export function registerRoutes(app: Express): Server {
         return res.status(401).json({ message: "Authentication required" });
       }
 
-      const { videoId, watchDuration, progressPercentage, deviceInfo } = req.body;
+      const { videoId, watchDuration, progressPercentage } = req.body;
       const userId = req.user!.id;
-      const ipAddress = req.ip || req.connection.remoteAddress || 'unknown';
+
+      // Extract comprehensive device information
+      const deviceData = extractDeviceInfo(req);
+      const locationData = await getLocationFromIP(deviceData.ipAddress);
 
       await storage.recordWatchHistory({
         userId,
         videoId,
         watchDuration,
         progressPercentage,
-        deviceInfo,
-        ipAddress,
+        deviceInfo: deviceData.deviceInfo,
+        deviceType: deviceData.deviceType,
+        browser: deviceData.browser,
+        os: deviceData.os,
+        ipAddress: deviceData.ipAddress,
+        country: locationData.country,
+        city: locationData.city,
       });
       res.json({ success: true });
     } catch (error) {

@@ -186,8 +186,13 @@ export const watchHistory = pgTable("watch_history", {
   watchedAt: timestamp("watched_at").defaultNow().notNull(),
   watchDuration: integer("watch_duration").notNull().default(0), // in seconds
   progressPercentage: integer("progress_percentage").notNull().default(0), // 0-100
-  deviceInfo: text("device_info"), // User agent or device type
+  deviceInfo: text("device_info"), // User agent string
+  deviceType: text("device_type"), // mobile, tablet, desktop
+  browser: text("browser"), // Chrome, Firefox, Safari, etc.
+  os: text("os"), // Windows, macOS, iOS, Android, etc.
   ipAddress: text("ip_address"), // For tracking device/location
+  country: text("country"), // Derived from IP
+  city: text("city"), // Derived from IP
 });
 
 // Video ratings for student feedback
@@ -220,8 +225,15 @@ export const userSessions = pgTable("user_sessions", {
   userId: integer("user_id").references(() => users.id).notNull(),
   sessionStart: timestamp("session_start").defaultNow().notNull(),
   sessionEnd: timestamp("session_end"),
-  deviceInfo: text("device_info"),
+  deviceInfo: text("device_info"), // User agent string
+  deviceType: text("device_type"), // mobile, tablet, desktop
+  browser: text("browser"), // Chrome, Firefox, Safari, etc.
+  os: text("os"), // Windows, macOS, iOS, Android, etc.
   ipAddress: text("ip_address"),
+  country: text("country"), // Derived from IP
+  city: text("city"), // Derived from IP
+  timezone: text("timezone"), // User's timezone
+  screenResolution: text("screen_resolution"), // e.g., "1920x1080"
   totalWatchTime: integer("total_watch_time").notNull().default(0), // in seconds
 });
 

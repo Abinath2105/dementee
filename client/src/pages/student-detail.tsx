@@ -22,7 +22,10 @@ import {
   User as UserIcon,
   Mail,
   Monitor,
-  MapPin
+  MapPin,
+  Smartphone,
+  Tablet,
+  Globe
 } from "lucide-react";
 import { type VideoWithCategory, type UserLearningStats, type User } from "@shared/schema";
 
@@ -268,11 +271,12 @@ export function StudentDetail() {
 
         {/* Detailed Analytics */}
         <Tabs defaultValue="progress" className="space-y-6">
-          <TabsList className="grid w-full grid-cols-5">
+          <TabsList className="grid w-full grid-cols-6">
             <TabsTrigger value="progress">Progress</TabsTrigger>
             <TabsTrigger value="completions">Completions</TabsTrigger>
             <TabsTrigger value="history">Watch History</TabsTrigger>
             <TabsTrigger value="sessions">Sessions</TabsTrigger>
+            <TabsTrigger value="devices">Device Analytics</TabsTrigger>
             <TabsTrigger value="bookmarks">Bookmarks</TabsTrigger>
           </TabsList>
 
@@ -373,9 +377,33 @@ export function StudentDetail() {
                         <div className="flex-1">
                           <h4 className="font-medium">{entry.video?.title || 'Unknown Video'}</h4>
                           <p className="text-sm text-gray-600">{entry.video?.category?.name || 'No category'}</p>
-                          <p className="text-xs text-gray-500">
-                            {formatDate(entry.createdAt)} • {entry.deviceInfo} • {entry.ipAddress}
-                          </p>
+                          <div className="text-xs text-gray-500 space-y-1">
+                            <p>{formatDate(entry.watchedAt)}</p>
+                            <div className="flex items-center gap-2 flex-wrap">
+                              {entry.deviceType && (
+                                <Badge variant="outline" className="text-xs">
+                                  {entry.deviceType === 'mobile' ? '📱' : entry.deviceType === 'tablet' ? '📱' : '💻'} {entry.deviceType}
+                                </Badge>
+                              )}
+                              {entry.browser && (
+                                <Badge variant="outline" className="text-xs">
+                                  {entry.browser}
+                                </Badge>
+                              )}
+                              {entry.os && (
+                                <Badge variant="outline" className="text-xs">
+                                  {entry.os}
+                                </Badge>
+                              )}
+                              {entry.country && entry.country !== 'Unknown' && (
+                                <Badge variant="outline" className="text-xs">
+                                  <MapPin className="h-3 w-3 mr-1" />
+                                  {entry.city && entry.city !== 'Unknown' ? `${entry.city}, ${entry.country}` : entry.country}
+                                </Badge>
+                              )}
+                            </div>
+                            <p className="text-xs text-gray-400">IP: {entry.ipAddress}</p>
+                          </div>
                         </div>
                         <div className="text-right">
                           <p className="text-sm font-medium">{formatDuration(entry.watchDuration)}</p>
@@ -414,13 +442,33 @@ export function StudentDetail() {
                             <Monitor className="h-6 w-6 text-blue-600" />
                           </div>
                           <div>
-                            <h4 className="font-medium">{formatDate(session.startTime)}</h4>
-                            <p className="text-sm text-gray-600">
-                              {session.deviceInfo || 'Unknown device'}
-                            </p>
-                            <p className="text-xs text-gray-500">
-                              IP: {session.ipAddress}
-                            </p>
+                            <h4 className="font-medium">{formatDate(session.sessionStart)}</h4>
+                            <div className="text-sm text-gray-600 space-y-1">
+                              <div className="flex items-center gap-2 flex-wrap">
+                                {session.deviceType && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {session.deviceType === 'mobile' ? '📱' : session.deviceType === 'tablet' ? '📱' : '💻'} {session.deviceType}
+                                  </Badge>
+                                )}
+                                {session.browser && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {session.browser}
+                                  </Badge>
+                                )}
+                                {session.os && (
+                                  <Badge variant="outline" className="text-xs">
+                                    {session.os}
+                                  </Badge>
+                                )}
+                              </div>
+                              {session.country && session.country !== 'Unknown' && (
+                                <div className="flex items-center gap-1 text-xs text-gray-500">
+                                  <MapPin className="h-3 w-3" />
+                                  {session.city && session.city !== 'Unknown' ? `${session.city}, ${session.country}` : session.country}
+                                </div>
+                              )}
+                              <p className="text-xs text-gray-400">IP: {session.ipAddress}</p>
+                            </div>
                           </div>
                         </div>
                         <div className="text-right">
@@ -435,6 +483,172 @@ export function StudentDetail() {
                 )}
               </CardContent>
             </Card>
+          </TabsContent>
+
+          <TabsContent value="devices" className="space-y-6">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              {/* Device Types Analytics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Monitor className="h-5 w-5" />
+                    Device Usage
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {watchHistory.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Monitor className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No device data available</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {/* Calculate device usage stats */}
+                      {(() => {
+                        const deviceStats = watchHistory.reduce((acc: any, entry: any) => {
+                          const deviceType = entry.deviceType || 'Unknown';
+                          acc[deviceType] = (acc[deviceType] || 0) + 1;
+                          return acc;
+                        }, {});
+                        
+                        const total = Object.values(deviceStats).reduce((sum: any, count: any) => sum + count, 0);
+                        
+                        return Object.entries(deviceStats).map(([device, count]: [string, any]) => (
+                          <div key={device} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 bg-blue-100 rounded-full flex items-center justify-center">
+                                {device === 'mobile' ? (
+                                  <Smartphone className="h-5 w-5 text-blue-600" />
+                                ) : device === 'tablet' ? (
+                                  <Tablet className="h-5 w-5 text-blue-600" />
+                                ) : (
+                                  <Monitor className="h-5 w-5 text-blue-600" />
+                                )}
+                              </div>
+                              <div>
+                                <p className="font-medium capitalize">{device}</p>
+                                <p className="text-sm text-gray-600">{count} sessions</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium">{Math.round((count / total) * 100)}%</p>
+                              <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
+                                <div 
+                                  className="bg-blue-600 h-2 rounded-full" 
+                                  style={{ width: `${(count / total) * 100}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Browser Analytics */}
+              <Card>
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <Globe className="h-5 w-5" />
+                    Browser Usage
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {watchHistory.length === 0 ? (
+                    <div className="text-center py-8">
+                      <Globe className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No browser data available</p>
+                    </div>
+                  ) : (
+                    <div className="space-y-4">
+                      {(() => {
+                        const browserStats = watchHistory.reduce((acc: any, entry: any) => {
+                          const browser = entry.browser || 'Unknown';
+                          acc[browser] = (acc[browser] || 0) + 1;
+                          return acc;
+                        }, {});
+                        
+                        const total = Object.values(browserStats).reduce((sum: any, count: any) => sum + count, 0);
+                        
+                        return Object.entries(browserStats).map(([browser, count]: [string, any]) => (
+                          <div key={browser} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 bg-green-100 rounded-full flex items-center justify-center">
+                                <Globe className="h-5 w-5 text-green-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium">{browser}</p>
+                                <p className="text-sm text-gray-600">{count} sessions</p>
+                              </div>
+                            </div>
+                            <div className="text-right">
+                              <p className="font-medium">{Math.round((count / total) * 100)}%</p>
+                              <div className="w-20 bg-gray-200 rounded-full h-2 mt-1">
+                                <div 
+                                  className="bg-green-600 h-2 rounded-full" 
+                                  style={{ width: `${(count / total) * 100}%` }}
+                                ></div>
+                              </div>
+                            </div>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+
+              {/* Location Analytics */}
+              <Card className="md:col-span-2">
+                <CardHeader>
+                  <CardTitle className="flex items-center gap-2">
+                    <MapPin className="h-5 w-5" />
+                    Location Analytics
+                  </CardTitle>
+                </CardHeader>
+                <CardContent>
+                  {watchHistory.length === 0 ? (
+                    <div className="text-center py-8">
+                      <MapPin className="h-12 w-12 text-gray-400 mx-auto mb-4" />
+                      <p className="text-gray-500">No location data available</p>
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                      {(() => {
+                        const locationStats = watchHistory.reduce((acc: any, entry: any) => {
+                          if (entry.country && entry.country !== 'Unknown') {
+                            const location = entry.city && entry.city !== 'Unknown' 
+                              ? `${entry.city}, ${entry.country}` 
+                              : entry.country;
+                            acc[location] = (acc[location] || 0) + 1;
+                          }
+                          return acc;
+                        }, {});
+                        
+                        return Object.entries(locationStats).map(([location, count]: [string, any]) => (
+                          <div key={location} className="flex items-center justify-between p-3 border rounded-lg">
+                            <div className="flex items-center gap-3">
+                              <div className="h-10 w-10 bg-purple-100 rounded-full flex items-center justify-center">
+                                <MapPin className="h-5 w-5 text-purple-600" />
+                              </div>
+                              <div>
+                                <p className="font-medium">{location}</p>
+                                <p className="text-sm text-gray-600">{count} sessions</p>
+                              </div>
+                            </div>
+                            <Badge variant="outline">
+                              {count} visits
+                            </Badge>
+                          </div>
+                        ));
+                      })()}
+                    </div>
+                  )}
+                </CardContent>
+              </Card>
+            </div>
           </TabsContent>
 
           <TabsContent value="bookmarks" className="space-y-6">
