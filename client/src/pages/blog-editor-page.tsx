@@ -165,24 +165,13 @@ export default function BlogEditorPage() {
     },
   });
 
-  // Debounced auto-save function
+  // Debounced auto-save function - COMPLETELY DISABLED
   const debouncedAutoSave = useCallback((data: any) => {
-    if (autoSaveTimeoutRef.current) {
-      clearTimeout(autoSaveTimeoutRef.current);
-    }
-    
-    autoSaveTimeoutRef.current = setTimeout(() => {
-      if (autoSaveEnabled && isEdit && data.title && data.content) {
-        const submitData = {
-          ...data,
-          slug: data.slug || generateSlug(data.title),
-          categoryId: data.categoryId && data.categoryId !== 'none' ? parseInt(data.categoryId) : null,
-          publishedAt: data.publishedAt ? new Date(data.publishedAt).toISOString() : new Date().toISOString(),
-        };
-        autoSaveMutation.mutate(submitData);
-      }
-    }, 2000); // 2 second delay
-  }, [autoSaveEnabled, isEdit, autoSaveMutation]);
+    // AUTO-SAVE COMPLETELY DISABLED TO PREVENT UNWANTED SAVES
+    // All saving is now manual only via the "Update" or "Publish" button
+    console.log('Auto-save disabled - no automatic saving will occur');
+    return;
+  }, []);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -223,10 +212,8 @@ export default function BlogEditorPage() {
 
     setFormData(newFormData);
 
-    // Trigger debounced auto-save only if enabled
-    if (autoSaveEnabled && isEdit) {
-      debouncedAutoSave(newFormData);
-    }
+    // AUTO-SAVE COMPLETELY DISABLED
+    // No automatic saving will occur - only manual saves via buttons
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -416,7 +403,16 @@ export default function BlogEditorPage() {
                 <Label className="text-base font-medium">Content *</Label>
                 <RichTextEditor
                   content={formData.content}
-                  onChange={(content) => handleChange('content', content)}
+                  onChange={(content) => {
+                    // Direct state update with NO auto-save whatsoever
+                    setFormData(prev => ({
+                      ...prev,
+                      content: content
+                    }));
+                    
+                    // AUTO-SAVE COMPLETELY DISABLED
+                    // No automatic saving - only manual saves via buttons
+                  }}
                   placeholder="Start writing your blog post..."
                   className="min-h-[500px]"
                 />
