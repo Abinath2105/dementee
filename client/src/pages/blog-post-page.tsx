@@ -43,7 +43,10 @@ export default function BlogPostPage() {
         }
         throw new Error('Failed to fetch blog post');
       }
-      return response.json();
+      const data = await response.json();
+      console.log('Blog post data received:', data);
+      console.log('Cover image field:', data.coverImage);
+      return data;
     },
     enabled: !!slug,
   });
@@ -218,6 +221,13 @@ export default function BlogPostPage() {
                 src={post.coverImage}
                 alt={post.title}
                 className="w-full rounded-lg shadow-lg"
+                onError={(e) => {
+                  console.error('Cover image failed to load:', post.coverImage);
+                  e.currentTarget.style.display = 'none';
+                }}
+                onLoad={() => {
+                  console.log('Cover image loaded successfully:', post.coverImage);
+                }}
               />
             </div>
           )}
