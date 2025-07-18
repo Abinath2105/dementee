@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useParams, useLocation } from 'wouter';
 import { useMutation, useQueryClient, useQuery } from '@tanstack/react-query';
 import { Button } from '@/components/ui/button';
@@ -21,6 +21,10 @@ export default function BlogEditorPage() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [isUploading, setIsUploading] = useState(false);
   const [tagInput, setTagInput] = useState('');
+  const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
+  const [lastSaved, setLastSaved] = useState<Date | null>(null);
+  const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [formData, setFormData] = useState({
     title: '',
@@ -76,6 +80,15 @@ export default function BlogEditorPage() {
     }
   }, [post, isEdit]);
 
+  // Cleanup auto-save timeout on unmount
+  useEffect(() => {
+    return () => {
+      if (autoSaveTimeoutRef.current) {
+        clearTimeout(autoSaveTimeoutRef.current);
+      }
+    };
+  }, []);
+
   const generateSlug = (title: string) => {
     return title
       .toLowerCase()
@@ -108,13 +121,19 @@ export default function BlogEditorPage() {
     mutationFn: (data: any) => apiRequest('PUT', `/api/admin/blog/${id}`, data),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['/api/admin/blog'] });
-      toast({
-        title: 'Success',
-        description: 'Blog post updated successfully',
-      });
-      navigate('/admin');
+      setLastSaved(new Date());
+      setAutoSaveStatus('saved');
+      // Only show success toast for manual saves (when navigating)
+      if (!autoSaveEnabled || formData.status === 'published') {
+        toast({
+          title: 'Success',
+          description: 'Blog post updated successfully',
+        });
+        navigate('/admin');
+      }
     },
     onError: (error: any) => {
+      setAutoSaveStatus('error');
       toast({
         title: 'Error',
         description: error.message || 'Failed to update blog post',
@@ -122,6 +141,48 @@ export default function BlogEditorPage() {
       });
     },
   });
+
+  // Auto-save mutation for background saves
+  const autoSaveMutation = useMutation({
+    mutationFn: (data: any) => apiRequest('PUT', `/api/admin/blog/${id}`, data),
+    onMutate: () => {
+      setAutoSaveStatus('saving');
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ['/api/admin/blog'] });
+      setLastSaved(new Date());
+      setAutoSaveStatus('saved');
+      // Hide the "saved" status after 3 seconds
+      setTimeout(() => {
+        setAutoSaveStatus('idle');
+      }, 3000);
+    },
+    onError: () => {
+      setAutoSaveStatus('error');
+      setTimeout(() => {
+        setAutoSaveStatus('idle');
+      }, 3000);
+    },
+  });
+
+  // Debounced auto-save function
+  const debouncedAutoSave = useCallback((data: any) => {
+    if (autoSaveTimeoutRef.current) {
+      clearTimeout(autoSaveTimeoutRef.current);
+    }
+    
+    autoSaveTimeoutRef.current = setTimeout(() => {
+      if (autoSaveEnabled && isEdit && data.title && data.content) {
+        const submitData = {
+          ...data,
+          slug: data.slug || generateSlug(data.title),
+          categoryId: data.categoryId && data.categoryId !== 'none' ? parseInt(data.categoryId) : null,
+          publishedAt: data.publishedAt ? new Date(data.publishedAt).toISOString() : new Date().toISOString(),
+        };
+        autoSaveMutation.mutate(submitData);
+      }
+    }, 2000); // 2 second delay
+  }, [autoSaveEnabled, isEdit, autoSaveMutation]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -150,17 +211,21 @@ export default function BlogEditorPage() {
   };
 
   const handleChange = (field: string, value: any) => {
-    setFormData(prev => ({
-      ...prev,
+    const newFormData = {
+      ...formData,
       [field]: value,
-    }));
+    };
 
     // Auto-generate slug when title changes
     if (field === 'title' && value) {
-      setFormData(prev => ({
-        ...prev,
-        slug: generateSlug(value),
-      }));
+      newFormData.slug = generateSlug(value);
+    }
+
+    setFormData(newFormData);
+
+    // Trigger debounced auto-save only if enabled
+    if (autoSaveEnabled && isEdit) {
+      debouncedAutoSave(newFormData);
     }
   };
 
@@ -270,6 +335,32 @@ export default function BlogEditorPage() {
               </h1>
             </div>
             <div className="flex items-center space-x-3">
+              {/* Auto-save controls - only show for existing posts */}
+              {isEdit && (
+                <div className="flex items-center space-x-2 text-sm">
+                  <Switch
+                    checked={autoSaveEnabled}
+                    onCheckedChange={setAutoSaveEnabled}
+                    className="data-[state=checked]:bg-green-600"
+                  />
+                  <span className="text-gray-600">Auto-save</span>
+                  {autoSaveStatus === 'saving' && (
+                    <span className="text-blue-600 animate-pulse">Saving...</span>
+                  )}
+                  {autoSaveStatus === 'saved' && (
+                    <span className="text-green-600">✓ Saved</span>
+                  )}
+                  {autoSaveStatus === 'error' && (
+                    <span className="text-red-600">Error</span>
+                  )}
+                  {lastSaved && autoSaveStatus === 'idle' && (
+                    <span className="text-gray-500">
+                      Last saved: {lastSaved.toLocaleTimeString()}
+                    </span>
+                  )}
+                </div>
+              )}
+              
               <Button
                 variant="outline"
                 onClick={handlePreview}
@@ -280,7 +371,7 @@ export default function BlogEditorPage() {
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={createMutation.isPending || updateMutation.isPending}
+                disabled={createMutation.isPending || updateMutation.isPending || autoSaveMutation.isPending}
               >
                 <Save className="h-4 w-4 mr-2" />
                 {isEdit ? 'Update' : 'Publish'}
