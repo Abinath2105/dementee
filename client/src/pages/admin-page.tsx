@@ -1010,6 +1010,9 @@ export default function AdminPage() {
                                 }}>
                                   <KeyRound className="h-4 w-4" />
                                 </Button>
+                                <Button size="sm" variant="outline" onClick={() => navigate(`/admin/student/${userItem.id}`)}>
+                                  <Eye className="h-4 w-4" />
+                                </Button>
                               </div>
                             </TableCell>
                           </TableRow>
