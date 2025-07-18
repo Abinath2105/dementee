@@ -176,6 +176,11 @@ export default function BlogEditorPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // DEBUGGING: Log all form submissions to identify unwanted submissions
+    console.log('handleSubmit called - Form submission triggered');
+    console.log('Form data:', formData);
+    console.log('Is edit mode:', isEdit);
+    
     if (!formData.title || !formData.content) {
       toast({
         title: 'Error',
@@ -191,6 +196,8 @@ export default function BlogEditorPage() {
       categoryId: formData.categoryId && formData.categoryId !== 'none' ? parseInt(formData.categoryId) : null,
       publishedAt: formData.publishedAt ? new Date(formData.publishedAt).toISOString() : new Date().toISOString(),
     };
+
+    console.log('About to submit data:', submitData);
 
     if (isEdit) {
       updateMutation.mutate(submitData);
@@ -235,7 +242,15 @@ export default function BlogEditorPage() {
       }
 
       const data = await response.json();
-      handleChange('coverImage', data.url);
+      
+      // DEBUGGING: Check if this is triggering auto-save
+      console.log('Image uploaded, updating coverImage without triggering auto-save');
+      
+      // Direct state update without triggering handleChange to avoid any side effects
+      setFormData(prev => ({
+        ...prev,
+        coverImage: data.url
+      }));
       
       toast({
         title: 'Success',
@@ -370,7 +385,13 @@ export default function BlogEditorPage() {
 
       {/* Main Content */}
       <main className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
-        <form onSubmit={handleSubmit} className="space-y-8">
+        <form onSubmit={handleSubmit} className="space-y-8" onKeyDown={(e) => {
+          if (e.key === 'Enter' && e.target.tagName === 'INPUT') {
+            // Prevent form submission on Enter key in input fields
+            console.log('Enter key pressed in input, preventing form submission');
+            e.preventDefault();
+          }
+        }}>
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
             {/* Main Editor */}
             <div className="lg:col-span-2 space-y-6">
