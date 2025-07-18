@@ -101,15 +101,33 @@ export default function RichTextEditor({ content, onChange, placeholder = "Start
         types: ['heading', 'paragraph'],
       }),
     ],
-    content,
+    content: content || '<p></p>', // Ensure valid initial content
     onUpdate: ({ editor }) => {
       // TEMPORARILY DISABLED TO PREVENT AUTO-SAVES
       // No onChange calls until we identify the root cause
       console.log('Editor content changed but onChange disabled to prevent auto-saves');
     },
+    onCreate: ({ editor }) => {
+      // Ensure editor starts with valid content
+      if (!editor.getHTML() || editor.getHTML() === '') {
+        editor.commands.setContent('<p></p>');
+      }
+    },
+    onError: (error) => {
+      console.error('TipTap editor error:', error);
+      // Prevent error from propagating and causing issues
+    },
     editorProps: {
       attributes: {
         class: 'prose prose-lg max-w-none focus:outline-none min-h-[400px] p-6 bg-white border rounded-lg',
+      },
+      handleKeyDown: (view, event) => {
+        // Prevent Enter key from causing issues
+        if (event.key === 'Enter' && event.ctrlKey) {
+          event.preventDefault();
+          return true;
+        }
+        return false;
       },
     },
   });
