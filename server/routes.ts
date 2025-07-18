@@ -1943,6 +1943,29 @@ Message: ${message}
     }
   });
 
+  // User Role Management API
+  app.put("/api/admin/users/:id/role", async (req, res) => {
+    if (!req.isAuthenticated() || !req.user?.isAdmin) {
+      return res.status(403).json({ message: "Admin access required" });
+    }
+
+    try {
+      const userId = parseInt(req.params.id);
+      const { isAdmin } = req.body;
+      
+      // Prevent self role change
+      if (userId === req.user.id) {
+        return res.status(400).json({ message: "Cannot change your own role" });
+      }
+
+      const updatedUser = await storage.updateUserRole(userId, isAdmin);
+      res.json(updatedUser);
+    } catch (error) {
+      console.error("Update user role error:", error);
+      res.status(500).json({ message: "Failed to update user role" });
+    }
+  });
+
   // User Profile API
   app.get("/api/user/profile", async (req, res) => {
     if (!req.isAuthenticated()) {

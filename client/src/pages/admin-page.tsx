@@ -581,6 +581,31 @@ export default function AdminPage() {
     setShowAssignCategory(true);
   };
 
+  const handleRoleChange = useMutation({
+    mutationFn: async ({ userId, isAdmin }: { userId: number; isAdmin: boolean }) => {
+      const response = await apiRequest('PUT', `/api/admin/users/${userId}/role`, { isAdmin });
+      return response;
+    },
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["/api/admin/users"] });
+      toast({
+        title: "Success",
+        description: "User role updated successfully",
+      });
+    },
+    onError: (error: any) => {
+      toast({
+        title: "Error",
+        description: error.message || "Failed to update user role",
+        variant: "destructive",
+      });
+    },
+  });
+
+  const handleRoleChangeAction = (userId: number, isAdmin: boolean) => {
+    handleRoleChange.mutate({ userId, isAdmin });
+  };
+
   const handleCloseAssignCategory = () => {
     setSelectedUser(null);
     setShowAssignCategory(false);
@@ -934,6 +959,7 @@ export default function AdminPage() {
                         <TableRow>
                           <TableHead>User</TableHead>
                           <TableHead>Email</TableHead>
+                          <TableHead>Role</TableHead>
                           <TableHead>Status</TableHead>
                           <TableHead>Actions</TableHead>
                         </TableRow>
@@ -946,6 +972,28 @@ export default function AdminPage() {
                               <div className="text-sm text-gray-500">@{userItem.username}</div>
                             </TableCell>
                             <TableCell>{userItem.email}</TableCell>
+                            <TableCell>
+                              <div className="flex items-center space-x-2">
+                                <Switch
+                                  checked={userItem.isAdmin}
+                                  onCheckedChange={(checked) => handleRoleChangeAction(userItem.id, checked)}
+                                  disabled={userItem.id === user?.id} // Prevent self role change
+                                />
+                                <span className="text-sm">
+                                  {userItem.isAdmin ? (
+                                    <Badge variant="default">
+                                      <Shield className="h-3 w-3 mr-1" />
+                                      Admin
+                                    </Badge>
+                                  ) : (
+                                    <Badge variant="secondary">
+                                      <Users className="h-3 w-3 mr-1" />
+                                      Student
+                                    </Badge>
+                                  )}
+                                </span>
+                              </div>
+                            </TableCell>
                             <TableCell>
                               <Badge variant={userItem.isVerified ? "default" : "secondary"}>
                                 {userItem.isVerified ? "Verified" : "Unverified"}

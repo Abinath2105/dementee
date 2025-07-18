@@ -1547,6 +1547,14 @@ export class DatabaseStorage implements IStorage {
   async deleteUserProfile(userId: number): Promise<void> {
     await db.delete(userProfiles).where(eq(userProfiles.userId, userId));
   }
+
+  async updateUserRole(id: number, isAdmin: boolean): Promise<User> {
+    const [updatedUser] = await db.update(users)
+      .set({ isAdmin, updatedAt: new Date() })
+      .where(eq(users.id, id))
+      .returning();
+    return updatedUser;
+  }
 }
 
 export const storage = new DatabaseStorage();
