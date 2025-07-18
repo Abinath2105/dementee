@@ -24,6 +24,7 @@ export default function BlogEditorPage() {
   const [autoSaveEnabled, setAutoSaveEnabled] = useState(false);
   const [lastSaved, setLastSaved] = useState<Date | null>(null);
   const [autoSaveStatus, setAutoSaveStatus] = useState<'idle' | 'saving' | 'saved' | 'error'>('idle');
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const autoSaveTimeoutRef = useRef<NodeJS.Timeout | null>(null);
 
   const [formData, setFormData] = useState({
@@ -101,6 +102,7 @@ export default function BlogEditorPage() {
   const createMutation = useMutation({
     mutationFn: (data: any) => apiRequest('POST', '/api/admin/blog', data),
     onSuccess: () => {
+      setIsSubmitting(false);
       queryClient.invalidateQueries({ queryKey: ['/api/admin/blog'] });
       toast({
         title: 'Success',
@@ -109,6 +111,7 @@ export default function BlogEditorPage() {
       navigate('/admin');
     },
     onError: (error: any) => {
+      setIsSubmitting(false);
       toast({
         title: 'Error',
         description: error.message || 'Failed to create blog post',
@@ -120,6 +123,7 @@ export default function BlogEditorPage() {
   const updateMutation = useMutation({
     mutationFn: (data: any) => apiRequest('PUT', `/api/admin/blog/${id}`, data),
     onSuccess: () => {
+      setIsSubmitting(false);
       queryClient.invalidateQueries({ queryKey: ['/api/admin/blog'] });
       setLastSaved(new Date());
       setAutoSaveStatus('saved');
@@ -133,6 +137,7 @@ export default function BlogEditorPage() {
       }
     },
     onError: (error: any) => {
+      setIsSubmitting(false);
       setAutoSaveStatus('error');
       toast({
         title: 'Error',
@@ -176,6 +181,14 @@ export default function BlogEditorPage() {
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Prevent double submissions
+    if (isSubmitting) {
+      console.log('Form submission already in progress, ignoring duplicate submission');
+      return;
+    }
+    
+    setIsSubmitting(true);
+    
     // DEBUGGING: Log all form submissions to identify unwanted submissions
     console.log('handleSubmit called - Form submission triggered');
     console.log('Form data:', formData);
@@ -189,6 +202,7 @@ export default function BlogEditorPage() {
     console.log('Content length:', formData.content?.length || 0);
     
     if (!formData.title || formData.title.trim() === '') {
+      setIsSubmitting(false);
       toast({
         title: 'Error',
         description: 'Title is required',
@@ -198,6 +212,7 @@ export default function BlogEditorPage() {
     }
     
     if (!formData.content || formData.content.trim() === '' || formData.content === '<p></p>') {
+      setIsSubmitting(false);
       toast({
         title: 'Error',
         description: 'Content is required',
@@ -223,6 +238,8 @@ export default function BlogEditorPage() {
   };
 
   const handleChange = (field: string, value: any) => {
+    console.log(`handleChange called for field: ${field}`);
+    
     const newFormData = {
       ...formData,
       [field]: value,
@@ -237,6 +254,7 @@ export default function BlogEditorPage() {
 
     // AUTO-SAVE COMPLETELY DISABLED
     // No automatic saving will occur - only manual saves via buttons
+    console.log('Field updated, no auto-save triggered');
   };
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -389,10 +407,10 @@ export default function BlogEditorPage() {
               </Button>
               <Button
                 onClick={handleSubmit}
-                disabled={createMutation.isPending || updateMutation.isPending || autoSaveMutation.isPending}
+                disabled={createMutation.isPending || updateMutation.isPending || autoSaveMutation.isPending || isSubmitting}
               >
                 <Save className="h-4 w-4 mr-2" />
-                {isEdit ? 'Update' : 'Publish'}
+                {isSubmitting ? 'Submitting...' : (isEdit ? 'Update' : 'Publish')}
               </Button>
             </div>
           </div>
@@ -442,6 +460,7 @@ export default function BlogEditorPage() {
                   content={formData.content}
                   onChange={(content) => {
                     // Direct state update with NO auto-save whatsoever
+                    console.log('Rich Text Editor content changed, updating state only');
                     setFormData(prev => ({
                       ...prev,
                       content: content
@@ -449,6 +468,7 @@ export default function BlogEditorPage() {
                     
                     // AUTO-SAVE COMPLETELY DISABLED
                     // No automatic saving - only manual saves via buttons
+                    console.log('Content updated without triggering any saves');
                   }}
                   placeholder="Start writing your blog post..."
                   className="min-h-[500px]"

@@ -1808,8 +1808,9 @@ Message: ${message}
         try {
           const timestampSlug = `${req.body.slug}-${Date.now()}`;
           const blogDataWithTimestamp = {
-            ...blogData,
-            slug: timestampSlug
+            ...req.body,
+            slug: timestampSlug,
+            tags: Array.isArray(req.body.tags) ? req.body.tags : []
           };
           const validatedData = insertBlogPostSchema.parse(blogDataWithTimestamp);
           const post = await storage.createBlogPost(validatedData);
