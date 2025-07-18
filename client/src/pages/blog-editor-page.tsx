@@ -181,10 +181,26 @@ export default function BlogEditorPage() {
     console.log('Form data:', formData);
     console.log('Is edit mode:', isEdit);
     
-    if (!formData.title || !formData.content) {
+    // Enhanced validation with detailed logging
+    console.log('Validating form data:');
+    console.log('Title:', formData.title);
+    console.log('Content:', formData.content);
+    console.log('Title length:', formData.title?.length || 0);
+    console.log('Content length:', formData.content?.length || 0);
+    
+    if (!formData.title || formData.title.trim() === '') {
       toast({
         title: 'Error',
-        description: 'Title and content are required',
+        description: 'Title is required',
+        variant: 'destructive',
+      });
+      return;
+    }
+    
+    if (!formData.content || formData.content.trim() === '' || formData.content === '<p></p>') {
+      toast({
+        title: 'Error',
+        description: 'Content is required',
         variant: 'destructive',
       });
       return;

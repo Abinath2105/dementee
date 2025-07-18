@@ -103,9 +103,10 @@ export default function RichTextEditor({ content, onChange, placeholder = "Start
     ],
     content: content || '<p></p>', // Ensure valid initial content
     onUpdate: ({ editor }) => {
-      // TEMPORARILY DISABLED TO PREVENT AUTO-SAVES
-      // No onChange calls until we identify the root cause
-      console.log('Editor content changed but onChange disabled to prevent auto-saves');
+      // Re-enabled onChange for content capture but with safeguards
+      const content = editor.getHTML();
+      console.log('Editor content changed, updating content but not triggering auto-save');
+      onChange(content);
     },
     onCreate: ({ editor }) => {
       // Ensure editor starts with valid content
