@@ -1775,11 +1775,51 @@ Message: ${message}
         blogData.tags = [];
       }
 
+      // Handle duplicate slug by adding counter suffix
+      let originalSlug = blogData.slug;
+      let finalSlug = originalSlug;
+      let counter = 1;
+      
+      while (true) {
+        try {
+          const existingPost = await storage.getBlogPostBySlug(finalSlug);
+          if (!existingPost) {
+            blogData.slug = finalSlug;
+            break;
+          }
+          // Slug exists, try with counter
+          finalSlug = `${originalSlug}-${counter}`;
+          counter++;
+        } catch (error) {
+          // If getBlogPostBySlug fails, assume slug is available
+          blogData.slug = finalSlug;
+          break;
+        }
+      }
+
       const validatedData = insertBlogPostSchema.parse(blogData);
       const post = await storage.createBlogPost(validatedData);
       res.status(201).json(post);
     } catch (error) {
       console.error("Create blog post error:", error);
+      
+      // If it's still a duplicate key error, try with timestamp
+      if (error.code === '23505' && error.constraint === 'blog_posts_slug_key') {
+        try {
+          const timestampSlug = `${req.body.slug}-${Date.now()}`;
+          const blogDataWithTimestamp = {
+            ...blogData,
+            slug: timestampSlug
+          };
+          const validatedData = insertBlogPostSchema.parse(blogDataWithTimestamp);
+          const post = await storage.createBlogPost(validatedData);
+          res.status(201).json(post);
+          return;
+        } catch (retryError) {
+          console.error("Retry blog post creation failed:", retryError);
+        }
+      }
+      
       res.status(500).json({ message: "Failed to create blog post" });
     }
   });
