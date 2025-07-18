@@ -35,7 +35,7 @@ import {
   Undo,
   Redo
 } from 'lucide-react';
-import { useState, useRef } from 'react';
+import { useState, useRef, useCallback } from 'react';
 
 interface RichTextEditorProps {
   content: string;
@@ -52,6 +52,18 @@ export default function RichTextEditor({ content, onChange, placeholder = "Start
   const [isUploading, setIsUploading] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { toast } = useToast();
+  const debounceTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+
+  // Debounced onChange to prevent rapid-fire events
+  const debouncedOnChange = useCallback((content: string) => {
+    if (debounceTimeoutRef.current) {
+      clearTimeout(debounceTimeoutRef.current);
+    }
+    
+    debounceTimeoutRef.current = setTimeout(() => {
+      onChange(content);
+    }, 300); // 300ms delay to prevent excessive calls
+  }, [onChange]);
 
   const editor = useEditor({
     extensions: [
@@ -91,7 +103,9 @@ export default function RichTextEditor({ content, onChange, placeholder = "Start
     ],
     content,
     onUpdate: ({ editor }) => {
-      onChange(editor.getHTML());
+      // TEMPORARILY DISABLED TO PREVENT AUTO-SAVES
+      // No onChange calls until we identify the root cause
+      console.log('Editor content changed but onChange disabled to prevent auto-saves');
     },
     editorProps: {
       attributes: {
