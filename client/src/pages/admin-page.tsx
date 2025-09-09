@@ -922,7 +922,7 @@ export default function AdminPage() {
                   <div className="block md:hidden space-y-4">
                     {videos.map((video) => (
                       <Card key={video.id} className="p-4">
-                        <div className="flex space-x-3">
+                        <div className="flex items-start space-x-3">
                           <img
                             src={video.thumbnailUrl || `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`}
                             alt={video.title}
@@ -933,43 +933,41 @@ export default function AdminPage() {
                             }}
                           />
                           <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-gray-900 text-sm truncate">{video.title}</h3>
+                            <h3 className="font-medium text-gray-900 text-sm truncate mb-1">{video.title}</h3>
                             <p className="text-xs text-gray-500 mb-2">YouTube ID: {video.youtubeId}</p>
-                            <div className="flex flex-wrap gap-1 mb-3">
+                            <div className="flex flex-wrap gap-1 mb-2">
                               {video.categories?.map((category, index) => (
                                 <Badge key={index} variant="secondary" className="text-xs">
                                   {category.name}
                                 </Badge>
                               ))}
                             </div>
-                            <div className="flex items-center justify-between">
-                              <div className="flex items-center space-x-1">
-                                <Eye className="h-4 w-4 text-gray-400" />
-                                <span className="text-sm text-gray-600">{video.views}</span>
-                              </div>
-                              <div className="flex space-x-2">
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => {
-                                    setEditingVideo(video);
-                                    setShowEditVideo(true);
-                                  }}
-                                  className="h-8 w-8 p-0"
-                                >
-                                  <Edit className="h-4 w-4" />
-                                </Button>
-                                <Button
-                                  variant="outline"
-                                  size="sm"
-                                  onClick={() => handleDeleteVideo(video.id)}
-                                  disabled={deleteVideoMutation.isPending}
-                                  className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:border-red-300"
-                                >
-                                  <Trash2 className="h-4 w-4" />
-                                </Button>
-                              </div>
+                            <div className="flex items-center space-x-1 mb-3">
+                              <Eye className="h-4 w-4 text-gray-400" />
+                              <span className="text-sm text-gray-600">{video.views} views</span>
                             </div>
+                          </div>
+                          <div className="flex flex-col space-y-2 ml-3">
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => {
+                                setEditingVideo(video);
+                                setShowEditVideo(true);
+                              }}
+                              className="h-8 w-8 p-0"
+                            >
+                              <Edit className="h-4 w-4" />
+                            </Button>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleDeleteVideo(video.id)}
+                              disabled={deleteVideoMutation.isPending}
+                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:border-red-300"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
                           </div>
                         </div>
                       </Card>
