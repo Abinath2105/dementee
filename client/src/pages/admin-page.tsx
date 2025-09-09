@@ -921,55 +921,66 @@ export default function AdminPage() {
                   {/* Mobile Videos View */}
                   <div className="block md:hidden space-y-4">
                     {videos.map((video) => (
-                      <Card key={video.id} className="p-4">
-                        <div className="flex items-start space-x-3">
+                      <Card key={video.id} className="hover:shadow-md transition-shadow overflow-hidden">
+                        {/* Video Thumbnail */}
+                        <div className="relative h-48 bg-gradient-to-br from-blue-500 to-purple-600">
                           <img
                             src={video.thumbnailUrl || `https://img.youtube.com/vi/${video.youtubeId}/hqdefault.jpg`}
                             alt={video.title}
-                            className="w-20 h-15 object-cover rounded flex-shrink-0"
+                            className="w-full h-full object-cover"
                             onError={(e) => {
                               const target = e.target as HTMLImageElement;
                               target.src = `https://img.youtube.com/vi/${video.youtubeId}/default.jpg`;
                             }}
                           />
-                          <div className="flex-1 min-w-0">
-                            <h3 className="font-medium text-gray-900 text-sm truncate mb-1">{video.title}</h3>
-                            <p className="text-xs text-gray-500 mb-2">YouTube ID: {video.youtubeId}</p>
-                            <div className="flex flex-wrap gap-1 mb-2">
-                              {video.categories?.map((category, index) => (
-                                <Badge key={index} variant="secondary" className="text-xs">
-                                  {category.name}
-                                </Badge>
-                              ))}
-                            </div>
-                            <div className="flex items-center space-x-1 mb-3">
-                              <Eye className="h-4 w-4 text-gray-400" />
-                              <span className="text-sm text-gray-600">{video.views} views</span>
-                            </div>
+                          <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+                          <div className="absolute top-3 right-3">
+                            <Badge variant="secondary" className="text-xs bg-black bg-opacity-70 text-white">
+                              <Eye className="h-3 w-3 mr-1" />
+                              {video.views}
+                            </Badge>
                           </div>
-                          <div className="flex flex-col space-y-2 ml-3">
-                            <Button
-                              variant="outline"
-                              size="sm"
+                        </div>
+                        
+                        <CardContent className="p-4">
+                          <h3 className="font-semibold text-gray-900 mb-2 text-lg line-clamp-2">{video.title}</h3>
+                          <p className="text-sm text-gray-600 mb-3">YouTube ID: {video.youtubeId}</p>
+                          
+                          {/* Categories */}
+                          <div className="flex flex-wrap gap-1 mb-4">
+                            {video.categories?.map((category, index) => (
+                              <Badge key={index} variant="outline" className="text-xs">
+                                {category.name}
+                              </Badge>
+                            ))}
+                          </div>
+                          
+                          {/* Action Buttons */}
+                          <div className="flex space-x-2">
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
                               onClick={() => {
                                 setEditingVideo(video);
                                 setShowEditVideo(true);
                               }}
-                              className="h-8 w-8 p-0"
+                              className="flex-1"
                             >
-                              <Edit className="h-4 w-4" />
+                              <Edit className="h-4 w-4 mr-1" />
+                              Edit
                             </Button>
-                            <Button
+                            <Button 
+                              size="sm" 
                               variant="outline"
-                              size="sm"
                               onClick={() => handleDeleteVideo(video.id)}
                               disabled={deleteVideoMutation.isPending}
-                              className="h-8 w-8 p-0 text-red-600 hover:text-red-700 hover:border-red-300"
+                              className="flex-1 text-red-600 hover:text-red-700 hover:border-red-300"
                             >
-                              <Trash2 className="h-4 w-4" />
+                              <Trash2 className="h-4 w-4 mr-1" />
+                              Delete
                             </Button>
                           </div>
-                        </div>
+                        </CardContent>
                       </Card>
                     ))}
                   </div>
