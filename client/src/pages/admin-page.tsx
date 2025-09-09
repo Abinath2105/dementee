@@ -1381,7 +1381,39 @@ export default function AdminPage() {
                     )}
                   </div>
                   
-                  <div className="overflow-x-auto">
+                  {/* Mobile Public Users View */}
+                  <div className="block md:hidden space-y-4">
+                    {filteredPublicUsers.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p>{publicUserSearchTerm ? "No users found matching your search" : "No public users found"}</p>
+                      </div>
+                    ) : (
+                      filteredPublicUsers.map((publicUser) => (
+                        <Card key={publicUser.id} className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-gray-900 text-sm">{publicUser.fullName}</h3>
+                              <p className="text-xs text-gray-500 mb-1">{publicUser.email}</p>
+                              <p className="text-xs text-gray-500">Registered: {new Date(publicUser.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="outline"
+                              onClick={() => convertPublicUserMutation.mutate(publicUser.id)}
+                              disabled={convertPublicUserMutation.isPending}
+                              className="ml-3 text-xs"
+                            >
+                              {convertPublicUserMutation.isPending ? "Converting..." : "Convert"}
+                            </Button>
+                          </div>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Desktop Public Users Table */}
+                  <div className="hidden md:block overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
