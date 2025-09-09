@@ -82,7 +82,7 @@ export default function AdminPage() {
     queryKey: ["/api/admin/users"],
   });
 
-  const { data: publicUsers = [], isLoading: publicUsersLoading } = useQuery({
+  const { data: publicUsers = [], isLoading: publicUsersLoading } = useQuery<any[]>({
     queryKey: ["/api/admin/public-users"],
   });
 
@@ -99,15 +99,15 @@ export default function AdminPage() {
   });
 
   // New feature queries
-  const { data: notifications = [] } = useQuery({
+  const { data: notifications = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/notifications"],
   });
 
-  const { data: events = [] } = useQuery({
+  const { data: events = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/events"],
   });
 
-  const { data: blogPosts = [] } = useQuery({
+  const { data: blogPosts = [] } = useQuery<any[]>({
     queryKey: ["/api/admin/blog"],
   });
 
@@ -336,9 +336,15 @@ export default function AdminPage() {
   });
 
   const handleDeleteVideo = (videoId: number) => {
-    if (confirm("Are you sure you want to delete this video?")) {
-      deleteVideoMutation.mutate(videoId);
-    }
+    const video = videos.find(v => v.id === videoId);
+    setConfirmationConfig({
+      title: "Delete Video",
+      description: `Are you sure you want to delete the video "${video?.title}"? This action cannot be undone.`,
+      confirmText: "Delete Video",
+      variant: "destructive",
+      onConfirm: () => deleteVideoMutation.mutate(videoId)
+    });
+    setShowConfirmation(true);
   };
 
   const handleAdminToggle = (userId: number, isAdmin: boolean) => {
@@ -380,75 +386,96 @@ export default function AdminPage() {
 
   // New feature handlers
   const handleDeleteNotification = async (notificationId: number) => {
-    if (confirm("Are you sure you want to delete this notification?")) {
-      try {
-        const response = await fetch(`/api/admin/notifications/${notificationId}`, {
-          method: "DELETE",
-          credentials: "include",
-        });
-        if (!response.ok) throw new Error("Failed to delete notification");
-        
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications"] });
-        toast({
-          title: "Success",
-          description: "Notification deleted successfully",
-        });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to delete notification",
-          variant: "destructive",
-        });
+    setConfirmationConfig({
+      title: "Delete Notification",
+      description: "Are you sure you want to delete this notification? This action cannot be undone.",
+      confirmText: "Delete Notification",
+      variant: "destructive",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/admin/notifications/${notificationId}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          if (!response.ok) throw new Error("Failed to delete notification");
+          
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/notifications"] });
+          toast({
+            title: "Success",
+            description: "Notification deleted successfully",
+          });
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: error instanceof Error ? error.message : "Failed to delete notification",
+            variant: "destructive",
+          });
+        }
       }
-    }
+    });
+    setShowConfirmation(true);
   };
 
   const handleDeleteEvent = async (eventId: number) => {
-    if (confirm("Are you sure you want to delete this event?")) {
-      try {
-        const response = await fetch(`/api/admin/events/${eventId}`, {
-          method: "DELETE",
-          credentials: "include",
-        });
-        if (!response.ok) throw new Error("Failed to delete event");
-        
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
-        toast({
-          title: "Success",
-          description: "Event deleted successfully",
-        });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to delete event",
-          variant: "destructive",
-        });
+    setConfirmationConfig({
+      title: "Delete Event",
+      description: "Are you sure you want to delete this event? This action cannot be undone.",
+      confirmText: "Delete Event",
+      variant: "destructive",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/admin/events/${eventId}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          if (!response.ok) throw new Error("Failed to delete event");
+          
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/events"] });
+          toast({
+            title: "Success",
+            description: "Event deleted successfully",
+          });
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: error instanceof Error ? error.message : "Failed to delete event",
+            variant: "destructive",
+          });
+        }
       }
-    }
+    });
+    setShowConfirmation(true);
   };
 
   const handleDeleteBlogPost = async (postId: number) => {
-    if (confirm("Are you sure you want to delete this blog post?")) {
-      try {
-        const response = await fetch(`/api/admin/blog/${postId}`, {
-          method: "DELETE",
-          credentials: "include",
-        });
-        if (!response.ok) throw new Error("Failed to delete blog post");
-        
-        queryClient.invalidateQueries({ queryKey: ["/api/admin/blog"] });
-        toast({
-          title: "Success",
-          description: "Blog post deleted successfully",
-        });
-      } catch (error) {
-        toast({
-          title: "Error",
-          description: error instanceof Error ? error.message : "Failed to delete blog post",
-          variant: "destructive",
-        });
+    setConfirmationConfig({
+      title: "Delete Blog Post",
+      description: "Are you sure you want to delete this blog post? This action cannot be undone.",
+      confirmText: "Delete Post",
+      variant: "destructive",
+      onConfirm: async () => {
+        try {
+          const response = await fetch(`/api/admin/blog/${postId}`, {
+            method: "DELETE",
+            credentials: "include",
+          });
+          if (!response.ok) throw new Error("Failed to delete blog post");
+          
+          queryClient.invalidateQueries({ queryKey: ["/api/admin/blog"] });
+          toast({
+            title: "Success",
+            description: "Blog post deleted successfully",
+          });
+        } catch (error) {
+          toast({
+            title: "Error",
+            description: error instanceof Error ? error.message : "Failed to delete blog post",
+            variant: "destructive",
+          });
+        }
       }
-    }
+    });
+    setShowConfirmation(true);
   };
 
   const handleVisibilityToggle = (videoId: number, isPublic: boolean) => {
@@ -480,9 +507,14 @@ export default function AdminPage() {
   });
 
   const handleDeleteInvitation = (invitationId: number) => {
-    if (confirm("Are you sure you want to delete this invitation?")) {
-      deleteInvitationMutation.mutate(invitationId);
-    }
+    setConfirmationConfig({
+      title: "Delete Invitation",
+      description: "Are you sure you want to delete this invitation? This action cannot be undone.",
+      confirmText: "Delete Invitation",
+      variant: "destructive",
+      onConfirm: () => deleteInvitationMutation.mutate(invitationId)
+    });
+    setShowConfirmation(true);
   };
 
   const deletePublicUserMutation = useMutation({
@@ -510,9 +542,15 @@ export default function AdminPage() {
   });
 
   const handleDeletePublicUser = (userId: number) => {
-    if (confirm("Are you sure you want to delete this public user account? This action cannot be undone.")) {
-      deletePublicUserMutation.mutate(userId);
-    }
+    const user = publicUsers.find(u => u.id === userId);
+    setConfirmationConfig({
+      title: "Delete Public User",
+      description: `Are you sure you want to delete the public user "${user?.fullName || user?.email}"? This action cannot be undone.`,
+      confirmText: "Delete User",
+      variant: "destructive",
+      onConfirm: () => deletePublicUserMutation.mutate(userId)
+    });
+    setShowConfirmation(true);
   };
 
   const resendVerificationMutation = useMutation({
@@ -885,7 +923,6 @@ export default function AdminPage() {
                                 {video.categories?.map((category, index) => (
                                   <Badge key={index} variant="secondary" className="text-xs truncate">
                                     {category.name}
-                                    {category.isPrimary && "*"}
                                   </Badge>
                                 ))}
                               </div>
@@ -1025,7 +1062,6 @@ export default function AdminPage() {
                                 checked={userItem.isAdmin}
                                 onCheckedChange={(checked) => handleRoleChangeAction(userItem.id, checked)}
                                 disabled={userItem.id === user?.id}
-                                size="sm"
                               />
                               <span className="text-xs text-gray-600">Admin Role</span>
                             </div>
