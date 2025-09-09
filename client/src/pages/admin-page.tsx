@@ -953,7 +953,77 @@ export default function AdminPage() {
                       Invite User
                     </Button>
                   </div>
-                  <div className="overflow-x-auto">
+                  
+                  {/* Mobile Users View */}
+                  <div className="block md:hidden space-y-4">
+                    {users.map((userItem) => (
+                      <Card key={userItem.id} className="p-4">
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h3 className="font-medium text-gray-900 text-sm">{userItem.fullName}</h3>
+                            <p className="text-xs text-gray-500 mb-1">@{userItem.username}</p>
+                            <p className="text-xs text-gray-500 mb-2">{userItem.email}</p>
+                            <div className="flex items-center space-x-2 mb-3">
+                              {userItem.isAdmin ? (
+                                <Badge variant="default" className="text-xs">
+                                  <Shield className="h-3 w-3 mr-1" />
+                                  Admin
+                                </Badge>
+                              ) : (
+                                <Badge variant="secondary" className="text-xs">
+                                  <Users className="h-3 w-3 mr-1" />
+                                  Student
+                                </Badge>
+                              )}
+                              <Badge variant={userItem.isVerified ? "default" : "secondary"} className="text-xs">
+                                {userItem.isVerified ? "Verified" : "Unverified"}
+                              </Badge>
+                            </div>
+                            <div className="flex items-center space-x-2 mb-3">
+                              <Switch
+                                checked={userItem.isAdmin}
+                                onCheckedChange={(checked) => handleRoleChangeAction(userItem.id, checked)}
+                                disabled={userItem.id === user?.id}
+                                size="sm"
+                              />
+                              <span className="text-xs text-gray-600">Admin Role</span>
+                            </div>
+                          </div>
+                        </div>
+                        <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+                          <div className="flex space-x-2">
+                            <Button size="sm" variant="outline" onClick={() => handleAssignCategory(userItem)} className="text-xs px-2 py-1">
+                              <UserCheck className="h-3 w-3 mr-1" />
+                              Categories
+                            </Button>
+                            <Button size="sm" variant="outline" onClick={() => {
+                              setResetPasswordUser(userItem);
+                              setShowResetPassword(true);
+                            }} className="text-xs px-2 py-1">
+                              <KeyRound className="h-3 w-3 mr-1" />
+                              Reset
+                            </Button>
+                          </div>
+                          <div className="flex space-x-2">
+                            <Button size="sm" variant="outline" onClick={() => navigate(`/admin/student/${userItem.id}`)} className="text-xs px-2 py-1">
+                              <Eye className="h-3 w-3" />
+                            </Button>
+                            <Button
+                              size="sm"
+                              variant="outline"
+                              onClick={() => handleDeleteUser(userItem.id)}
+                              disabled={userItem.id === user?.id || deleteUserMutation.isPending}
+                              className="text-xs px-2 py-1 text-red-600 hover:text-red-700 hover:border-red-300"
+                            >
+                              <Trash2 className="h-3 w-3" />
+                            </Button>
+                          </div>
+                        </div>
+                      </Card>
+                    ))}
+                  </div>
+                  
+                  <div className="hidden md:block overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -1012,6 +1082,15 @@ export default function AdminPage() {
                                 </Button>
                                 <Button size="sm" variant="outline" onClick={() => navigate(`/admin/student/${userItem.id}`)}>
                                   <Eye className="h-4 w-4" />
+                                </Button>
+                                <Button
+                                  size="sm"
+                                  variant="outline"
+                                  onClick={() => handleDeleteUser(userItem.id)}
+                                  disabled={userItem.id === user?.id || deleteUserMutation.isPending}
+                                  className="text-red-600 hover:text-red-700 hover:border-red-300"
+                                >
+                                  <Trash2 className="h-4 w-4" />
                                 </Button>
                               </div>
                             </TableCell>
