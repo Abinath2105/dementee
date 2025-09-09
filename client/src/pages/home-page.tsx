@@ -108,30 +108,29 @@ export default function HomePage() {
   }, [appSettings]);
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background pb-16 md:pb-0">
       {/* Navigation - Mobile First */}
       <nav className="bg-white shadow-sm border-b border-gray-200 sticky top-0 z-50">
         <div className="max-w-7xl mx-auto px-3 sm:px-4 lg:px-8">
-          <div className="flex justify-between items-center h-14 sm:h-16">
+          <div className="flex justify-between items-center h-16 sm:h-18">
             <div className="flex items-center min-w-0">
               <div className="flex flex-col leading-tight mr-2 sm:mr-3 flex-shrink-0">
-                <div className="text-base sm:text-lg font-bold text-blue-600">Zmartclass</div>
+                <div className="text-lg sm:text-xl font-bold text-blue-600">Zmartclass</div>
                 <div className="text-xs text-gray-500 font-normal -mt-1 text-right">De mentee</div>
               </div>
             </div>
-            <div className="flex items-center space-x-2 sm:space-x-4 flex-shrink-0">
+            
+            {/* Desktop Navigation */}
+            <div className="hidden md:flex items-center space-x-4">
               <Link href="/profile">
-                <Button variant="outline" size="sm" className="hidden sm:flex">
+                <Button variant="outline" size="sm">
                   <User className="h-4 w-4 mr-2" />
                   Profile
-                </Button>
-                <Button variant="outline" size="sm" className="sm:hidden">
-                  <User className="h-4 w-4" />
                 </Button>
               </Link>
               {!user?.isAdmin && (
                 <Link href="/dashboard">
-                  <Button variant="outline" size="sm" className="hidden sm:flex">
+                  <Button variant="outline" size="sm">
                     <Settings className="h-4 w-4 mr-2" />
                     Dashboard
                   </Button>
@@ -139,12 +138,9 @@ export default function HomePage() {
               )}
               {user?.isAdmin && (
                 <Link href="/admin">
-                  <Button variant="outline" size="sm" className="hidden sm:flex">
+                  <Button variant="outline" size="sm">
                     <Settings className="h-4 w-4 mr-2" />
                     Admin Panel
-                  </Button>
-                  <Button variant="outline" size="sm" className="sm:hidden">
-                    <Settings className="h-4 w-4" />
                   </Button>
                 </Link>
               )}
@@ -154,24 +150,60 @@ export default function HomePage() {
                 size="sm" 
                 onClick={() => logoutMutation.mutate()}
                 disabled={logoutMutation.isPending}
-                className="hidden sm:flex"
               >
                 <LogOut className="h-4 w-4 mr-2" />
                 Logout
               </Button>
+            </div>
+            
+            {/* Mobile Navigation */}
+            <div className="flex md:hidden items-center space-x-2">
+              <NotificationBell />
               <Button 
                 variant="ghost" 
                 size="sm" 
                 onClick={() => logoutMutation.mutate()}
                 disabled={logoutMutation.isPending}
-                className="sm:hidden"
+                className="h-10 w-10 p-0"
               >
-                <LogOut className="h-4 w-4" />
+                <LogOut className="h-5 w-5" />
               </Button>
             </div>
           </div>
         </div>
       </nav>
+      
+      {/* Mobile Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-40">
+        <div className="grid grid-cols-4 h-16">
+          <Link href="/home" className="flex flex-col items-center justify-center p-2 hover:bg-gray-50 active:bg-gray-100 transition-colors">
+            <Play className="h-5 w-5 text-blue-600 mb-1" />
+            <span className="text-xs text-gray-600 font-medium">Videos</span>
+          </Link>
+          <Link href="/profile" className="flex flex-col items-center justify-center p-2 hover:bg-gray-50 active:bg-gray-100 transition-colors">
+            <User className="h-5 w-5 text-gray-400 mb-1" />
+            <span className="text-xs text-gray-600">Profile</span>
+          </Link>
+          {!user?.isAdmin ? (
+            <Link href="/dashboard" className="flex flex-col items-center justify-center p-2 hover:bg-gray-50 active:bg-gray-100 transition-colors">
+              <Settings className="h-5 w-5 text-gray-400 mb-1" />
+              <span className="text-xs text-gray-600">Dashboard</span>
+            </Link>
+          ) : (
+            <Link href="/admin" className="flex flex-col items-center justify-center p-2 hover:bg-gray-50 active:bg-gray-100 transition-colors">
+              <Settings className="h-5 w-5 text-gray-400 mb-1" />
+              <span className="text-xs text-gray-600">Admin</span>
+            </Link>
+          )}
+          <button 
+            onClick={() => setLocation('/dashboard')}
+            className="flex flex-col items-center justify-center p-2 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          >
+            <Calendar className="h-5 w-5 text-gray-400 mb-1" />
+            <span className="text-xs text-gray-600">More</span>
+          </button>
+        </div>
+      </div>
 
       {/* Banner Carousel */}
       {appSettings?.bannerImages && appSettings.bannerImages.length > 0 && (

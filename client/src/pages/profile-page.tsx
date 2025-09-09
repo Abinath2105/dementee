@@ -26,8 +26,11 @@ import {
   Edit3,
   Save,
   X,
-  Camera
+  Camera,
+  Play,
+  Settings
 } from "lucide-react";
+import { Link, useLocation } from "wouter";
 
 const profileSchema = z.object({
   firstName: z.string().min(1, "First name is required"),
@@ -54,6 +57,7 @@ export default function ProfilePage() {
   const { user } = useAuth();
   const { toast } = useToast();
   const [isEditing, setIsEditing] = useState(false);
+  const [, setLocation] = useLocation();
 
   // Fetch user profile data
   const { data: profile, isLoading } = useQuery({
@@ -151,7 +155,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-gray-50 py-8">
+    <div className="min-h-screen bg-gray-50 py-4 md:py-8 pb-20 md:pb-8">
       <div className="max-w-4xl mx-auto px-4 sm:px-6 lg:px-8">
         {/* Header */}
         <div className="mb-8">
@@ -561,6 +565,38 @@ export default function ProfilePage() {
               </CardContent>
             </Card>
           </div>
+        </div>
+      </div>
+      
+      {/* Mobile Bottom Navigation */}
+      <div className="fixed bottom-0 left-0 right-0 bg-white border-t border-gray-200 md:hidden z-40">
+        <div className="grid grid-cols-4 h-16">
+          <Link href="/home" className="flex flex-col items-center justify-center p-2 hover:bg-gray-50 active:bg-gray-100 transition-colors">
+            <Play className="h-5 w-5 text-gray-400 mb-1" />
+            <span className="text-xs text-gray-600">Videos</span>
+          </Link>
+          <Link href="/profile" className="flex flex-col items-center justify-center p-2 hover:bg-gray-50 active:bg-gray-100 transition-colors">
+            <User className="h-5 w-5 text-blue-600 mb-1" />
+            <span className="text-xs text-gray-600 font-medium">Profile</span>
+          </Link>
+          {!user?.isAdmin ? (
+            <Link href="/dashboard" className="flex flex-col items-center justify-center p-2 hover:bg-gray-50 active:bg-gray-100 transition-colors">
+              <Settings className="h-5 w-5 text-gray-400 mb-1" />
+              <span className="text-xs text-gray-600">Dashboard</span>
+            </Link>
+          ) : (
+            <Link href="/admin" className="flex flex-col items-center justify-center p-2 hover:bg-gray-50 active:bg-gray-100 transition-colors">
+              <Settings className="h-5 w-5 text-gray-400 mb-1" />
+              <span className="text-xs text-gray-600">Admin</span>
+            </Link>
+          )}
+          <button 
+            onClick={() => setLocation('/dashboard')}
+            className="flex flex-col items-center justify-center p-2 hover:bg-gray-50 active:bg-gray-100 transition-colors"
+          >
+            <Calendar className="h-5 w-5 text-gray-400 mb-1" />
+            <span className="text-xs text-gray-600">More</span>
+          </button>
         </div>
       </div>
     </div>
