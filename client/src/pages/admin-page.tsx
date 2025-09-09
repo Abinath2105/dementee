@@ -1430,7 +1430,39 @@ export default function AdminPage() {
                     <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Invitations</h2>
                     <p className="text-sm text-gray-600">Manage pending user invitations</p>
                   </div>
-                  <div className="overflow-x-auto">
+                  
+                  {/* Mobile Invitations View */}
+                  <div className="block md:hidden space-y-4">
+                    {invitations.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <Mail className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p>No pending invitations</p>
+                      </div>
+                    ) : (
+                      invitations.map((invitation) => (
+                        <Card key={invitation.id} className="p-4">
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-gray-900 text-sm">{invitation.email}</h3>
+                              <p className="text-xs text-gray-500 mb-2">Invited by: {invitation.invitedBy}</p>
+                              <Badge variant="secondary" className="text-xs">Pending</Badge>
+                            </div>
+                            <Button 
+                              size="sm" 
+                              variant="outline" 
+                              onClick={() => handleDeleteInvitation(invitation.id)}
+                              className="ml-3 text-red-600 hover:text-red-700"
+                            >
+                              <Trash2 className="h-4 w-4" />
+                            </Button>
+                          </div>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Desktop Invitations Table */}
+                  <div className="hidden md:block overflow-x-auto">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -1441,20 +1473,34 @@ export default function AdminPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {invitations.map((invitation) => (
-                          <TableRow key={invitation.id}>
-                            <TableCell>{invitation.email}</TableCell>
-                            <TableCell>{invitation.invitedBy}</TableCell>
-                            <TableCell>
-                              <Badge variant="secondary">Pending</Badge>
-                            </TableCell>
-                            <TableCell>
-                              <Button size="sm" variant="outline">
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
+                        {invitations.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                              <Mail className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                              <p>No pending invitations</p>
                             </TableCell>
                           </TableRow>
-                        ))}
+                        ) : (
+                          invitations.map((invitation) => (
+                            <TableRow key={invitation.id}>
+                              <TableCell>{invitation.email}</TableCell>
+                              <TableCell>{invitation.invitedBy}</TableCell>
+                              <TableCell>
+                                <Badge variant="secondary">Pending</Badge>
+                              </TableCell>
+                              <TableCell>
+                                <Button 
+                                  size="sm" 
+                                  variant="outline" 
+                                  onClick={() => handleDeleteInvitation(invitation.id)}
+                                  className="text-red-600 hover:text-red-700"
+                                >
+                                  <Trash2 className="h-4 w-4" />
+                                </Button>
+                              </TableCell>
+                            </TableRow>
+                          ))
+                        )}
                       </TableBody>
                     </Table>
                   </div>
@@ -1475,7 +1521,57 @@ export default function AdminPage() {
                     </Button>
                   </div>
                   
-                  <div className="overflow-x-auto -mx-6 px-6">
+                  {/* Mobile Notifications View */}
+                  <div className="block md:hidden space-y-4">
+                    {notifications.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p>No notifications created</p>
+                      </div>
+                    ) : (
+                      notifications.map((notification: any) => (
+                        <Card key={notification.id} className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-gray-900 text-sm">{notification.title}</h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="secondary" className="text-xs">{notification.type}</Badge>
+                                <Badge variant={notification.isActive ? "default" : "secondary"} className="text-xs">
+                                  {notification.isActive ? "Active" : "Inactive"}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">Target: {notification.targetAudience}</p>
+                              <p className="text-xs text-gray-500">Created: {new Date(notification.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <div className="flex space-x-2 ml-3">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingNotification(notification);
+                                  setShowBroadcastNotification(true);
+                                }}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteNotification(notification.id)}
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Desktop Notifications Table */}
+                  <div className="hidden md:block overflow-x-auto -mx-6 px-6">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -1488,7 +1584,15 @@ export default function AdminPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {notifications.map((notification: any) => (
+                        {notifications.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                              <Bell className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                              <p>No notifications created</p>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          notifications.map((notification: any) => (
                           <TableRow key={notification.id}>
                             <TableCell className="font-medium">{notification.title}</TableCell>
                             <TableCell>
@@ -1523,7 +1627,8 @@ export default function AdminPage() {
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))}
+                        ))
+                        )}
                       </TableBody>
                     </Table>
                   </div>
@@ -1544,7 +1649,57 @@ export default function AdminPage() {
                     </Button>
                   </div>
                   
-                  <div className="overflow-x-auto -mx-6 px-6">
+                  {/* Mobile Events View */}
+                  <div className="block md:hidden space-y-4">
+                    {events.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p>No events created</p>
+                      </div>
+                    ) : (
+                      events.map((event: any) => (
+                        <Card key={event.id} className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-gray-900 text-sm">{event.title}</h3>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant="secondary" className="text-xs">{event.type}</Badge>
+                                <Badge variant={event.status === 'active' ? "default" : "secondary"} className="text-xs">
+                                  {event.status}
+                                </Badge>
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">Start: {new Date(event.startDate).toLocaleDateString()}</p>
+                              <p className="text-xs text-gray-500">Participants: {event.currentParticipants}/{event.maxParticipants}</p>
+                            </div>
+                            <div className="flex space-x-2 ml-3">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => {
+                                  setEditingEvent(event);
+                                  setShowEvent(true);
+                                }}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteEvent(event.id)}
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Desktop Events Table */}
+                  <div className="hidden md:block overflow-x-auto -mx-6 px-6">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -1557,7 +1712,15 @@ export default function AdminPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {events.map((event: any) => (
+                        {events.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={6} className="text-center py-8 text-gray-500">
+                              <Calendar className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                              <p>No events created</p>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          events.map((event: any) => (
                           <TableRow key={event.id}>
                             <TableCell className="font-medium">{event.title}</TableCell>
                             <TableCell>
@@ -1592,7 +1755,8 @@ export default function AdminPage() {
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))}
+                        ))
+                        )}
                       </TableBody>
                     </Table>
                   </div>
@@ -1613,7 +1777,57 @@ export default function AdminPage() {
                     </Button>
                   </div>
                   
-                  <div className="overflow-x-auto -mx-6 px-6">
+                  {/* Mobile Blog Posts View */}
+                  <div className="block md:hidden space-y-4">
+                    {blogPosts.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p>No blog posts created</p>
+                      </div>
+                    ) : (
+                      blogPosts.map((post: any) => (
+                        <Card key={post.id} className="p-4">
+                          <div className="flex items-start justify-between mb-3">
+                            <div className="flex-1 min-w-0">
+                              <h3 className="font-medium text-gray-900 text-sm">{post.title}</h3>
+                              <p className="text-xs text-gray-500 mb-1">By: {post.author}</p>
+                              <div className="flex items-center gap-2 mt-1">
+                                <Badge variant={post.status === 'published' ? "default" : "secondary"} className="text-xs">
+                                  {post.status}
+                                </Badge>
+                                {post.isFeatured && (
+                                  <Badge variant="outline" className="text-xs">Featured</Badge>
+                                )}
+                              </div>
+                              <p className="text-xs text-gray-500 mt-1">Views: {post.viewCount || 0}</p>
+                              <p className="text-xs text-gray-500">Created: {new Date(post.createdAt).toLocaleDateString()}</p>
+                            </div>
+                            <div className="flex space-x-2 ml-3">
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => navigate(`/admin/blog/edit/${post.id}`)}
+                                className="h-8 w-8 p-0"
+                              >
+                                <Edit className="h-4 w-4" />
+                              </Button>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                onClick={() => handleDeleteBlogPost(post.id)}
+                                className="h-8 w-8 p-0 text-red-600 hover:text-red-700"
+                              >
+                                <Trash2 className="h-4 w-4" />
+                              </Button>
+                            </div>
+                          </div>
+                        </Card>
+                      ))
+                    )}
+                  </div>
+
+                  {/* Desktop Blog Posts Table */}
+                  <div className="hidden md:block overflow-x-auto -mx-6 px-6">
                     <Table>
                       <TableHeader>
                         <TableRow>
@@ -1627,7 +1841,15 @@ export default function AdminPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {blogPosts.map((post: any) => (
+                        {blogPosts.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={7} className="text-center py-8 text-gray-500">
+                              <FileText className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                              <p>No blog posts created</p>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          blogPosts.map((post: any) => (
                           <TableRow key={post.id}>
                             <TableCell className="font-medium">{post.title}</TableCell>
                             <TableCell>{post.author}</TableCell>
@@ -1662,7 +1884,8 @@ export default function AdminPage() {
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))}
+                        ))
+                        )}
                       </TableBody>
                     </Table>
                   </div>
