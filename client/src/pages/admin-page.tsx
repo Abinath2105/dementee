@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useQuery, useMutation } from "@tanstack/react-query";
 import { useAuth } from "@/hooks/use-auth";
 import { Link, Redirect, useLocation } from "wouter";
@@ -9,7 +9,9 @@ import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Switch } from "@/components/ui/switch";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, UserPlus, Mail, Palette, KeyRound, Menu, X, FolderOpen, Bell, Calendar, FileText } from "lucide-react";
+import { Input } from "@/components/ui/input";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Play, Video, Users, Eye, Clock, Plus, Edit, Trash2, ArrowLeft, Shield, UserCheck, EyeOff, UserPlus, Mail, Palette, KeyRound, Menu, X, FolderOpen, Bell, Calendar, FileText, Search, Filter } from "lucide-react";
 import { AddVideoModal } from "@/components/add-video-modal";
 import { EditVideoModal } from "@/components/edit-video-modal";
 import { InviteUserModal } from "@/components/invite-user-modal";
@@ -44,6 +46,12 @@ export default function AdminPage() {
   const [showResetPassword, setShowResetPassword] = useState(false);
   const [resetPasswordUser, setResetPasswordUser] = useState<User | null>(null);
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  
+  // Search and filter states
+  const [userSearchTerm, setUserSearchTerm] = useState("");
+  const [userRoleFilter, setUserRoleFilter] = useState("all");
+  const [userVerificationFilter, setUserVerificationFilter] = useState("all");
+  const [publicUserSearchTerm, setPublicUserSearchTerm] = useState("");
   
   // New feature states
   const [showBroadcastNotification, setShowBroadcastNotification] = useState(false);
@@ -690,6 +698,35 @@ export default function AdminPage() {
     setShowAssignCategory(false);
   };
 
+  // Filtered users based on search and filters
+  const filteredUsers = useMemo(() => {
+    return users.filter(user => {
+      const matchesSearch = userSearchTerm === "" || 
+        user.fullName?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+        user.username?.toLowerCase().includes(userSearchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(userSearchTerm.toLowerCase());
+      
+      const matchesRole = userRoleFilter === "all" || 
+        (userRoleFilter === "admin" && user.isAdmin) ||
+        (userRoleFilter === "student" && !user.isAdmin);
+      
+      const matchesVerification = userVerificationFilter === "all" ||
+        (userVerificationFilter === "verified" && user.isVerified) ||
+        (userVerificationFilter === "unverified" && !user.isVerified);
+      
+      return matchesSearch && matchesRole && matchesVerification;
+    });
+  }, [users, userSearchTerm, userRoleFilter, userVerificationFilter]);
+
+  // Filtered public users based on search
+  const filteredPublicUsers = useMemo(() => {
+    return publicUsers.filter(user => {
+      return publicUserSearchTerm === "" ||
+        user.fullName?.toLowerCase().includes(publicUserSearchTerm.toLowerCase()) ||
+        user.email?.toLowerCase().includes(publicUserSearchTerm.toLowerCase());
+    });
+  }, [publicUsers, publicUserSearchTerm]);
+
 
 
   const sidebarItems = [
@@ -1024,7 +1061,7 @@ export default function AdminPage() {
                   <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center mb-6 gap-4">
                     <div>
                       <h2 className="text-lg sm:text-xl font-semibold text-gray-900">User Management</h2>
-                      <p className="text-sm text-gray-600">Manage user accounts and permissions</p>
+                      <p className="text-sm text-gray-600">Manage user accounts and permissions ({filteredUsers.length} users)</p>
                     </div>
                     <Button onClick={() => setShowInviteUser(true)} className="w-full sm:w-auto">
                       <UserPlus className="h-4 w-4 mr-2" />
@@ -1032,9 +1069,72 @@ export default function AdminPage() {
                     </Button>
                   </div>
                   
+                  {/* Search and Filter Controls */}
+                  <div className="mb-6 space-y-4">
+                    <div className="flex flex-col sm:flex-row gap-4">
+                      <div className="flex-1">
+                        <div className="relative">
+                          <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                          <Input
+                            placeholder="Search users by name, username, or email..."
+                            value={userSearchTerm}
+                            onChange={(e) => setUserSearchTerm(e.target.value)}
+                            className="pl-10"
+                          />
+                        </div>
+                      </div>
+                      <div className="flex gap-2">
+                        <Select value={userRoleFilter} onValueChange={setUserRoleFilter}>
+                          <SelectTrigger className="w-32">
+                            <SelectValue placeholder="Role" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Roles</SelectItem>
+                            <SelectItem value="admin">Admin</SelectItem>
+                            <SelectItem value="student">Student</SelectItem>
+                          </SelectContent>
+                        </Select>
+                        <Select value={userVerificationFilter} onValueChange={setUserVerificationFilter}>
+                          <SelectTrigger className="w-36">
+                            <SelectValue placeholder="Status" />
+                          </SelectTrigger>
+                          <SelectContent>
+                            <SelectItem value="all">All Status</SelectItem>
+                            <SelectItem value="verified">Verified</SelectItem>
+                            <SelectItem value="unverified">Unverified</SelectItem>
+                          </SelectContent>
+                        </Select>
+                      </div>
+                    </div>
+                    {(userSearchTerm || userRoleFilter !== "all" || userVerificationFilter !== "all") && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600">
+                        <Filter className="h-4 w-4" />
+                        <span>Showing {filteredUsers.length} of {users.length} users</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => {
+                            setUserSearchTerm("");
+                            setUserRoleFilter("all");
+                            setUserVerificationFilter("all");
+                          }}
+                          className="ml-2 h-6 px-2"
+                        >
+                          Clear filters
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  
                   {/* Mobile Users View */}
                   <div className="block md:hidden space-y-4">
-                    {users.map((userItem) => (
+                    {filteredUsers.length === 0 ? (
+                      <div className="text-center py-8 text-gray-500">
+                        <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                        <p>No users found matching your criteria</p>
+                      </div>
+                    ) : (
+                      filteredUsers.map((userItem) => (
                       <Card key={userItem.id} className="p-4">
                         <div className="flex items-start justify-between">
                           <div className="flex-1">
@@ -1097,7 +1197,8 @@ export default function AdminPage() {
                           </div>
                         </div>
                       </Card>
-                    ))}
+                    ))
+                    )}
                   </div>
                   
                   <div className="hidden md:block overflow-x-auto">
@@ -1112,7 +1213,15 @@ export default function AdminPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {users.map((userItem) => (
+                        {filteredUsers.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={5} className="text-center py-8 text-gray-500">
+                              <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                              <p>No users found matching your criteria</p>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredUsers.map((userItem) => (
                           <TableRow key={userItem.id}>
                             <TableCell>
                               <div className="font-medium">{userItem.fullName}</div>
@@ -1172,7 +1281,8 @@ export default function AdminPage() {
                               </div>
                             </TableCell>
                           </TableRow>
-                        ))}
+                        ))
+                        )}
                       </TableBody>
                     </Table>
                   </div>
@@ -1183,8 +1293,36 @@ export default function AdminPage() {
                 <div>
                   <div className="mb-6">
                     <h2 className="text-lg sm:text-xl font-semibold text-gray-900">Public Users</h2>
-                    <p className="text-sm text-gray-600">Users who registered through the landing page</p>
+                    <p className="text-sm text-gray-600">Users who registered through the landing page ({filteredPublicUsers.length} users)</p>
                   </div>
+                  
+                  {/* Search Control for Public Users */}
+                  <div className="mb-6">
+                    <div className="relative max-w-md">
+                      <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-400 h-4 w-4" />
+                      <Input
+                        placeholder="Search public users by name or email..."
+                        value={publicUserSearchTerm}
+                        onChange={(e) => setPublicUserSearchTerm(e.target.value)}
+                        className="pl-10"
+                      />
+                    </div>
+                    {publicUserSearchTerm && (
+                      <div className="flex items-center gap-2 text-sm text-gray-600 mt-2">
+                        <Filter className="h-4 w-4" />
+                        <span>Showing {filteredPublicUsers.length} of {publicUsers.length} users</span>
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          onClick={() => setPublicUserSearchTerm("")}
+                          className="ml-2 h-6 px-2"
+                        >
+                          Clear search
+                        </Button>
+                      </div>
+                    )}
+                  </div>
+                  
                   <div className="overflow-x-auto">
                     <Table>
                       <TableHeader>
@@ -1196,7 +1334,15 @@ export default function AdminPage() {
                         </TableRow>
                       </TableHeader>
                       <TableBody>
-                        {publicUsers.map((publicUser) => (
+                        {filteredPublicUsers.length === 0 ? (
+                          <TableRow>
+                            <TableCell colSpan={4} className="text-center py-8 text-gray-500">
+                              <Users className="h-12 w-12 mx-auto mb-4 text-gray-300" />
+                              <p>{publicUserSearchTerm ? "No users found matching your search" : "No public users found"}</p>
+                            </TableCell>
+                          </TableRow>
+                        ) : (
+                          filteredPublicUsers.map((publicUser) => (
                           <TableRow key={publicUser.id}>
                             <TableCell>{publicUser.fullName}</TableCell>
                             <TableCell>{publicUser.email}</TableCell>
@@ -1212,7 +1358,8 @@ export default function AdminPage() {
                               </Button>
                             </TableCell>
                           </TableRow>
-                        ))}
+                        ))
+                        )}
                       </TableBody>
                     </Table>
                   </div>
