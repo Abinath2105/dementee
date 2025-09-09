@@ -22,6 +22,7 @@ import { CategoryCard } from "@/components/category-card";
 import BroadcastNotificationModal from "@/components/broadcast-notification-modal";
 import EventModal from "@/components/event-modal";
 import BlogPostModal from "@/components/blog-post-modal";
+import { ConfirmationDialog } from "@/components/confirmation-dialog";
 import { queryClient, apiRequest } from "@/lib/queryClient";
 import { useToast } from "@/hooks/use-toast";
 import type { VideoWithCategory, AdminStats, User, Category, UserInvitation } from "@shared/schema";
@@ -51,6 +52,16 @@ export default function AdminPage() {
   const [editingEvent, setEditingEvent] = useState<any>(null);
   const [showBlogPost, setShowBlogPost] = useState(false);
   const [editingBlogPost, setEditingBlogPost] = useState<any>(null);
+  
+  // Confirmation dialog states
+  const [showConfirmation, setShowConfirmation] = useState(false);
+  const [confirmationConfig, setConfirmationConfig] = useState<{
+    title: string;
+    description: string;
+    confirmText: string;
+    variant: "default" | "destructive";
+    onConfirm: () => void;
+  } | null>(null);
   
   const { toast } = useToast();
 
@@ -331,19 +342,40 @@ export default function AdminPage() {
   };
 
   const handleAdminToggle = (userId: number, isAdmin: boolean) => {
-    updateUserAdminMutation.mutate({ userId, isAdmin });
+    const user = users.find(u => u.id === userId);
+    const action = isAdmin ? "grant admin privileges to" : "remove admin privileges from";
+    setConfirmationConfig({
+      title: isAdmin ? "Grant Admin Access" : "Remove Admin Access",
+      description: `Are you sure you want to ${action} "${user?.fullName || user?.email}"? This will ${isAdmin ? "give them full administrative access" : "restrict them to regular user access"}.`,
+      confirmText: isAdmin ? "Grant Admin" : "Remove Admin",
+      variant: "default",
+      onConfirm: () => updateUserAdminMutation.mutate({ userId, isAdmin })
+    });
+    setShowConfirmation(true);
   };
 
   const handleDeleteUser = (userId: number) => {
-    if (confirm("Are you sure you want to delete this user account? This action cannot be undone.")) {
-      deleteUserMutation.mutate(userId);
-    }
+    const user = users.find(u => u.id === userId);
+    setConfirmationConfig({
+      title: "Delete User Account",
+      description: `Are you sure you want to delete the user "${user?.fullName || user?.email}"? This action cannot be undone and will permanently remove all user data.`,
+      confirmText: "Delete User",
+      variant: "destructive",
+      onConfirm: () => deleteUserMutation.mutate(userId)
+    });
+    setShowConfirmation(true);
   };
 
   const handleDeleteCategory = (categoryId: number) => {
-    if (confirm("Are you sure you want to delete this category? All videos in this category will be uncategorized.")) {
-      deleteCategoryMutation.mutate(categoryId);
-    }
+    const category = categories.find(c => c.id === categoryId);
+    setConfirmationConfig({
+      title: "Delete Category",
+      description: `Are you sure you want to delete the category "${category?.name}"? All videos in this category will be uncategorized.`,
+      confirmText: "Delete Category",
+      variant: "destructive",
+      onConfirm: () => deleteCategoryMutation.mutate(categoryId)
+    });
+    setShowConfirmation(true);
   };
 
   // New feature handlers
@@ -603,7 +635,16 @@ export default function AdminPage() {
   });
 
   const handleRoleChangeAction = (userId: number, isAdmin: boolean) => {
-    handleRoleChange.mutate({ userId, isAdmin });
+    const user = users.find(u => u.id === userId);
+    const action = isAdmin ? "promote to admin" : "demote to regular user";
+    setConfirmationConfig({
+      title: isAdmin ? "Promote to Admin" : "Demote to User",
+      description: `Are you sure you want to ${action} "${user?.fullName || user?.email}"?`,
+      confirmText: isAdmin ? "Promote" : "Demote",
+      variant: "default",
+      onConfirm: () => handleRoleChange.mutate({ userId, isAdmin })
+    });
+    setShowConfirmation(true);
   };
 
   const handleCloseAssignCategory = () => {
@@ -1479,6 +1520,19 @@ export default function AdminPage() {
         post={editingBlogPost}
         mode={editingBlogPost ? 'edit' : 'create'}
       />
+
+      {/* Confirmation Dialog */}
+      {confirmationConfig && (
+        <ConfirmationDialog
+          isOpen={showConfirmation}
+          onClose={() => setShowConfirmation(false)}
+          onConfirm={confirmationConfig.onConfirm}
+          title={confirmationConfig.title}
+          description={confirmationConfig.description}
+          confirmText={confirmationConfig.confirmText}
+          variant={confirmationConfig.variant}
+        />
+      )}
     </div>
   );
 }

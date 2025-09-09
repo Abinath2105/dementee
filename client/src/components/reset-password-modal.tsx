@@ -17,11 +17,11 @@ import type { User } from "@shared/schema";
 
 interface ResetPasswordModalProps {
   user: User | null;
-  open: boolean;
+  isOpen: boolean;
   onClose: () => void;
 }
 
-export function ResetPasswordModal({ user, open, onClose }: ResetPasswordModalProps) {
+export function ResetPasswordModal({ user, isOpen, onClose }: ResetPasswordModalProps) {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const { toast } = useToast();
@@ -92,7 +92,7 @@ export function ResetPasswordModal({ user, open, onClose }: ResetPasswordModalPr
   };
 
   return (
-    <Dialog open={open} onOpenChange={handleClose}>
+    <Dialog open={isOpen} onOpenChange={handleClose}>
       <DialogContent className="sm:max-w-[425px]">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
