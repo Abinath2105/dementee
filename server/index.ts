@@ -147,9 +147,13 @@ async function initializeServer() {
       res.status(status).json({ message });
       
       // Don't throw in production - log and continue
+      // if (process.env.NODE_ENV === 'development') {
+      //   throw err;
+      // }
+
       if (process.env.NODE_ENV === 'development') {
-        throw err;
-      }
+  console.error(err);
+}
     });
 
     // Step 6: Setup Vite or static serving
@@ -181,12 +185,12 @@ async function initializeServer() {
           console.log('🔍 Performing final readiness check...');
           
           // Verify we can handle a basic request
-          const testHealthCheck = await fetch(`http://localhost:${port}/health`).catch(() => null);
-          if (testHealthCheck?.ok) {
-            console.log('✓ Health check endpoint responding correctly');
-          } else {
-            console.warn('⚠️  Health check endpoint not responding as expected');
-          }
+          // const testHealthCheck = await fetch(`http://localhost:${port}/health`).catch(() => null);
+          // if (testHealthCheck?.ok) {
+          //   console.log('✓ Health check endpoint responding correctly');
+          // } else {
+          //   console.warn('⚠️  Health check endpoint not responding as expected');
+          // }
           
           console.log('🎉 Zmartclass is ready to accept connections!');
           resolve();
