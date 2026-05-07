@@ -1,0 +1,31 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0K🚀 Starting Zmartclass server initialization...
+Step 1: Validating environment variables...
+✓ Environment variables validated successfully
+Step 2: Testing database connection...
+Testing database connection...
+✗ Database connection failed: TypeError: Invalid URL
+[90m    at new URL (node:internal/url:806:29)[39m
+    at Object.parse [90m(file:///home/runner/workspace/[39mnode_modules/[4m@neondatabase/serverless[24m/index.mjs:841:225[90m)[39m
+    at parse [90m(file:///home/runner/workspace/[39mnode_modules/[4m@neondatabase/serverless[24m/index.mjs:848:1[90m)[39m
+    at new ConnectionParameters [90m(file:///home/runner/workspace/[39mnode_modules/[4m@neondatabase/serverless[24m/index.mjs:869:23[90m)[39m
+    at new Client [90m(file:///home/runner/workspace/[39mnode_modules/[4m@neondatabase/serverless[24m/index.mjs:1226:35[90m)[39m
+    at new NeonClient [90m(file:///home/runner/workspace/[39mnode_modules/[4m@neondatabase/serverless[24m/index.mjs:1570:121[90m)[39m
+    at Cn.newClient [90m(file:///home/runner/workspace/[39mnode_modules/[4m@neondatabase/serverless[24m/index.mjs:1378:74[90m)[39m
+    at Cn.connect [90m(file:///home/runner/workspace/[39mnode_modules/[4m@neondatabase/serverless[24m/index.mjs:1378:23[90m)[39m
+    at Cn.query [90m(file:///home/runner/workspace/[39mnode_modules/[4m@neondatabase/serverless[24m/index.mjs:1407:63[90m)[39m
+    at Cn.query [90m(file:///home/runner/workspace/[39mnode_modules/[4m@neondatabase/serverless[24m/index.mjs:1623:14[90m)[39m {
+  code: [32m'ERR_INVALID_URL'[39m,
+  input: [32m'Work@83745'[39m
+}
+❌ Server initialization failed: Database connection failed: Invalid URL
+💡 Fix: Check your database connection string and network connectivity
+🚨 Fatal error during server startup: Error: Database connection failed: Invalid URL
+    at testDatabaseConnection [90m(/home/runner/workspace/[39mserver/db.ts:27:11[90m)[39m
+    at async initializeServer [90m(/home/runner/workspace/[39mserver/index.ts:125:5[90m)[39m
+    at async <anonymous> [90m(/home/runner/workspace/[39mserver/index.ts:243:5[90m)[39m
+Server will not start. Please check the configuration and try again.
+[1G[0K⠙[1G[0K

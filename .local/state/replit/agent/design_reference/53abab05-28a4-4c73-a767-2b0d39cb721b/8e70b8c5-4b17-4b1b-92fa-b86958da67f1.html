@@ -1,0 +1,734 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>VideoLearn Pro - Learning Management Platform</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#2563EB',
+                        secondary: '#64748B',
+                        accent: '#10B981',
+                        background: '#F8FAFC'
+                    }
+                }
+            }
+        };
+    </script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <style>
+        body { font-family: 'Inter', sans-serif; }
+    </style>
+</head>
+<body class="bg-background">
+    <!-- @COMPONENT: AppContainer -->
+    <div id="appContainer" class="min-h-screen">
+        
+        <!-- @COMPONENT: Navigation -->
+        <nav class="bg-white shadow-sm border-b border-gray-200">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                <div class="flex justify-between items-center h-16">
+                    <div class="flex items-center">
+                        <i class="fas fa-play-circle text-primary text-2xl mr-3"></i>
+                        <span class="text-xl font-bold text-gray-900">VideoLearn Pro</span>
+                    </div>
+                    <div class="flex items-center space-x-4">
+                        <button id="toggleView" class="bg-primary text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors">
+                            <i class="fas fa-user-cog mr-2"></i>Admin Panel
+                        </button>
+                        <button id="logoutBtn" class="text-secondary hover:text-gray-900 transition-colors">
+                            <i class="fas fa-sign-out-alt mr-2"></i>Logout
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </nav>
+        <!-- @END_COMPONENT: Navigation -->
+
+        <!-- @COMPONENT: LoginPage -->
+        <div id="loginPage" class="hidden min-h-screen bg-gradient-to-br from-blue-50 to-indigo-100 flex items-center justify-center py-12 px-4 sm:px-6 lg:px-8">
+            <div class="max-w-md w-full space-y-8">
+                <div class="text-center">
+                    <i class="fas fa-play-circle text-primary text-6xl mb-4"></i>
+                    <h2 class="text-3xl font-bold text-gray-900 mb-2">Welcome to VideoLearn Pro</h2>
+                    <p class="text-secondary">Sign in to access your learning platform</p>
+                </div>
+                
+                <!-- Login Form -->
+                <form class="bg-white p-8 rounded-xl shadow-lg space-y-6" data-mock="true">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                        <input type="email" placeholder="Enter your email" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="user.email">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-2">Password</label>
+                        <input type="password" placeholder="Enter your password" class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="user.password">
+                    </div>
+                    <button type="submit" class="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium" data-event="click:handleLogin">
+                        Sign In
+                    </button>
+                    <div class="text-center">
+                        <a href="#" class="text-primary hover:text-blue-700 text-sm">Don't have an account? Sign up</a>
+                    </div>
+                </form>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: LoginPage -->
+
+        <!-- @COMPONENT: UserInterface -->
+        <div id="userInterface" class="min-h-screen">
+            <!-- Hero Section -->
+            <div class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white py-16">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
+                    <h1 class="text-4xl md:text-5xl font-bold mb-4">Discover Knowledge</h1>
+                    <p class="text-xl mb-8 opacity-90">Access curated video content to enhance your skills</p>
+                    
+                    <!-- Search Bar -->
+                    <div class="max-w-2xl mx-auto relative">
+                        <input type="text" placeholder="Search videos by title, category, or tags..." 
+                               class="w-full px-6 py-4 pr-16 text-gray-900 rounded-xl shadow-lg focus:ring-4 focus:ring-blue-300 focus:outline-none" 
+                               data-bind="searchQuery">
+                        <button class="absolute right-3 top-1/2 transform -translate-y-1/2 bg-primary text-white px-6 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                                data-event="click:handleSearch">
+                            <i class="fas fa-search"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Filter Section -->
+            <div class="bg-white border-b border-gray-200 py-4">
+                <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+                    <div class="flex flex-wrap items-center gap-4">
+                        <span class="font-medium text-gray-700">Filter by:</span>
+                        <select class="px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" data-bind="selectedCategory">
+                            <option>All Categories</option>
+                            <option data-mock="true">Technology</option>
+                            <option data-mock="true">Marketing</option>
+                            <option data-mock="true">Sales</option>
+                            <option data-mock="true">Design</option>
+                        </select>
+                        <div class="flex flex-wrap gap-2">
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full cursor-pointer hover:bg-blue-200" data-mock="true">JavaScript</span>
+                            <span class="px-3 py-1 bg-green-100 text-green-800 text-sm rounded-full cursor-pointer hover:bg-green-200" data-mock="true">React</span>
+                            <span class="px-3 py-1 bg-purple-100 text-purple-800 text-sm rounded-full cursor-pointer hover:bg-purple-200" data-mock="true">UI/UX</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Video Library -->
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+                <div class="flex justify-between items-center mb-8">
+                    <h2 class="text-2xl font-bold text-gray-900">Video Library</h2>
+                    <div class="text-secondary">
+                        <span data-bind="videoCount" data-mock="true">48</span> videos available
+                    </div>
+                </div>
+
+                <!-- @MAP: videos.map(video => ( -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    <!-- Video Card 1 -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" data-event="click:openVideo" data-mock="true">
+                        <!-- Modern web development landscape with coding interface on multiple screens -->
+                        <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=225" 
+                             alt="Modern web development tutorial" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Technology</span>
+                                <span class="text-xs text-gray-500">15:30</span>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">Introduction to Modern Web Development</h3>
+                            <p class="text-sm text-gray-600 line-clamp-2">Learn the fundamentals of modern web development including HTML5, CSS3, and JavaScript ES6+</p>
+                            <div class="flex items-center mt-3 text-xs text-gray-500">
+                                <i class="fas fa-eye mr-1"></i>
+                                <span>1,234 views</span>
+                                <span class="mx-2">•</span>
+                                <span>2 days ago</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Card 2 -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" data-event="click:openVideo" data-mock="true">
+                        <!-- Digital marketing analytics dashboard with charts and graphs -->
+                        <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=225" 
+                             alt="Digital marketing analytics" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Marketing</span>
+                                <span class="text-xs text-gray-500">22:15</span>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">Digital Marketing Analytics Masterclass</h3>
+                            <p class="text-sm text-gray-600 line-clamp-2">Master the art of digital marketing analytics and data-driven decision making</p>
+                            <div class="flex items-center mt-3 text-xs text-gray-500">
+                                <i class="fas fa-eye mr-1"></i>
+                                <span>856 views</span>
+                                <span class="mx-2">•</span>
+                                <span>1 week ago</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Card 3 -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" data-event="click:openVideo" data-mock="true">
+                        <!-- Professional sales meeting with handshake and business documents -->
+                        <img src="https://images.unsplash.com/photo-1521791136064-7986c2920216?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=225" 
+                             alt="Professional sales strategies" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="px-2 py-1 bg-purple-100 text-purple-800 text-xs rounded-full">Sales</span>
+                                <span class="text-xs text-gray-500">18:45</span>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">Advanced Sales Strategies for 2024</h3>
+                            <p class="text-sm text-gray-600 line-clamp-2">Discover cutting-edge sales techniques that top performers use to close more deals</p>
+                            <div class="flex items-center mt-3 text-xs text-gray-500">
+                                <i class="fas fa-eye mr-1"></i>
+                                <span>2,103 views</span>
+                                <span class="mx-2">•</span>
+                                <span>3 days ago</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Video Card 4 -->
+                    <div class="bg-white rounded-xl shadow-md overflow-hidden hover:shadow-lg transition-shadow cursor-pointer" data-event="click:openVideo" data-mock="true">
+                        <!-- UI/UX design workspace with design tools and mockups -->
+                        <img src="https://images.unsplash.com/photo-1561070791-2526d30994b5?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=400&h=225" 
+                             alt="UI/UX design workspace" class="w-full h-48 object-cover">
+                        <div class="p-4">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="px-2 py-1 bg-yellow-100 text-yellow-800 text-xs rounded-full">Design</span>
+                                <span class="text-xs text-gray-500">25:12</span>
+                            </div>
+                            <h3 class="font-semibold text-gray-900 mb-2 line-clamp-2">UI/UX Design Principles</h3>
+                            <p class="text-sm text-gray-600 line-clamp-2">Learn the fundamental principles of user interface and user experience design</p>
+                            <div class="flex items-center mt-3 text-xs text-gray-500">
+                                <i class="fas fa-eye mr-1"></i>
+                                <span>1,567 views</span>
+                                <span class="mx-2">•</span>
+                                <span>5 days ago</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <!-- @END_MAP )) -->
+
+                <!-- Load More Button -->
+                <div class="text-center mt-12">
+                    <button class="bg-primary text-white px-8 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium" data-event="click:loadMore">
+                        Load More Videos
+                    </button>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: UserInterface -->
+
+        <!-- @COMPONENT: AdminInterface -->
+        <div id="adminInterface" class="hidden min-h-screen bg-gray-50">
+            <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+                
+                <!-- Admin Header -->
+                <div class="mb-8">
+                    <h1 class="text-3xl font-bold text-gray-900 mb-2">Admin Dashboard</h1>
+                    <p class="text-secondary">Manage your video content and monitor platform activity</p>
+                </div>
+
+                <!-- Admin Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-blue-100 rounded-full">
+                                <i class="fas fa-video text-primary text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600">Total Videos</p>
+                                <p class="text-2xl font-bold text-gray-900" data-bind="totalVideos" data-mock="true">48</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-green-100 rounded-full">
+                                <i class="fas fa-users text-accent text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600">Active Users</p>
+                                <p class="text-2xl font-bold text-gray-900" data-bind="activeUsers" data-mock="true">1,234</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-purple-100 rounded-full">
+                                <i class="fas fa-eye text-purple-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600">Total Views</p>
+                                <p class="text-2xl font-bold text-gray-900" data-bind="totalViews" data-mock="true">15,678</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm">
+                        <div class="flex items-center">
+                            <div class="p-3 bg-yellow-100 rounded-full">
+                                <i class="fas fa-clock text-yellow-600 text-xl"></i>
+                            </div>
+                            <div class="ml-4">
+                                <p class="text-sm text-gray-600">Watch Time</p>
+                                <p class="text-2xl font-bold text-gray-900" data-bind="watchTime" data-mock="true">2,890h</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Action Buttons -->
+                <div class="flex flex-wrap gap-4 mb-8">
+                    <button id="addVideoBtn" class="bg-primary text-white px-6 py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium flex items-center" data-event="click:openAddVideo">
+                        <i class="fas fa-plus mr-2"></i>Add New Video
+                    </button>
+                    <button class="bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium flex items-center">
+                        <i class="fas fa-download mr-2"></i>Export Data
+                    </button>
+                    <button class="bg-white text-gray-700 border border-gray-300 px-6 py-3 rounded-lg hover:bg-gray-50 transition-colors font-medium flex items-center">
+                        <i class="fas fa-users mr-2"></i>Manage Users
+                    </button>
+                </div>
+
+                <!-- Video Management Table -->
+                <div class="bg-white rounded-xl shadow-sm overflow-hidden">
+                    <div class="px-6 py-4 border-b border-gray-200">
+                        <h3 class="text-lg font-semibold text-gray-900">Video Management</h3>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full">
+                            <thead class="bg-gray-50">
+                                <tr>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Video</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Category</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Views</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date Added</th>
+                                    <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody class="bg-white divide-y divide-gray-200">
+                                <tr data-mock="true">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <!-- Web development tutorial thumbnail -->
+                                            <img src="https://images.unsplash.com/photo-1461749280684-dccba630e2f6?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=64&h=36" 
+                                                 alt="Video thumbnail" class="w-16 h-9 object-cover rounded">
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">Introduction to Modern Web Development</div>
+                                                <div class="text-sm text-gray-500">15:30 duration</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full">Technology</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">1,234</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dec 15, 2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button class="text-primary hover:text-blue-700 mr-3" data-event="click:editVideo">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-600 hover:text-red-800" data-event="click:deleteVideo">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                                <tr data-mock="true">
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <div class="flex items-center">
+                                            <!-- Marketing analytics dashboard -->
+                                            <img src="https://images.unsplash.com/photo-1460925895917-afdab827c52f?ixlib=rb-4.0.3&ixid=MnwxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8&auto=format&fit=crop&w=64&h=36" 
+                                                 alt="Video thumbnail" class="w-16 h-9 object-cover rounded">
+                                            <div class="ml-4">
+                                                <div class="text-sm font-medium text-gray-900">Digital Marketing Analytics</div>
+                                                <div class="text-sm text-gray-500">22:15 duration</div>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap">
+                                        <span class="px-2 py-1 bg-green-100 text-green-800 text-xs rounded-full">Marketing</span>
+                                    </td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">856</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">Dec 12, 2023</td>
+                                    <td class="px-6 py-4 whitespace-nowrap text-sm font-medium">
+                                        <button class="text-primary hover:text-blue-700 mr-3" data-event="click:editVideo">
+                                            <i class="fas fa-edit"></i>
+                                        </button>
+                                        <button class="text-red-600 hover:text-red-800" data-event="click:deleteVideo">
+                                            <i class="fas fa-trash"></i>
+                                        </button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: AdminInterface -->
+
+        <!-- @COMPONENT: AddVideoModal -->
+        <div id="addVideoModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-xl max-w-2xl w-full max-h-screen overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-xl font-bold text-gray-900">Add New Video</h3>
+                        <button id="closeAddVideoModal" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <form class="space-y-6" data-mock="true">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">YouTube Video URL</label>
+                            <input type="url" placeholder="https://www.youtube.com/watch?v=..." 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                   data-bind="videoUrl">
+                            <p class="text-xs text-gray-500 mt-1">Paste the YouTube video link here. Title and thumbnail will be fetched automatically.</p>
+                        </div>
+                        
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Category</label>
+                                <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary" data-bind="selectedCategory">
+                                    <option>Select Category</option>
+                                    <option data-mock="true">Technology</option>
+                                    <option data-mock="true">Marketing</option>
+                                    <option data-mock="true">Sales</option>
+                                    <option data-mock="true">Design</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-sm font-medium text-gray-700 mb-2">Duration</label>
+                                <input type="text" placeholder="e.g., 15:30" 
+                                       class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                       data-bind="duration">
+                            </div>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Custom Description</label>
+                            <textarea rows="4" placeholder="Add a custom description for this video..." 
+                                      class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                      data-bind="description"></textarea>
+                        </div>
+                        
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Tags</label>
+                            <input type="text" placeholder="Enter tags separated by commas (e.g., javascript, react, frontend)" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                   data-bind="tags">
+                        </div>
+                        
+                        <!-- Preview Section -->
+                        <div class="bg-gray-50 p-4 rounded-lg">
+                            <h4 class="font-medium text-gray-900 mb-3">Video Preview</h4>
+                            <div class="flex items-start space-x-4">
+                                <div class="w-32 h-18 bg-gray-200 rounded flex items-center justify-center" data-implementation="Video thumbnail will appear here">
+                                    <i class="fas fa-image text-gray-400 text-2xl"></i>
+                                </div>
+                                <div class="flex-1">
+                                    <div class="h-4 bg-gray-200 rounded mb-2" data-implementation="Video title will appear here"></div>
+                                    <div class="h-3 bg-gray-200 rounded w-3/4" data-implementation="Video description will appear here"></div>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="flex justify-end space-x-4">
+                            <button type="button" id="cancelAddVideo" class="px-6 py-3 border border-gray-300 text-gray-700 rounded-lg hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" class="px-6 py-3 bg-primary text-white rounded-lg hover:bg-blue-700 transition-colors" data-event="click:addVideo">
+                                Add Video
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: AddVideoModal -->
+
+        <!-- @COMPONENT: VideoPlayerModal -->
+        <div id="videoPlayerModal" class="hidden fixed inset-0 bg-black bg-opacity-75 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-xl max-w-4xl w-full max-h-screen overflow-y-auto">
+                <div class="p-6">
+                    <div class="flex justify-between items-center mb-4">
+                        <h3 class="text-xl font-bold text-gray-900" data-bind="videoTitle" data-mock="true">Introduction to Modern Web Development</h3>
+                        <button id="closeVideoPlayer" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-xl"></i>
+                        </button>
+                    </div>
+                    
+                    <!-- Video Player Container -->
+                    <div class="aspect-video bg-black rounded-lg mb-4 flex items-center justify-center" data-implementation="Embedded YouTube player will be rendered here">
+                        <div class="text-white text-center">
+                            <i class="fas fa-play-circle text-6xl mb-4 opacity-50"></i>
+                            <p class="text-lg opacity-75">YouTube Video Player</p>
+                            <p class="text-sm opacity-50">Embedded player will appear here</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Video Info -->
+                    <div class="space-y-4">
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center space-x-4">
+                                <span class="px-3 py-1 bg-blue-100 text-blue-800 text-sm rounded-full" data-bind="videoCategory" data-mock="true">Technology</span>
+                                <span class="text-sm text-gray-500" data-bind="videoDuration" data-mock="true">15:30</span>
+                                <span class="text-sm text-gray-500" data-bind="videoViews" data-mock="true">1,234 views</span>
+                            </div>
+                            <button class="flex items-center space-x-2 text-gray-600 hover:text-gray-900">
+                                <i class="fas fa-bookmark"></i>
+                                <span>Save</span>
+                            </button>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-2">Description</h4>
+                            <p class="text-gray-600" data-bind="videoDescription" data-mock="true">
+                                Learn the fundamentals of modern web development including HTML5, CSS3, and JavaScript ES6+. 
+                                This comprehensive tutorial covers best practices, modern frameworks, and development tools.
+                            </p>
+                        </div>
+                        
+                        <div>
+                            <h4 class="font-medium text-gray-900 mb-2">Tags</h4>
+                            <div class="flex flex-wrap gap-2" data-bind="videoTags">
+                                <span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full" data-mock="true">JavaScript</span>
+                                <span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full" data-mock="true">HTML5</span>
+                                <span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full" data-mock="true">CSS3</span>
+                                <span class="px-3 py-1 bg-gray-100 text-gray-700 text-sm rounded-full" data-mock="true">Web Development</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: VideoPlayerModal -->
+
+        <!-- @COMPONENT: RegistrationModal -->
+        <div id="registrationModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-xl max-w-md w-full">
+                <div class="p-6">
+                    <div class="text-center mb-6">
+                        <i class="fas fa-user-plus text-primary text-4xl mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-900">Create Account</h3>
+                        <p class="text-gray-600">Join our learning community</p>
+                    </div>
+                    
+                    <form class="space-y-4" data-mock="true">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Full Name</label>
+                            <input type="text" placeholder="Enter your full name" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                   data-bind="user.fullName">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Email Address</label>
+                            <input type="email" placeholder="Enter your email" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                   data-bind="user.email">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Password</label>
+                            <input type="password" placeholder="Create a password" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                   data-bind="user.password">
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-1">Confirm Password</label>
+                            <input type="password" placeholder="Confirm your password" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" 
+                                   data-bind="user.confirmPassword">
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium" data-event="click:handleRegistration">
+                            Create Account
+                        </button>
+                        
+                        <div class="text-center">
+                            <button type="button" class="text-primary hover:text-blue-700 text-sm">Already have an account? Sign in</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: RegistrationModal -->
+
+        <!-- @COMPONENT: OTPVerificationModal -->
+        <div id="otpModal" class="hidden fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50">
+            <div class="bg-white rounded-xl max-w-md w-full">
+                <div class="p-6">
+                    <div class="text-center mb-6">
+                        <i class="fas fa-envelope-open text-primary text-4xl mb-4"></i>
+                        <h3 class="text-xl font-bold text-gray-900">Verify Your Email</h3>
+                        <p class="text-gray-600">We've sent a verification code to your email</p>
+                    </div>
+                    
+                    <form class="space-y-4" data-mock="true">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2 text-center">Enter 6-digit verification code</label>
+                            <div class="flex justify-center space-x-2">
+                                <input type="text" maxlength="1" class="w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="otp.digit1">
+                                <input type="text" maxlength="1" class="w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="otp.digit2">
+                                <input type="text" maxlength="1" class="w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="otp.digit3">
+                                <input type="text" maxlength="1" class="w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="otp.digit4">
+                                <input type="text" maxlength="1" class="w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="otp.digit5">
+                                <input type="text" maxlength="1" class="w-12 h-12 text-center text-xl font-bold border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent" data-bind="otp.digit6">
+                            </div>
+                        </div>
+                        
+                        <button type="submit" class="w-full bg-primary text-white py-3 rounded-lg hover:bg-blue-700 transition-colors font-medium" data-event="click:verifyOTP">
+                            Verify Email
+                        </button>
+                        
+                        <div class="text-center">
+                            <button type="button" class="text-primary hover:text-blue-700 text-sm" data-event="click:resendOTP">
+                                Didn't receive code? Resend
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+        <!-- @END_COMPONENT: OTPVerificationModal -->
+
+    </div>
+    <!-- @END_COMPONENT: AppContainer -->
+
+    <script>
+        // TODO: Implement business logic, API calls, and state management
+        (function() {
+            // @STATE: currentView:string = 'user' | 'admin' | 'login'
+            // @STATE: isLoggedIn:boolean = false
+            // @STATE: currentUser:object = null
+            // @STATE: videos:array = []
+            // @STATE: searchQuery:string = ''
+            // @STATE: selectedCategory:string = 'all'
+
+            const elements = {
+                loginPage: document.getElementById('loginPage'),
+                userInterface: document.getElementById('userInterface'),
+                adminInterface: document.getElementById('adminInterface'),
+                addVideoModal: document.getElementById('addVideoModal'),
+                videoPlayerModal: document.getElementById('videoPlayerModal'),
+                registrationModal: document.getElementById('registrationModal'),
+                otpModal: document.getElementById('otpModal'),
+                toggleView: document.getElementById('toggleView'),
+                addVideoBtn: document.getElementById('addVideoBtn'),
+                closeAddVideoModal: document.getElementById('closeAddVideoModal'),
+                closeVideoPlayer: document.getElementById('closeVideoPlayer'),
+                cancelAddVideo: document.getElementById('cancelAddVideo'),
+                logoutBtn: document.getElementById('logoutBtn')
+            };
+
+            let currentView = 'user';
+            let isLoggedIn = true; // Set to true for demo purposes
+
+            function showView(view) {
+                // Hide all views
+                elements.loginPage.classList.add('hidden');
+                elements.userInterface.classList.add('hidden');
+                elements.adminInterface.classList.add('hidden');
+
+                // Show selected view
+                switch(view) {
+                    case 'login':
+                        elements.loginPage.classList.remove('hidden');
+                        break;
+                    case 'user':
+                        elements.userInterface.classList.remove('hidden');
+                        elements.toggleView.innerHTML = '<i class="fas fa-user-cog mr-2"></i>Admin Panel';
+                        break;
+                    case 'admin':
+                        elements.adminInterface.classList.remove('hidden');
+                        elements.toggleView.innerHTML = '<i class="fas fa-users mr-2"></i>User View';
+                        break;
+                }
+                currentView = view;
+            }
+
+            function showModal(modal) {
+                modal.classList.remove('hidden');
+            }
+
+            function hideModal(modal) {
+                modal.classList.add('hidden');
+            }
+
+            // Event listeners
+            elements.toggleView.addEventListener('click', function() {
+                if (currentView === 'user') {
+                    showView('admin');
+                } else {
+                    showView('user');
+                }
+            });
+
+            elements.addVideoBtn.addEventListener('click', function() {
+                showModal(elements.addVideoModal);
+            });
+
+            elements.closeAddVideoModal.addEventListener('click', function() {
+                hideModal(elements.addVideoModal);
+            });
+
+            elements.cancelAddVideo.addEventListener('click', function() {
+                hideModal(elements.addVideoModal);
+            });
+
+            elements.closeVideoPlayer.addEventListener('click', function() {
+                hideModal(elements.videoPlayerModal);
+            });
+
+            elements.logoutBtn.addEventListener('click', function() {
+                showView('login');
+            });
+
+            // Video card click handlers
+            document.addEventListener('click', function(e) {
+                if (e.target.closest('[data-event="click:openVideo"]')) {
+                    showModal(elements.videoPlayerModal);
+                }
+            });
+
+            // OTP input navigation
+            document.addEventListener('input', function(e) {
+                if (e.target.matches('#otpModal input[type="text"]')) {
+                    const current = e.target;
+                    const next = current.nextElementSibling;
+                    if (current.value && next) {
+                        next.focus();
+                    }
+                }
+            });
+
+            // Initialize app
+            if (isLoggedIn) {
+                showView('user');
+            } else {
+                showView('login');
+            }
+
+            // Close modals when clicking outside
+            document.addEventListener('click', function(e) {
+                const modals = [elements.addVideoModal, elements.videoPlayerModal, elements.registrationModal, elements.otpModal];
+                modals.forEach(modal => {
+                    if (e.target === modal) {
+                        hideModal(modal);
+                    }
+                });
+            });
+        })();
+    </script>
+</body>
+</html>

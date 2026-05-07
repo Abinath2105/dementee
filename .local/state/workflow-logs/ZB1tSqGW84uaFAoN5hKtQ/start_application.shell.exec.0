@@ -1,0 +1,42 @@
+
+> rest-express@1.0.0 dev
+> NODE_ENV=development tsx server/index.ts
+
+[1G[0K🚀 Starting Zmartclass server initialization...
+Step 1: Validating environment variables...
+✓ Environment variables validated successfully
+Step 2: Testing database connection...
+Testing database connection...
+✗ Database connection failed: error: password authentication failed for user 'neondb_owner'
+    at [90mfile:///home/runner/workspace/[39mnode_modules/[4m@neondatabase/serverless[24m/index.mjs:1345:74
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async testDatabaseConnection [90m(/home/runner/workspace/[39mserver/db.ts:23:5[90m)[39m
+    at async initializeServer [90m(/home/runner/workspace/[39mserver/index.ts:125:5[90m)[39m
+    at async <anonymous> [90m(/home/runner/workspace/[39mserver/index.ts:243:5[90m)[39m {
+  length: [33m75[39m,
+  severity: [32m'ERROR'[39m,
+  code: [32m'28P01'[39m,
+  detail: [90mundefined[39m,
+  hint: [90mundefined[39m,
+  position: [90mundefined[39m,
+  internalPosition: [90mundefined[39m,
+  internalQuery: [90mundefined[39m,
+  where: [90mundefined[39m,
+  schema: [90mundefined[39m,
+  table: [90mundefined[39m,
+  column: [90mundefined[39m,
+  dataType: [90mundefined[39m,
+  constraint: [90mundefined[39m,
+  file: [90mundefined[39m,
+  line: [90mundefined[39m,
+  routine: [90mundefined[39m
+}
+❌ Server initialization failed: Database connection failed: password authentication failed for user 'neondb_owner'
+💡 Fix: Check your database connection string and network connectivity
+🚨 Fatal error during server startup: Error: Database connection failed: password authentication failed for user 'neondb_owner'
+    at testDatabaseConnection [90m(/home/runner/workspace/[39mserver/db.ts:27:11[90m)[39m
+[90m    at process.processTicksAndRejections (node:internal/process/task_queues:95:5)[39m
+    at async initializeServer [90m(/home/runner/workspace/[39mserver/index.ts:125:5[90m)[39m
+    at async <anonymous> [90m(/home/runner/workspace/[39mserver/index.ts:243:5[90m)[39m
+Server will not start. Please check the configuration and try again.
+[1G[0K⠙[1G[0K
